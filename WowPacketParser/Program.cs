@@ -4,11 +4,10 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using WowPacketParser.Enums;
-using WowPacketParser.Loading;
-using WowPacketParser.Misc;
-using WowPacketParser.SQL;
-using WowPacketParser.Parsing.Parsers;
+using PacketDumper.Processing;
+using PacketDumper.Misc;
+using PacketParser.Misc;
+using PacketParser.SQL;
 
 namespace WowPacketParser
 {
@@ -16,39 +15,38 @@ namespace WowPacketParser
     {
         private static void Main(string[] args)
         {
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+
             SetUpConsole();
 
             var files = args.ToList();
+
             if (files.Count == 0)
             {
                 PrintUsage();
                 return;
             }
-
             // config options are handled in Misc.Settings
             Utilities.RemoveConfigOptions(ref files);
-
             if (!Utilities.GetFiles(ref files))
             {
                 EndPrompt();
                 return;
             }
 
-            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-
-            if (Settings.FilterPacketNumLow < 0)
+            if (Settings.ReaderFilterPacketNumLow < 0)
                 throw new ConstraintException("FilterPacketNumLow must be positive");
 
-            if (Settings.FilterPacketNumHigh < 0)
+            if (Settings.ReaderFilterPacketNumHigh < 0)
                 throw new ConstraintException("FilterPacketNumHigh must be positive");
 
-            if (Settings.FilterPacketNumLow > 0 && Settings.FilterPacketNumHigh > 0
-                && Settings.FilterPacketNumLow > Settings.FilterPacketNumHigh)
-                throw new ConstraintException("FilterPacketNumLow must be less or equal than FilterPacketNumHigh");
+            if (Settings.ReaderFilterPacketNumLow > 0 && Settings.ReaderFilterPacketNumHigh > 0
+                && Settings.ReaderFilterPacketNumLow > Settings.ReaderFilterPacketNumHigh)
+                throw new ConstraintException("FilterPacketNumLow must be less or equal than ReaderFilterPacketNumHigh");
 
             // Disable DB when we don't need its data (dumping to a binary file)
-            if (Settings.DumpFormat == DumpFormatType.None || Settings.DumpFormat == DumpFormatType.Pkt ||
-                Settings.DumpFormat == DumpFormatType.PktSplit || Settings.DumpFormat == DumpFormatType.SniffDataOnly)
+            if (!(Settings.TextOutput || Settings.SQLOutput != 0))
             {
                 SQLConnector.Enabled = false;
                 SSHTunnel.Enabled = false;
@@ -60,18 +58,10 @@ namespace WowPacketParser
 
             var count = 0;
             foreach (var file in files)
-            {
-                SessionHandler.z_streams.Clear();
-                ClientVersion.SetVersion(Settings.ClientBuild);
-                new SniffFile(file, Settings.DumpFormat, Tuple.Create(++count, files.Count)).ProcessFile();
-            }
-
-            if (!String.IsNullOrWhiteSpace(Settings.SQLFileName))
-                Builder.DumpSQL("Dumping global sql", Settings.SQLFileName, "# multiple files\n");
+                new PacketFileDumper(file, Tuple.Create(++count, files.Count)).Process();
 
             SQLConnector.Disconnect();
             SSHTunnel.Disconnect();
-            Logger.WriteErrors();
 
             EndPrompt();
         }

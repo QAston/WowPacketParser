@@ -1,0 +1,364 @@
+using System;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Text;
+<<<<<<< HEAD
+using WowPacketParser.Enums;
+using WowPacketParser.Store;
+using WowPacketParser.Store.Objects;
+using WowPacketParser.Parsing.Parsers;
+using Ionic.Zlib;
+=======
+using System.Collections.Generic;
+using ICSharpCode.SharpZipLib.Zip.Compression;
+using PacketParser.Enums;
+using PacketParser.Enums.Version;
+using PacketParser.Misc;
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+
+namespace PacketParser.DataStructures
+{
+    public sealed partial class Packet : BinaryReader, ITreeNode
+    {
+<<<<<<< HEAD
+        private static readonly bool SniffData = Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.SniffData) || Settings.DumpFormat == DumpFormatType.SniffDataOnly;
+        private static readonly bool SniffDataOpcodes = Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.SniffDataOpcodes) || Settings.DumpFormat == DumpFormatType.SniffDataOnly;
+
+        private static DateTime _firstPacketTime;
+
+=======
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        [SuppressMessage("Microsoft.Reliability", "CA2000", Justification = "MemoryStream is disposed in ClosePacket().")]
+        public Packet(byte[] input, int opcode, DateTime time, Direction direction, int number, string fileName)
+            : base(new MemoryStream(input.Length), Encoding.UTF8)
+        {
+            this.BaseStream.Write(input, 0, input.Length);
+            SetPosition(0);
+            Opcode = opcode;
+            Time = time;
+            Direction = direction;
+            Number = number;
+            StoreData = new NamedTreeNode();
+            StoreDataCache = StoreData;
+            StoreIndexedLists = new LinkedList<Tuple<NamedTreeNode, IndexedTreeNode>>();
+            StoreObjects = new Stack<Tuple<NamedTreeNode, LinkedList<Tuple<NamedTreeNode, IndexedTreeNode>>>>();
+            FileName = fileName;
+            Status = ParsedStatus.None;
+            SubPacketNumber = 0;
+            Parent = null;
+
+            if (number == 0)
+                _firstPacketTime = Time;
+
+            TimeSpan = Time - _firstPacketTime;
+        }
+
+        [SuppressMessage("Microsoft.Reliability", "CA2000", Justification = "MemoryStream is disposed in ClosePacket().")]
+        public Packet(byte[] input, int opcode, Packet parent)
+            : base(new MemoryStream(input.Length), Encoding.UTF8)
+        {
+            this.BaseStream.Write(input, 0, input.Length);
+            SetPosition(0);
+            Opcode = opcode;
+            Time = parent.Time;
+            Direction = parent.Direction;
+            Number = parent.Number;
+            StoreData = new NamedTreeNode();
+            StoreDataCache = StoreData;
+            StoreIndexedLists = new LinkedList<Tuple<NamedTreeNode, IndexedTreeNode>>();
+            StoreObjects = new Stack<Tuple<NamedTreeNode, LinkedList<Tuple<NamedTreeNode, IndexedTreeNode>>>>();
+            FileName = parent.FileName;
+            Status = ParsedStatus.None;
+            Parent = (parent.Parent != null) ? parent.Parent : parent;
+            SubPacketNumber = ++Parent.SubPacketCount;
+        }
+
+        public int Opcode { get; set; } // setter can't be private because it's used in multiple_packets
+        public DateTime Time { get; private set; }
+        private DateTime _firstPacketTime;
+        public TimeSpan TimeSpan { get; private set; }
+        public Direction Direction { get; private set; }
+        public int Number { get; private set; }
+        public string FileName { get; private set; }
+        public ParsedStatus Status { get; set; }
+<<<<<<< HEAD
+        public bool WriteToFile { get; private set; }
+        public int ConnectionIndex { get; set; }
+=======
+        public string ErrorMessage = "";
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+
+        public Packet Parent;
+        public int SubPacketNumber;
+        private int SubPacketCount = 0;
+        public bool SubPacket
+        {
+            get
+            {
+                return Parent != null;
+            }
+        }
+        public int ParentOpcode
+        {
+            get
+            {
+                if (SubPacket)
+                    return Parent.Opcode;
+                return 0;
+            }
+        }
+
+        public int ParseID = -1;
+
+        public NamedTreeNode GetData()
+        {
+            return StoreData;
+        }
+
+        public string GetHeader()
+        {
+            StringBuilder output = new StringBuilder(100);
+            output.Append(Enum<Direction>.ToString(Direction));
+            output.Append(": ");
+            output.Append(Opcodes.GetOpcodeName(Opcode));
+            output.Append(" (0x");
+            output.Append(Opcode.ToString("X4"));
+            output.Append(") Length: ");
+            output.Append(Length);
+            output.Append(" Time: ");
+            output.Append(Time.ToString("MM/dd/yyyy HH:mm:ss.fff"));
+            output.Append(" Number: ");
+            output.Append(Number);
+            if (SubPacket)
+            {
+                output.Append(" (subpacket of packet: opcode ");
+                output.Append(Opcodes.GetOpcodeName(ParentOpcode));
+                output.Append(" (0x");
+                output.Append(ParentOpcode.ToString("X4"));
+                output.Append(") )");
+            }
+            output.AppendLine();
+            return output.ToString();
+        }
+
+<<<<<<< HEAD
+        public Packet Inflate(int inflatedSize, bool keepStream = true)
+=======
+        public void Inflate(int inflatedSize, int bytesToInflate)
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        {
+            var oldPos = Position;
+            var decompress = ReadBytes(bytesToInflate);
+            var tailData = ReadToEnd();
+            this.BaseStream.SetLength(oldPos + inflatedSize + tailData.Length);
+            
+            var newarr = new byte[inflatedSize];
+
+            if (ClientVersion.RemovedInVersion(ClientVersionBuild.V4_3_0_15005))
+                keepStream = false;
+
+            if (keepStream)
+            {
+<<<<<<< HEAD
+                if (!SessionHandler.z_streams.ContainsKey(ConnectionIndex))
+                    SessionHandler.z_streams[ConnectionIndex] = new ZlibCodec(CompressionMode.Decompress);
+                SessionHandler.z_streams[ConnectionIndex].InputBuffer = arr;
+                SessionHandler.z_streams[ConnectionIndex].NextIn = 0;
+                SessionHandler.z_streams[ConnectionIndex].AvailableBytesIn = arr.Length;
+                SessionHandler.z_streams[ConnectionIndex].OutputBuffer = newarr;
+                SessionHandler.z_streams[ConnectionIndex].NextOut = 0;
+                SessionHandler.z_streams[ConnectionIndex].AvailableBytesOut = inflatedSize;
+                SessionHandler.z_streams[ConnectionIndex].Inflate(FlushType.Sync);
+=======
+                var inflater = new Inflater();
+                inflater.SetInput(decompress, 0, bytesToInflate);
+                inflater.Inflate(newarr, 0, inflatedSize);
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+            }
+            else
+            {
+<<<<<<< HEAD
+                /*try
+                {
+                    var inflater = new Inflater(true);
+                    inflater.SetInput(arr, 0, arr.Length);
+                    inflater.Inflate(newarr, 0, inflatedSize);
+                }
+                catch (ICSharpCode.SharpZipLib.SharpZipBaseException)
+                {
+                    var inflater = new Inflater(true);
+                    inflater.SetInput(arr, 0, arr.Length);
+                    inflater.Inflate(newarr, 0, inflatedSize);
+                }*/
+                ZlibCodec stream = new ZlibCodec(CompressionMode.Decompress);
+                stream.InputBuffer = arr;
+                stream.NextIn = 0;
+                stream.AvailableBytesIn = arr.Length;
+                stream.OutputBuffer = newarr;
+                stream.NextOut = 0;
+                stream.AvailableBytesOut = inflatedSize;
+                stream.Inflate(FlushType.None);
+                stream.Inflate(FlushType.Finish);
+                stream.EndInflate();
+            }
+
+            // Cannot use "using" here
+            var pkt = new Packet(newarr, Opcode, Time, Direction, Number, Writer, FileName);
+            pkt.ConnectionIndex = ConnectionIndex;
+            return pkt;
+=======
+                var inflater = new Inflater(true);
+                inflater.SetInput(decompress, 0, bytesToInflate);
+                inflater.Inflate(newarr, 0, inflatedSize);
+            }
+            SetPosition(oldPos);
+            this.BaseStream.Write(newarr, 0, inflatedSize);
+            this.BaseStream.Write(tailData, 0, tailData.Length);
+            SetPosition(oldPos);
+        }
+            
+        public void Inflate(int inflatedSize)
+        {
+            Inflate(inflatedSize, (int)(Length - Position));
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        }
+
+        public byte[] GetStream(long offset)
+        {
+            var pos = Position;
+            SetPosition(offset);
+            var buffer = ReadToEnd();
+            SetPosition(pos);
+            return buffer;
+        }
+
+<<<<<<< HEAD
+        public string GetHeader(bool isMultiple = false)
+        {
+            return string.Format("{0}: {1} (0x{2}) Length: {3} ConnectionIndex: {4} Time: {5} Number: {6}{7}",
+                Direction, Enums.Version.Opcodes.GetOpcodeName(Opcode), Opcode.ToString("X4"),
+                Length, ConnectionIndex, Time.ToString("MM/dd/yyyy HH:mm:ss.fff"),
+                Number, isMultiple ? " (part of another packet)" : "");
+        }
+
+=======
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        public long Position
+        {
+            get { return BaseStream.Position; }
+        }
+
+        public void SetPosition(long val)
+        {
+            BaseStream.Position = val;
+        }
+
+        public long Length
+        {
+            get { return BaseStream.Length; }
+        }
+
+        public bool CanRead()
+        {
+            return Position != Length;
+        }
+
+        public void ClosePacket()
+        {
+<<<<<<< HEAD
+            if (!Settings.DumpFormatWithText())
+                return;
+=======
+            if (BaseStream != null)
+                BaseStream.Close();
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+
+            Parent = null;
+
+            Dispose(true);
+        }
+        public NodeType GetNode<NodeType>(params string[] address)
+        {
+<<<<<<< HEAD
+            if (!Settings.DumpFormatWithText())
+                return;
+
+            if (Writer == null)
+                Writer = new StringBuilder();
+
+            Writer.AppendFormat(format, args);
+=======
+            NodeType ret;
+            if (TryGetNode<NodeType>(out ret, address))
+                return ret;
+            throw new Exception(String.Format("Could not receive object of type {0} from address{1}", typeof(NodeType), address));
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        }
+        public bool TryGetNode<NodeType>(out NodeType ret, params string[] address)
+        {
+<<<<<<< HEAD
+            if (!Settings.DumpFormatWithText())
+                return;
+
+            if (Writer == null)
+                Writer = new StringBuilder();
+
+            Writer.AppendLine();
+=======
+            return TryGetNode<NodeType>(out ret, address, 0);
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        }
+        public bool TryGetNode<NodeType>(out NodeType ret, string[] address, int addrIndex)
+        {
+<<<<<<< HEAD
+            if (!Settings.DumpFormatWithText())
+                return;
+
+            if (Writer == null)
+                Writer = new StringBuilder();
+
+            Writer.AppendLine(value);
+        }
+
+        public void WriteLine(string format, params object[] args)
+        {
+            if (!Settings.DumpFormatWithText())
+                return;
+
+            if (Writer == null)
+                Writer = new StringBuilder();
+
+            Writer.AppendLine(string.Format(format, args));
+        }
+
+        public void ClosePacket()
+        {
+            if (Writer != null)
+            {
+                if (Settings.DumpFormatWithText())
+                    Writer.Clear();
+
+                Writer = null;
+=======
+            if (address.Length == addrIndex)
+            {
+                try
+                {
+                    ret = (NodeType)((Object)this);
+                    return true;
+                }
+                catch
+                {
+                    ret = default(NodeType);
+                    return false;
+                }
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+            }
+            return StoreData.TryGetNode<NodeType>(out ret, address, addrIndex);
+        }
+        public TreeNodeEnumerator GetTreeEnumerator()
+        {
+            return new TreeNodeEnumerator(this);
+        }
+    }
+}

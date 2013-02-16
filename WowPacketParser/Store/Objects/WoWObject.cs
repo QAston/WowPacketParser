@@ -1,8 +1,9 @@
 using System.Collections.Generic;
-using WowPacketParser.Enums;
-using WowPacketParser.Misc;
+using PacketParser.Enums;
+using PacketParser.Misc;
+using PacketParser.Enums.Version;
 
-namespace WowPacketParser.Store.Objects
+namespace PacketParser.DataStructures
 {
     public class WoWObject
     {
@@ -56,6 +57,19 @@ namespace WowPacketParser.Store.Objects
                 default:
                     return 7200;
             }
+        }
+        public Guid? GetGuid()
+        {
+            UpdateField low;
+            UpdateField high;
+            if (UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_GUID), out low))
+                if (UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_GUID + 1), out high))
+                {
+                    ulong lowg = low.UInt32Value;
+                    ulong highg = high.UInt32Value;
+                    return new Guid(lowg | (highg<<32));
+                }
+            return null;
         }
 
         public virtual void LoadValuesFromUpdateFields() { }

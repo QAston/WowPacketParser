@@ -1,9 +1,11 @@
 using System;
-using WowPacketParser.Enums;
-using WowPacketParser.Enums.Version;
-using WowPacketParser.Misc;
+using PacketParser.Enums;
+using PacketParser.Enums.Version;
+using PacketParser.Misc;
+using PacketParser.Processing;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class GroupHandler
     {
@@ -26,7 +28,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadEnum<LfgRoleFlag>("Role", TypeCode.Int32);
             var guid = packet.StartBitStream(2, 6, 3, 7, 5, 1, 0, 4);
             packet.ParseBitStream(guid, 6, 4, 1, 3, 0, 5, 2, 7);
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
 
         }
 
@@ -52,11 +54,13 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadInt32("Counter");
 
             var numFields = packet.ReadInt32("Member Count");
+            var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
+            packet.StoreBeginList("Members");
             for (var i = 0; i < numFields; i++)
             {
                 var name = packet.ReadCString("Name", i);
                 var guid = packet.ReadGuid("GUID", i);
-                StoreGetters.AddName(guid, name);
+                names.AddPlayerName(guid, name);
                 packet.ReadEnum<GroupMemberStatusFlag>("Status", TypeCode.Byte, i);
                 packet.ReadByte("Sub Group", i);
                 packet.ReadEnum<GroupUpdateFlag>("Update Flags", TypeCode.Byte, i);
@@ -64,6 +68,7 @@ namespace WowPacketParser.Parsing.Parsers
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_0_10958))
                     packet.ReadEnum<LfgRoleFlag>("Role", TypeCode.Byte, i);
             }
+            packet.StoreEndList();
 
             packet.ReadGuid("Leader GUID");
 
@@ -140,9 +145,10 @@ namespace WowPacketParser.Parsing.Parsers
 
             if (updateFlags.HasFlag(GroupUpdateFlag422.Auras))
             {
-                packet.ReadByte("Unk byte");
+                packet.ReadByte("Unk byte 1");
                 var mask = packet.ReadUInt64("Aura mask");
                 var cnt = packet.ReadUInt32("Aura count");
+                packet.StoreBeginList("Auras");
                 for (var i = 0; i < cnt; ++i)
                 {
                     if (mask == 0) // bad packet
@@ -155,9 +161,14 @@ namespace WowPacketParser.Parsing.Parsers
 
                     var aflags = packet.ReadEnum<AuraFlag>("Aura Flags", TypeCode.UInt16, i);
                     if (aflags.HasFlag(AuraFlag.Scalable))
+                    {
+                        packet.StoreBeginList("EffectsBasePoints", i);
                         for (var j = 0; j < 3; ++j)
                             packet.ReadInt32("Effect BasePoints", i, j);
+                        packet.StoreEndList();
+                    }
                 }
+                packet.StoreEndList();
             }
 
             if (updateFlags.HasFlag(GroupUpdateFlag422.PetGuid))
@@ -186,9 +197,10 @@ namespace WowPacketParser.Parsing.Parsers
 
             if (updateFlags.HasFlag(GroupUpdateFlag422.PetAuras))
             {
-                packet.ReadByte("Unk byte");
+                packet.ReadByte("Unk byte 2");
                 var mask = packet.ReadUInt64("Pet Aura mask");
                 var cnt = packet.ReadUInt32("Pet Aura count");
+                packet.StoreBeginList("Pet Auras");
                 for (var i = 0; i < cnt; ++i)
                 {
                     if ((mask & (1ul << i)) == 0)
@@ -198,9 +210,14 @@ namespace WowPacketParser.Parsing.Parsers
 
                     var aflags = packet.ReadEnum<AuraFlag>("Aura Flags", TypeCode.UInt16, i);
                     if (aflags.HasFlag(AuraFlag.Scalable))
+                    {
+                        packet.StoreBeginList("EffectsBasePoints", i);
                         for (var j = 0; j < 3; ++j)
                             packet.ReadInt32("Effect BasePoints", i, j);
+                        packet.StoreEndList();
+                    }
                 }
+                packet.StoreEndList();
             }
 
             if (updateFlags.HasFlag(GroupUpdateFlag422.VehicleSeat))
@@ -272,6 +289,7 @@ namespace WowPacketParser.Parsing.Parsers
                 var auraMask = packet.ReadUInt64("Aura Mask");
 
                 var maxAura = ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing) ? 64 : 56;
+                packet.StoreBeginList("Auras");
                 for (var i = 0; i < maxAura; ++i)
                 {
                     if ((auraMask & (1ul << i)) == 0)
@@ -284,6 +302,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                     packet.ReadEnum<AuraFlag>("Aura Flags", TypeCode.Byte, i);
                 }
+                packet.StoreEndList();
             }
 
             if (updateFlags.HasFlag(GroupUpdateFlag.PetGuid))
@@ -323,8 +342,9 @@ namespace WowPacketParser.Parsing.Parsers
             if (updateFlags.HasFlag(GroupUpdateFlag.PetAuras))
             {
                 var auraMask = packet.ReadUInt64("Pet Auramask");
-
+                
                 var maxAura = ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing) ? 64 : 56;
+                packet.StoreBeginList("Pet Auras");
                 for (var i = 0; i < maxAura; ++i)
                 {
                     if ((auraMask & (1ul << i)) == 0)
@@ -337,6 +357,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                     packet.ReadEnum<AuraFlag>("Aura Flags", TypeCode.Byte, i);
                 }
+                packet.StoreEndList();
             }
 
             if (ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing) && // no idea when this was added exactly, doesn't exist in 2.4.1
@@ -386,14 +407,15 @@ namespace WowPacketParser.Parsing.Parsers
 
             packet.ReadXORByte(guidBytes, 3);
 
-            packet.WriteGuid("Guid", guidBytes); // Non-zero in cross realm parties
+            // Non-zero in cross realm parties
+            packet.StoreBitstreamGuid("GUID", guidBytes);
         }
 
         [Parser(Opcode.CMSG_GROUP_INVITE, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleGroupInvite434(Packet packet)
         {
-            packet.ReadInt32("Unk Int32"); // Non-zero in cross realm parties (1383)
-            packet.ReadInt32("Unk Int32"); // Always 0
+            packet.ReadInt32("Unk Int32 1"); // Non-zero in cross realm parties (1383)
+            packet.ReadInt32("Unk Int32 2"); // Always 0
             var guid = new byte[8];
             guid[2] = packet.ReadBit();
             guid[7] = packet.ReadBit();
@@ -418,7 +440,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 5);
             packet.ReadXORByte(guid, 3);
             packet.ReadXORByte(guid, 2);
-            packet.WriteGuid("Guid", guid); // Non-zero in cross realm parties
+            packet.StoreBitstreamGuid("Guid", guid); // Non-zero in cross realm parties
         }
 
         [Parser(Opcode.SMSG_GROUP_INVITE, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
@@ -428,8 +450,10 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadCString("Name");
             packet.ReadInt32("Unk Int32 1");
             var count = packet.ReadByte("Count");
+            packet.StoreBeginList("UnkData");
             for (var i = 0; i < count; ++i)
                 packet.ReadUInt32("Unk Uint32", i);
+            packet.StoreEndList();
 
             packet.ReadInt32("Unk Int32 2");
         }
@@ -457,16 +481,18 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 4);
 
             packet.ReadInt32("Timestamp?");
-            packet.ReadInt32("Unk Int 32");
-            packet.ReadInt32("Unk Int 32");
+            packet.ReadInt32("Unk Int 32 1");
+            packet.ReadInt32("Unk Int 32 2");
 
             packet.ReadXORByte(guid, 6);
             packet.ReadXORByte(guid, 0);
             packet.ReadXORByte(guid, 2);
             packet.ReadXORByte(guid, 3);
 
+            packet.StoreBeginList("UnkList");
             for (var i = 0; i < count3; i++)
-                packet.ReadInt32("Unk Int 32", i);
+                packet.ReadInt32("Unk Int 32 3", i);
+            packet.StoreEndList();
 
             packet.ReadXORByte(guid, 5);
 
@@ -476,9 +502,9 @@ namespace WowPacketParser.Parsing.Parsers
 
             packet.ReadWoWString("Invited", count2);
 
-            packet.ReadInt32("Unk Int 32");
+            packet.ReadInt32("Unk Int 32 4");
 
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
 
         }
 
@@ -583,8 +609,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (packet.Direction == Direction.ServerToClient)
                 packet.ReadGuid("GUID");
 
-            var position = packet.ReadVector2();
-            packet.WriteLine("Position: " + position);
+            packet.ReadVector2("Position");
         }
 
         [Parser(Opcode.CMSG_GROUP_RAID_CONVERT)]
@@ -660,8 +685,8 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadXORByte(guid1, 1);
 
             packet.ReadEnum<LfgRoleFlag>("Old Roles", TypeCode.Int32);
-            packet.WriteGuid("Assigner Guid", guid1);
-            packet.WriteGuid("Target Guid", guid2);
+            packet.StoreBitstreamGuid("Assigner Guid", guid1);
+            packet.StoreBitstreamGuid("Target Guid", guid2);
         }
 
         [Parser(Opcode.SMSG_RAID_MARKERS_CHANGED)]
@@ -687,6 +712,7 @@ namespace WowPacketParser.Parsing.Parsers
             for (int i = 0; i < count; ++i)
                 guids[i] = packet.StartBitStream(5, 3, 1, 7, 2, 0, 6, 4);
 
+            packet.StoreBeginList("Errors");
             for (int i = 0; i < count; ++i)
             {
                 packet.ReadXORByte(guids[i], 4);
@@ -701,8 +727,9 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadXORByte(guids[i], 3);
                 packet.ReadXORByte(guids[i], 1);
 
-                packet.WriteGuid("Guid", guids[i], i);
+                packet.StoreBitstreamGuid("Guid", guids[i], i);
             }
+            packet.StoreEndList();
 
         }
 

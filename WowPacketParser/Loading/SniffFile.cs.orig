@@ -1,0 +1,368 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Text;
+using WowPacketParser.Enums;
+using WowPacketParser.Misc;
+using WowPacketParser.Parsing;
+using WowPacketParser.SQL;
+using WowPacketParser.Store;
+using WowPacketParser.Enums.Version;
+using WowPacketParser.Processing;
+
+namespace WowPacketParser.Loading
+{
+    public class PacketFileProcessor
+    {
+        public readonly string FileName;
+        private readonly Statistics _stats;
+<<<<<<< HEAD
+        private LinkedList<Packet> _packets;
+        private readonly DumpFormatType _dumpFormat;
+        private readonly string _logPrefix;
+
+        private readonly LinkedList<string> _withErrorHeaders = new LinkedList<string>();
+        private readonly LinkedList<string> _skippedHeaders = new LinkedList<string>();
+
+        public SniffFile(string fileName, DumpFormatType dumpFormat = DumpFormatType.Text, Tuple<int, int> number = null)
+=======
+        public readonly string LogPrefix;
+        public LinkedList<IPacketProcessor> _processors = new LinkedList<IPacketProcessor>();
+
+        public PacketFileProcessor(string fileName, Tuple<int, int> number = null)
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        {
+            if (string.IsNullOrWhiteSpace(fileName))
+                throw new ArgumentException("fileName cannot be null, empty or whitespace.", "fileName");
+
+            _stats = new Statistics();
+<<<<<<< HEAD
+            _packets = null;
+            _fileName = fileName;
+            _dumpFormat = dumpFormat;
+
+            _outFileName = Path.ChangeExtension(fileName, null) + "_parsed.txt";
+=======
+            FileName = fileName;
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+
+            if (number == null)
+                LogPrefix = string.Format("[{0}]", Path.GetFileName(fileName));
+            else
+<<<<<<< HEAD
+                _logPrefix = string.Format("[{0}/{1} {2}]", number.Item1, number.Item2, Path.GetFileName(fileName));
+        }
+
+        public void ProcessFile()
+        {
+            switch (_dumpFormat)
+            {
+                case DumpFormatType.SniffDataOnly:
+                {
+                    if (!ReadPackets())
+                        return;
+
+                    ParsePackets();
+
+                    WriteSQLs();
+
+                    GC.Collect();
+
+                    break;
+                }
+                case DumpFormatType.SqlOnly:
+                case DumpFormatType.Text:
+                {
+                    if (Utilities.FileIsInUse(_outFileName) && Settings.DumpFormat != DumpFormatType.SqlOnly)
+                    {
+                        // If our dump format requires a .txt to be created,
+                        // check if we can write to that .txt before starting parsing
+                        Trace.WriteLine(string.Format("Save file {0} is in use, parsing will not be done.", _outFileName));
+                        return;
+                    }
+
+                    Store.Store.SQLEnabledFlags = Settings.SQLOutputFlag;
+
+                    if (!ReadPackets())
+                        return;
+
+                    ParsePackets();
+
+                    if (Settings.SQLOutputFlag != 0)
+                        WriteSQLs();
+
+                    if (Settings.LogPacketErrors)
+                        WritePacketErrors();
+
+                    GC.Collect(); // Force a GC collect after parsing a file. It seems to help.
+
+                    break;
+                }
+                case DumpFormatType.Pkt:
+                {
+                    if (!ReadPackets())
+                        return;
+
+                    if (Settings.FilterPacketNumLow == 0 && Settings.FilterPacketNumHigh == 0 &&
+                        Settings.FilterPacketsNum < 0)
+                    {
+                        int packetsPerSplit = Math.Abs(Settings.FilterPacketsNum);
+                        int totalPackets = _packets.Count;
+
+                        int numberOfSplits = totalPackets / packetsPerSplit;
+
+                        for (int i = 0; i < numberOfSplits; ++i)
+                        {
+                            var fileNamePart = _fileName + "_part_" + (i + 1) + ".pkt";
+
+                            var packetsPart = new LinkedList<Packet>();
+
+                            for (int j = 0; j < packetsPerSplit; ++j)
+                            {
+                                if (_packets.Count == 0)
+                                    break;
+
+                                packetsPart.AddLast(_packets.First.Value);
+                                _packets.RemoveFirst();
+                            }
+
+                            BinaryDump(fileNamePart, packetsPart);
+                        }
+                    }
+                    else
+                    {
+                        var fileNameExcerpt = Path.ChangeExtension(_fileName, null) + "_excerpt.pkt";
+                        BinaryDump(fileNameExcerpt, _packets);
+                    }
+
+                    break;
+                }
+
+                case DumpFormatType.PktSplit:
+                {
+                    if (!ReadPackets())
+                        return;
+                    SplitBinaryDump();
+                    break;
+                }
+                default:
+                {
+                    Trace.WriteLine(string.Format("{0}: Dump format is none, nothing will be processed.", _logPrefix));
+                    break;
+                }
+            }
+=======
+                LogPrefix = string.Format("[{0}/{1} {2}]", number.Item1, number.Item2, Path.GetFileName(fileName));
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        }
+
+        public ClientVersionBuild GetClientVersion(IPacketReader reader)
+        {
+            // default selection, when version not provided in config
+            if (Settings.ClientBuild == ClientVersionBuild.Zero)
+            {
+                // use version info from file
+                return reader.GetBuild();
+            }
+            return Settings.ClientBuild;
+        }
+
+        public void Process()
+        {
+            _stats.SetStartTime(DateTime.Now);
+
+            var reader = Reader.GetReader(FileName);
+            Trace.WriteLine(string.Format("{0}: Processing packets (type {1})...", LogPrefix, reader.ToString()));
+            ClientVersion.SetVersion(GetClientVersion(reader));
+            if (ClientVersion.Build == ClientVersionBuild.Zero)
+                throw new Exception("Selected packet file type does not contain version info, you need to provide version in config!");
+            Trace.WriteLine(string.Format("{0}: Assumed version: {1}", LogPrefix, ClientVersion.VersionString));
+
+<<<<<<< HEAD
+            using (var writer = (Settings.DumpFormatWithText() ? new StreamWriter(_outFileName, true) : null))
+            {
+                var i = 1;
+                if (Settings.DumpFormatWithText())
+                    writer.WriteLine(GetHeader());
+=======
+            try
+            {
+                var packetNum = 0;
+                var packetCount = 0;
+
+                // initialize processors
+                IPacketProcessor proc = new TextFileOutput();
+                if (proc.Init(this))
+                    _processors.AddLast(proc);
+                proc = new SniffDataTableOutput();
+                if (proc.Init(this))
+                    _processors.AddLast(proc);
+                proc = new SQLFileOutput();
+                if (proc.Init(this))
+                    _processors.AddLast(proc);
+                proc = new RawFileOutput();
+                if (proc.Init(this))
+                    _processors.AddLast(proc);
+                proc = new SplitRawFileOutput();
+                if (proc.Init(this))
+                    _processors.AddLast(proc);
+
+                Storage.ClearContainers();
+
+                while (reader.CanRead())
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+
+                {
+                    var packet = reader.Read(packetNum, FileName);
+
+                    // read error
+                    if (packet == null)
+                        continue;
+
+                    ++packetNum;
+
+<<<<<<< HEAD
+                    if (Settings.DumpFormatWithText())
+                    {
+                        // Write to file
+                        writer.WriteLine(packet.Writer);
+                        writer.Flush();
+                    }
+=======
+                    // finish if read packet number reached max
+                    if (Settings.ReaderFilterPacketNumHigh != 0 && packetNum > Settings.ReaderFilterPacketNumHigh)
+                        break;
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+
+                    // skip packets if they were filtered out
+                    if (packetNum < Settings.ReaderFilterPacketNumLow)
+                        continue;
+
+                    // check for filters
+                    if (!CheckReadFilters(packet.Opcode))
+                        continue;
+
+                    ProcessPacket(packet);
+
+                    ++packetCount;
+
+                    // finish if read packet count reached max
+                    if (Settings.ReaderFilterPacketsNum > 0 && packetCount == Settings.ReaderFilterPacketsNum)
+                        break;
+                }
+                // finalize processors
+                foreach (var procs in _processors)
+                {
+                    procs.Finish();
+                }
+
+                _stats.SetEndTime(DateTime.Now);
+            }
+            catch (Exception ex)
+            {
+                Trace.WriteLine("File {0} could not be parsed", FileName);
+                Trace.WriteLine(ex.Data);
+                Trace.WriteLine(ex.GetType());
+                Trace.WriteLine(ex.Message);
+                Trace.WriteLine(ex.StackTrace);
+            }
+<<<<<<< HEAD
+        }
+
+        private void BinaryDump(string fileName, ICollection<Packet> packets)
+        {
+            Trace.WriteLine(string.Format("{0}: Copying {1} packets to .pkt format...", _logPrefix, packets.Count));
+
+            try
+            {
+                BinaryPacketWriter.Write(SniffType.Pkt, fileName, Encoding.ASCII, packets);
+            }
+            catch (Exception ex)
+=======
+            finally
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+            {
+                reader.Dispose();
+                Trace.WriteLine(string.Format("{0}: {1}", LogPrefix, _stats));
+            }
+        }
+
+        public string GetHeader()
+        {
+            return "# TrinityCore - WowPacketParser" + Environment.NewLine +
+                   "# File name: " + Path.GetFileName(FileName) + Environment.NewLine +
+                   "# Detected build: " + ClientVersion.Build + Environment.NewLine +
+                   "# Parsing date: " + DateTime.Now.ToString(CultureInfo.InvariantCulture) +
+                   Environment.NewLine;
+        }
+
+<<<<<<< HEAD
+            if (String.IsNullOrWhiteSpace(Settings.SQLFileName))
+            {
+                Builder.DumpSQL(string.Format("{0}: Dumping sql", _logPrefix), sqlFileName, GetHeader());
+                Storage.ClearContainers();
+            }
+=======
+        private bool CheckReadFilters(int opc)
+        {
+            var opcodeName = Opcodes.GetOpcodeName(opc);
+            if (Settings.ReaderFilterOpcode.Length > 0)
+                if (!opcodeName.MatchesFilters(Settings.ReaderFilterOpcode))
+                    return false;
+            // check for ignore filters
+            if (Settings.ReaderFilterIgnoreOpcode.Length > 0)
+                if (opcodeName.MatchesFilters(Settings.ReaderFilterIgnoreOpcode))
+                    return false;
+
+            return true;
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        }
+
+        private void ProcessPacket(Packet packet)
+        {
+            // Parse the packet, read the data into StoreData tree
+            Handler.Parse(packet);
+
+            // Update statistics
+            _stats.AddByStatus(packet.Status);
+
+            ProcessData(packet);
+
+            // Close Writer, Stream - Dispose
+            packet.ClosePacket();
+        }
+
+        public void ProcessData(Packet data)
+        {
+            var itr = data.GetTreeEnumerator();
+            while (itr.MoveNext())
+            {
+                foreach (var proc in _processors)
+                {
+                   foreach (var i in itr.CurrentClosedNodes)
+                   {
+                       if (i.type == typeof(Packet))
+                           proc.ProcessedPacket(i.obj as Packet);
+                   }
+                   if (itr.Type == typeof(Packet))
+                   {
+                       Packet packet = (Packet)itr.Current;
+                       proc.ProcessPacket(packet);
+                   }
+                   proc.ProcessData(itr.Name, itr.Index, itr.Current, itr.Type);
+                }
+            }
+            foreach (var proc in _processors)
+            {
+                foreach (var i in itr.CurrentClosedNodes)
+                {
+                    if (i.type == typeof(Packet))
+                        proc.ProcessedPacket(i.obj as Packet);
+                }
+            }
+        }
+    }
+}

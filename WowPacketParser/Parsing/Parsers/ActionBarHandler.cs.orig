@@ -1,0 +1,72 @@
+using PacketParser.Enums;
+using PacketParser.Misc;
+using PacketParser.DataStructures;
+
+namespace PacketParser.Parsing.Parsers
+{
+    public static class ActionBarHandler
+    {
+        [Parser(Opcode.SMSG_ACTION_BUTTONS)]
+        public static void HandleInitialButtons(Packet packet)
+        {
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_1_0_9767) && ClientVersion.RemovedInVersion(ClientVersionBuild.V4_3_4_15595))
+            {
+                // State = 0: Looks to be sent when initial action buttons get sent, however on Trinity we use 1 since 0 had some difficulties
+                // State = 1: Used in any SMSG_ACTION_BUTTONS packet with button data on Trinity. Only used after spec swaps on retail.
+                // State = 2: Clears the action bars client sided. This is sent during spec swap before unlearning and before sending the new buttons
+                if (packet.ReadByte("Packet Type") == 2)
+                    return;
+            }
+
+            var buttonCount = ClientVersion.AddedInVersion(ClientVersionBuild.V3_2_0_10192) ? 144 : 132;
+
+<<<<<<< HEAD
+            var startAction = new StartAction { Actions = new List<Store.Objects.Action>(buttonCount) };
+
+            for (var i = 0; i < buttonCount; i++)
+            {
+                var action = new Store.Objects.Action { Button = (uint)i };
+
+=======
+            packet.StoreBeginList("Buttons");
+            for (var i = 0; i < buttonCount; i++)
+            {
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+                var packed = packet.ReadInt32();
+
+                if (packed == 0)
+                    continue;
+
+                var actionId = (uint)(packed & 0x00FFFFFF);
+                packet.Store("Action", actionId, i);
+
+                var actionType = (ActionButtonType)((packed & 0xFF000000) >> 24);
+                packet.Store("Type", actionType, i);
+            }
+<<<<<<< HEAD
+
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
+                packet.ReadByte("Packet Type");
+
+            WoWObject character;
+            if (Storage.Objects.TryGetValue(SessionHandler.LoginGuid, out character))
+            {
+                var player = character as Player;
+                if (player != null && player.FirstLogin)
+                    Storage.StartActions.Add(new Tuple<Race, Class>(player.Race, player.Class), startAction, packet.TimeSpan);
+            }
+=======
+            packet.StoreEndList();
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
+                packet.ReadByte("Packet Type");
+>>>>>>> parent of bda6329... Revert "Merge branch 'qastonrebase'"
+        }
+
+
+        [Parser(Opcode.CMSG_SET_ACTIONBAR_TOGGLES)]
+        public static void HandleSetActionBarToggles(Packet packet)
+        {
+            packet.ReadByte("Action Bar");
+        }
+    }
+}

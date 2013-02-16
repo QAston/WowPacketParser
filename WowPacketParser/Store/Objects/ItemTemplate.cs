@@ -1,10 +1,9 @@
-﻿using WowPacketParser.Enums;
+﻿using PacketParser.Enums;
 using WowPacketParser.SQL;
 
-namespace WowPacketParser.Store.Objects
+namespace PacketParser.DataStructures
 {
     [DBTableName("item_template")]
-    public sealed class ItemTemplate
     {
         [DBFieldName("class")]
         public ItemClass Class;

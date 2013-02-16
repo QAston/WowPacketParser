@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using WowPacketParser.Enums;
-using WowPacketParser.Misc;
-using WowPacketParser.Store;
-using WowPacketParser.Store.Objects;
+using PacketParser.Enums;
+using PacketParser.Misc;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class ActionBarHandler
     {
@@ -24,25 +21,21 @@ namespace WowPacketParser.Parsing.Parsers
             var buttonCount = ClientVersion.AddedInVersion(ClientVersionBuild.V3_2_0_10192) ? 144 : 132;
 
             var startAction = new StartAction { Actions = new List<Store.Objects.Action>(buttonCount) };
-
             for (var i = 0; i < buttonCount; i++)
             {
                 var action = new Store.Objects.Action { Button = (uint)i };
-
                 var packed = packet.ReadInt32();
 
                 if (packed == 0)
                     continue;
 
-                action.Id = (uint)(packed & 0x00FFFFFF);
-                packet.WriteLine("Action " + i + ": " + action.Id);
+                var actionId = (uint)(packed & 0x00FFFFFF);
+                packet.Store("Action", actionId, i);
 
-                action.Type = (ActionButtonType)((packed & 0xFF000000) >> 24);
-                packet.WriteLine("Type " + i + ": " + action.Type);
-
-                startAction.Actions.Add(action);
+                var actionType = (ActionButtonType)((packed & 0xFF000000) >> 24);
+                packet.Store("Type", actionType, i);
             }
-
+            packet.StoreEndList();
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
                 packet.ReadByte("Packet Type");
 

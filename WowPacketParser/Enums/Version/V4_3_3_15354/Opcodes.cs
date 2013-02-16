@@ -1,6 +1,6 @@
-using WowPacketParser.Misc;
+using PacketParser.Misc;
 
-namespace WowPacketParser.Enums.Version.V4_3_3_15354
+namespace PacketParser.Enums.Version.V4_3_3_15354
 {
     public static class Opcodes_4_3_3
     {
@@ -147,6 +147,7 @@ namespace WowPacketParser.Enums.Version.V4_3_3_15354
             {Opcode.SMSG_NPC_TEXT_UPDATE, 0x646C},
             {Opcode.SMSG_PET_NAME_QUERY_RESPONSE, 0x2865},
             //{Opcode.SMSG_PONG, 0x0302},
+            {Opcode.SMSG_PLAYER_VEHICLE_DATA, 0x27E5},
             {Opcode.SMSG_PONG, 0x0085},
             {Opcode.SMSG_PLAYER_VEHICLE_DATA, 0x27E5},
             {Opcode.SMSG_QUESTGIVER_OFFER_REWARD, 0x7EAC},
