@@ -1,6 +1,6 @@
-namespace PacketParser.Enums
+namespace WowPacketParser.Enums
 {
-    public enum ItemSocketColor
+    public enum ItemSocketColor : byte
     {
         None = 0,
         Meta = 1,

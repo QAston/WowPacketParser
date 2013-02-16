@@ -1,6 +1,6 @@
-using PacketParser.Misc;
+using WowPacketParser.Misc;
 
-namespace PacketParser.Enums.Version.V4_2_0_14480
+namespace WowPacketParser.Enums.Version.V4_2_0_14480
 {
     public static class Opcodes_4_2_0
     {
@@ -366,7 +366,7 @@ namespace PacketParser.Enums.Version.V4_2_0_14480
             {Opcode.CMSG_TUTORIAL_FLAG, 0x266A},
             {Opcode.CMSG_TUTORIAL_RESET, 0xB6BF},
             {Opcode.CMSG_UNACCEPT_TRADE, 0x8848},
-            {Opcode.CMSG_UNKNOWN_1296, 0x9A0},
+            {Opcode.CMSG_ENABLE_NAGLE, 0x9A0},
             {Opcode.CMSG_UNLEARN_SKILL, 0xB2EE},
             {Opcode.CMSG_UPDATE_ACCOUNT_DATA, 0x66FF},
             {Opcode.CMSG_USE_ITEM, 0x22B3},
@@ -610,7 +610,7 @@ namespace PacketParser.Enums.Version.V4_2_0_14480
             {Opcode.SMSG_GROUP_CANCEL, 0xA627},
             {Opcode.SMSG_GROUP_DECLINE, 0x32E7},
             {Opcode.SMSG_GROUP_DESTROYED, 0x6AF6},
-            {Opcode.SMSG_GROUP_JOINED_BATTLEGROUND, 0x8707},
+            {Opcode.SMSG_BATTLEFIELD_STATUS_QUEUED, 0x8707},
             {Opcode.SMSG_GROUP_LIST, 0xBEB3},
             {Opcode.SMSG_GROUP_SET_LEADER, 0x3A63},
             {Opcode.SMSG_GROUP_UNINVITE, 0xBE6B},

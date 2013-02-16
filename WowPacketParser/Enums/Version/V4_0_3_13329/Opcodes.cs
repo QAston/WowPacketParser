@@ -1,6 +1,6 @@
-using PacketParser.Misc;
+using WowPacketParser.Misc;
 
-namespace PacketParser.Enums.Version.V4_0_3_13329
+namespace WowPacketParser.Enums.Version.V4_0_3_13329
 {
     public static class Opcodes_4_0_3
     {
@@ -712,7 +712,7 @@ namespace PacketParser.Enums.Version.V4_0_3_13329
             {Opcode.CMSG_GM_UNTEACH, 0x02E5}, // NF()(0x02E5) //
             {Opcode.SMSG_WARDEN_DATA, 0x212B}, // (0x23DD)(0x02E6) //
             {Opcode.CMSG_WARDEN_DATA, 0x467F}, // (0x233D)(0x02E7) //
-            {Opcode.SMSG_GROUP_JOINED_BATTLEGROUND, 0x02E8}, // NF()(0x02E8) //
+            {Opcode.SMSG_BATTLEFIELD_STATUS_QUEUED, 0x02E8}, // NF()(0x02E8) //
             {Opcode.MSG_BATTLEGROUND_PLAYER_POSITIONS, 0xFFBB}, // NF(0x8772)(0x02E9) //
             {Opcode.CMSG_PET_STOP_ATTACK, 0x02EA}, // NF()(0x02EA) //
             {Opcode.SMSG_BINDER_CONFIRM, 0xEF7C}, // (0x4234)(0x02EB) //
@@ -1265,7 +1265,7 @@ namespace PacketParser.Enums.Version.V4_0_3_13329
             {Opcode.SMSG_REDIRECT_CLIENT, 0x9000}, // (0x8400)(0x050D) //}, uint16 port}, uint32 unk}, uint8[20] hash (ip + port}, seed=sessionkey)
             {Opcode.CMSG_REDIRECTION_FAILED, 0x0509}, // (0x1201)(0x050E) // with networking
             {Opcode.SMSG_UNKNOWN_1295, 0x050F}, // NF()(0x050F) // // not found - disconnect
-            {Opcode.CMSG_UNKNOWN_1296, 0x0510}, // NF()(0x0510) // // something with networking
+            {Opcode.CMSG_ENABLE_NAGLE, 0x0510}, // NF()(0x0510) // // something with networking
             {Opcode.SMSG_FORCE_SEND_QUEUED_PACKETS, 0x0511}, // NF()(0x0511) // // not found - crash
             {Opcode.CMSG_REDIRECTION_AUTH_PROOF, 0x0512}, // NF()(0x0512) // // something with networking
             {Opcode.UMSG_UNKNOWN_1299, 0x0513}, // NF()(0x0513) // // not found

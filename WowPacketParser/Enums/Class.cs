@@ -1,4 +1,4 @@
-namespace PacketParser.Enums
+namespace WowPacketParser.Enums
 {
     public enum Class
     {
@@ -12,7 +12,7 @@ namespace PacketParser.Enums
         Shaman = 7,
         Mage = 8,
         Warlock = 9,
-        Unknown = 10,
+        Monk = 10,
         Druid = 11
     }
 }

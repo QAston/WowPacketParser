@@ -17,6 +17,9 @@ namespace WowPacketParser.SQL.Builders
             if (units.Count == 0)
                 return string.Empty;
 
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature))
+                return string.Empty;
+
             const string tableName = "creature";
 
             uint count = 0;
@@ -27,12 +30,12 @@ namespace WowPacketParser.SQL.Builders
 
                 var creature = unit.Value;
 
-                if (Settings.SpawnDumpFilterArea.Length > 0)
-                    if (!(creature.Area.ToString(CultureInfo.InvariantCulture).MatchesFilters(Settings.SpawnDumpFilterArea)))
+                if (Settings.AreaFilters.Length > 0)
+                    if (!(creature.Area.ToString(CultureInfo.InvariantCulture).MatchesFilters(Settings.AreaFilters)))
                         continue;
 
                 UpdateField uf;
-                if (!creature.UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_ENTRY), out uf))
+                if (!creature.UpdateFields.TryGetValue(UpdateFields.GetUpdateField(ObjectField.OBJECT_FIELD_ENTRY), out uf))
                     continue;   // broken entry, nothing to spawn
 
                 var entry = uf.UInt32Value;
@@ -43,13 +46,24 @@ namespace WowPacketParser.SQL.Builders
 
                 row.AddValue("guid", "@CGUID+" + count, noQuotes: true);
                 row.AddValue("id", entry);
-                row.AddValue("map", creature.Map);
+                row.AddValue("map", !creature.IsOnTransport() ? creature.Map : 0);  // TODO: query transport template for map
                 row.AddValue("spawnMask", 1);
                 row.AddValue("phaseMask", creature.PhaseMask);
-                row.AddValue("position_x", creature.Movement.Position.X);
-                row.AddValue("position_y", creature.Movement.Position.Y);
-                row.AddValue("position_z", creature.Movement.Position.Z);
-                row.AddValue("orientation", creature.Movement.Orientation);
+                if (!creature.IsOnTransport())
+                {
+                    row.AddValue("position_x", creature.Movement.Position.X);
+                    row.AddValue("position_y", creature.Movement.Position.Y);
+                    row.AddValue("position_z", creature.Movement.Position.Z);
+                    row.AddValue("orientation", creature.Movement.Orientation);
+                }
+                else
+                {
+                    row.AddValue("position_x", creature.Movement.TransportOffset.X);
+                    row.AddValue("position_y", creature.Movement.TransportOffset.Y);
+                    row.AddValue("position_z", creature.Movement.TransportOffset.Z);
+                    row.AddValue("orientation", creature.Movement.TransportOffset.O);
+                }
+
                 row.AddValue("spawntimesecs", spawnTimeSecs);
                 row.AddValue("spawndist", spawnDist);
                 row.AddValue("MovementType", movementType);
@@ -60,6 +74,11 @@ namespace WowPacketParser.SQL.Builders
                 {
                     row.CommentOut = true;
                     row.Comment += " - !!! might be temporary spawn !!!";
+                }
+                else if (creature.IsOnTransport())
+                {
+                    row.CommentOut = true;
+                    row.Comment += " - !!! on transport (NYI) !!!";
                 }
                 else
                     ++count;
@@ -85,6 +104,9 @@ namespace WowPacketParser.SQL.Builders
             if (gameObjects.Count == 0)
                 return string.Empty;
 
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.gameobject))
+                return string.Empty;
+
             const string tableName = "gameobject";
 
             uint count = 0;
@@ -95,19 +117,19 @@ namespace WowPacketParser.SQL.Builders
 
                 var go = gameobject.Value;
 
-                if (Settings.SpawnDumpFilterArea.Length > 0)
-                    if (!(go.Area.ToString(CultureInfo.InvariantCulture).MatchesFilters(Settings.SpawnDumpFilterArea)))
+                if (Settings.AreaFilters.Length > 0)
+                    if (!(go.Area.ToString(CultureInfo.InvariantCulture).MatchesFilters(Settings.AreaFilters)))
                         continue;
 
                 uint animprogress = 0;
                 uint state = 0;
                 UpdateField uf;
-                if (!go.UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_ENTRY), out uf))
+                if (!go.UpdateFields.TryGetValue(UpdateFields.GetUpdateField(ObjectField.OBJECT_FIELD_ENTRY), out uf))
                     continue;   // broken entry, nothing to spawn
 
                 var entry = uf.UInt32Value;
 
-                if (go.UpdateFields.TryGetValue((int)UpdateFields.GetUpdateFieldOffset(GameObjectField.GAMEOBJECT_BYTES_1), out uf))
+                if (go.UpdateFields.TryGetValue(UpdateFields.GetUpdateField(GameObjectField.GAMEOBJECT_BYTES_1), out uf))
                 {
                     var bytes = uf.UInt32Value;
                     state = (bytes & 0x000000FF);
@@ -116,13 +138,23 @@ namespace WowPacketParser.SQL.Builders
 
                 row.AddValue("guid", "@OGUID+" + count, noQuotes: true);
                 row.AddValue("id", entry);
-                row.AddValue("map", go.Map);
+                row.AddValue("map", !go.IsOnTransport() ? go.Map : 0);  // TODO: query transport template for map
                 row.AddValue("spawnMask", 1);
                 row.AddValue("phaseMask", go.PhaseMask);
-                row.AddValue("position_x", go.Movement.Position.X);
-                row.AddValue("position_y", go.Movement.Position.Y);
-                row.AddValue("position_z", go.Movement.Position.Z);
-                row.AddValue("orientation", go.Movement.Orientation);
+                if (!go.IsOnTransport())
+                {
+                    row.AddValue("position_x", go.Movement.Position.X);
+                    row.AddValue("position_y", go.Movement.Position.Y);
+                    row.AddValue("position_z", go.Movement.Position.Z);
+                    row.AddValue("orientation", go.Movement.Orientation);
+                }
+                else
+                {
+                    row.AddValue("position_x", go.Movement.TransportOffset.X);
+                    row.AddValue("position_y", go.Movement.TransportOffset.Y);
+                    row.AddValue("position_z", go.Movement.TransportOffset.Z);
+                    row.AddValue("orientation", go.Movement.TransportOffset.O);
+                }
 
                 var rotation = go.GetRotation();
                 if (rotation != null && rotation.Length == 4)
@@ -155,6 +187,11 @@ namespace WowPacketParser.SQL.Builders
                 {
                     row.CommentOut = true;
                     row.Comment += " - !!! transport !!!";
+                }
+                else if (go.IsOnTransport())
+                {
+                    row.CommentOut = true;
+                    row.Comment += " - !!! on transport (NYI) !!!";
                 }
                 else
                     ++count;

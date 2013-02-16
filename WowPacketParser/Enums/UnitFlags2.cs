@@ -1,10 +1,11 @@
 ﻿using System;
 
-namespace PacketParser.Enums
+namespace WowPacketParser.Enums
 {
     [Flags]
     public enum UnitFlags2 // 4.x
     {
+        None = 0x0,
         AppearDead = 0x1,
         Unk1 = 0x2,
         IgnoreReputation = 0x4, // ?

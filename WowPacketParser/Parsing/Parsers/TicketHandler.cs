@@ -1,9 +1,9 @@
 using System;
-using PacketParser.DataStructures;
-using PacketParser.Misc;
-using PacketParser.Enums;
 
-namespace PacketParser.Parsing.Parsers
+using WowPacketParser.Misc;
+using WowPacketParser.Enums;
+
+namespace WowPacketParser.Parsing.Parsers
 {
     public static class TicketHandler
     {
@@ -11,7 +11,6 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleGMSurveySubmit(Packet packet)
         {
             var count = packet.ReadUInt32("Survey Question Count");
-            packet.StoreBeginList("Surveys");
             for (var i = 0; i < count; ++i)
             {
                 var gmsurveyid = packet.ReadUInt32("GM Survey Id", i);
@@ -20,7 +19,6 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadByte("Question Number", i);
                 packet.ReadCString("Answer", i);
             }
-            packet.StoreEndList();
             packet.ReadCString("Comment");
 
         }
@@ -35,18 +33,16 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadBoolean("Need GM interaction");
             var count = packet.ReadInt32("Count");
 
-            packet.StoreBeginList("list");
             for (int i = 0; i < count; i++)
-                packet.Store("Sent", (packet.Time - packet.ReadTime()).ToFormattedString(), i);
-            packet.StoreEndList();
+                packet.WriteLine("[" + i + "] Sent: " + (packet.Time - packet.ReadTime()).ToFormattedString());
 
             if (count == 0)
                 packet.ReadInt32("Unk Int32");
             else
             {
                 var decompCount = packet.ReadInt32();
-                packet.Inflate(decompCount);
-                packet.Store("String", packet.ReadCString());
+                packet = packet.Inflate(decompCount);
+                packet.WriteLine(packet.ReadCString());
             }
         }
 
@@ -68,17 +64,15 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadUInt32("Response ID");
             packet.ReadUInt32("Ticket ID");
             packet.ReadCString("Description");
-            packet.StoreBeginList("Responses");
             for (var i = 1; i <= 4; i++)
                 packet.ReadCString("Response", i);
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_GMTICKET_GETTICKET)]
         public static void HandleGetGMTicket(Packet packet)
         {
-            var unk = packet.ReadInt32("Unk UInt32");
-            if (unk != 6)
+            var ticketStatus = packet.ReadEnum<GMTicketStatus>("TicketStatus", TypeCode.Int32);
+            if (ticketStatus != GMTicketStatus.HasText)
                 return;
 
             packet.ReadInt32("TicketID");
@@ -101,7 +95,19 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_GMTICKET_DELETETICKET)]
         public static void HandleCreateUpdateGMTicket(Packet packet)
         {
-            packet.ReadInt32("Unk UInt32");
+            var ticketResponse = packet.ReadEnum<GMTicketResponse>("TicketResponse", TypeCode.Int32);
+            switch (ticketResponse)
+            {
+                case GMTicketResponse.Failure:
+                    packet.WriteLine("Action failed");
+                    break;
+                case GMTicketResponse.Success:
+                    packet.WriteLine("Action succeeded");
+                    break;
+                case GMTicketResponse.Deleted:
+                    packet.WriteLine("Ticket deleted");
+                    break;
+            }
         }
 
         [Parser(Opcode.CMSG_GMTICKET_UPDATETEXT)]
@@ -127,13 +133,17 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_COMPLAIN)]
         public static void HandleComplain(Packet packet)
         {
-            packet.ReadBoolean("Unk bool 1");
+            bool fromChat = packet.ReadBoolean("From Chat"); // false = from mail
             packet.ReadGuid("Guid");
-            packet.ReadInt32("Unk Int32 2");
-            packet.ReadInt32("Unk Int32 3");
-            packet.ReadInt32("Unk Int32 4");
-            packet.ReadInt32("Unk Int32 5");
-            packet.ReadCString("Complain");
+            packet.ReadEnum<Language>("Language", TypeCode.Int32);
+            packet.ReadEnum<ChatMessageType>("Type", TypeCode.Int32);
+            packet.ReadInt32("Channel ID");
+
+            if (fromChat)
+            {
+                packet.ReadTime("Time ago");
+                packet.ReadCString("Complain");
+            }
         }
 
         [Parser(Opcode.CMSG_SUBMIT_BUG)]
@@ -146,9 +156,9 @@ namespace PacketParser.Parsing.Parsers
             pos.Y = packet.ReadSingle();
             pos.Z = packet.ReadSingle();
             pos.X = packet.ReadSingle();
-            packet.ReadInt32("Unk Int32");
+            packet.ReadInt32("Map ID");
             pos.O = packet.ReadSingle();
-            packet.Store("Position", pos);
+            packet.WriteLine("Position: {0}", pos);
         }
 
         [Parser(Opcode.CMSG_SUBMIT_COMPLAIN)]
@@ -197,18 +207,16 @@ namespace PacketParser.Parsing.Parsers
             for (int i = 0; i < count; ++i)
                 strLength[i] = packet.ReadBits(13);
 
-            packet.StoreBeginList("Complains");
             for (int i = 0; i < count; ++i)
             {
                 packet.ReadTime("Time", i);
                 packet.ReadWoWString("Data", strLength[i], i);
             }
-            packet.StoreEndList();
 
             packet.ReadInt32("Unk Int32 2");  // ##
 
-            packet.StoreBitstreamGuid("Guid", guid);
-            packet.Store("Position", pos);
+            packet.WriteGuid("Guid", guid);
+            packet.WriteLine("Position: {0}", pos);
         }
     }
 }

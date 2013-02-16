@@ -1,7 +1,7 @@
 using System;
-using PacketParser.Enums;
+using WowPacketParser.Enums;
 
-namespace PacketParser.DataStructures
+namespace WowPacketParser.Misc
 {
     public sealed class MovementInfo
     {
@@ -14,6 +14,10 @@ namespace PacketParser.DataStructures
         public Vector3 Position;
 
         public float Orientation;
+
+        public Guid TransportGuid;
+
+        public Vector4 TransportOffset;
 
         public Quaternion Rotation;
 

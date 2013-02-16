@@ -33,11 +33,12 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -71,6 +72,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -80,45 +82,14 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <CodeAnalysisLogFile>bin\Debug\WowPacketParser.exe.CodeAnalysisLog.xml</CodeAnalysisLogFile>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
-    <CodeAnalysisLogFile>bin\Release\WowPacketParser.exe.CodeAnalysisLog.xml</CodeAnalysisLogFile>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
-    <CodeAnalysisIgnoreBuiltInRuleSets>true</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
-    <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Ionic.Zlib, Version=1.9.1.8, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Dependencies\Ionic.Zlib.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -128,10 +99,6 @@
       <HintPath>Dependencies\MySql.Data.dll</HintPath>
     </Reference>
     <Reference Include="System.Configuration" />
-    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, PublicKeyToken=1b03e6acf1164f73">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\ICSharpCode.SharpZipLib.dll</HintPath>
-    </Reference>
     <Reference Include="SharpSSH, Version=2.0.0.25137, Culture=neutral, PublicKeyToken=null">
       <HintPath>Dependencies\SharpSSH.dll</HintPath>
     </Reference>
@@ -139,13 +106,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Dependencies\PowerCollections.dll</HintPath>
     </Reference>
-    <Reference Include="System.Data.SQLite, Version=1.0.81.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\System.Data.SQLite.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Web.Extensions" />
-    <Reference Include="System.XML" />
-    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enums\AccountDataType.cs" />
@@ -190,6 +150,8 @@
     <Compile Include="Enums\ContactListFlag.cs" />
     <Compile Include="Enums\ContactResult.cs" />
     <Compile Include="Enums\ContactStatus.cs" />
+    <Compile Include="Enums\BuyResult.cs" />
+    <Compile Include="Enums\QuestRequirementType.cs" />
     <Compile Include="Enums\CreatureFamily.cs" />
     <Compile Include="Enums\CreatureRank.cs" />
     <Compile Include="Enums\CreatureType.cs" />
@@ -198,7 +160,9 @@
     <Compile Include="Enums\DamageType.cs" />
     <Compile Include="Enums\DifficultyChangeType.cs" />
     <Compile Include="Enums\Direction.cs" />
+    <Compile Include="Enums\DismountResult.cs" />
     <Compile Include="Enums\DrunkenState.cs" />
+    <Compile Include="Enums\DumpFormatType.cs" />
     <Compile Include="Enums\EmoteType.cs" />
     <Compile Include="Enums\EncounterFrame.cs" />
     <Compile Include="Enums\EnvironmentDamage.cs" />
@@ -209,6 +173,8 @@
     <Compile Include="Enums\GameObjectFlag.cs" />
     <Compile Include="Enums\GameObjectType.cs" />
     <Compile Include="Enums\Gender.cs" />
+    <Compile Include="Enums\GMTicketResponse.cs" />
+    <Compile Include="Enums\GMTicketStatus.cs" />
     <Compile Include="Enums\GossipOptionIcon.cs" />
     <Compile Include="Enums\GossipPoiIcon.cs" />
     <Compile Include="Enums\GroupMemberStatusFlag.cs" />
@@ -228,6 +194,7 @@
     <Compile Include="Enums\HighGuidType.cs" />
     <Compile Include="Enums\Holiday.cs" />
     <Compile Include="Enums\InhabitType.cs" />
+    <Compile Include="Enums\MountResult.cs" />
     <Compile Include="Enums\RaidSummonFail.cs" />
     <Compile Include="Enums\TalentErrors.cs" />
     <Compile Include="Enums\TargetIcon.cs" />
@@ -298,6 +265,7 @@
     <Compile Include="Enums\SellResult.cs" />
     <Compile Include="Enums\SheathState.cs" />
     <Compile Include="Enums\SheathType.cs" />
+    <Compile Include="Enums\SniffType.cs" />
     <Compile Include="Enums\SpeedType.cs" />
     <Compile Include="Enums\SpellCastFailureReason.cs" />
     <Compile Include="Enums\SpellEffect.cs" />
@@ -310,7 +278,7 @@
     <Compile Include="Enums\SplineFlag.cs" />
     <Compile Include="Enums\SplineMode.cs" />
     <Compile Include="Enums\SplineType.cs" />
-    <Compile Include="Enums\SQLOutputFlags.cs" />
+    <Compile Include="Enums\SQLOutput.cs" />
     <Compile Include="Enums\StatType.cs" />
     <Compile Include="Enums\StoreNameType.cs" />
     <Compile Include="Enums\TargetFlag.cs" />
@@ -326,34 +294,40 @@
     <Compile Include="Enums\UnitFlags2.cs" />
     <Compile Include="Enums\UnitFlags.cs" />
     <Compile Include="Enums\UnknownFlags.cs" />
-    <Compile Include="Enums\UpdateField.cs" />
+    <Compile Include="Enums\UpdateFields.cs" />
     <Compile Include="Enums\UpdateFlag.cs" />
     <Compile Include="Enums\UpdateType.cs" />
     <Compile Include="Enums\VehicleFlags.cs" />
+    <Compile Include="Enums\Version\V5_0_5_16048\Opcodes.cs" />
+    <Compile Include="Enums\Version\V5_0_5_16048\UpdateFields.cs" />
     <Compile Include="Enums\Version\Opcodes.cs" />
     <Compile Include="Enums\Version\UpdateFields.cs" />
-    <Compile Include="Enums\Version\V3_3_0_10958\UpdateField.cs" />
+    <Compile Include="Enums\Version\V3_3_0_10958\UpdateFields.cs" />
     <Compile Include="Enums\Version\V3_3_5a_12340\Opcodes.cs" />
-    <Compile Include="Enums\Version\V3_3_5a_12340\UpdateField.cs" />
+    <Compile Include="Enums\Version\V3_3_5a_12340\UpdateFields.cs" />
     <Compile Include="Enums\Version\V4_0_3_13329\Opcodes.cs" />
     <Compile Include="Enums\Version\V4_0_6_13596\Opcodes.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Enums\Version\V4_0_6_13596\UpdateField.cs" />
+    <Compile Include="Enums\Version\V4_0_6_13596\UpdateFields.cs" />
     <Compile Include="Enums\Version\V4_1_0_13914\Opcodes.cs" />
     <Compile Include="Enums\Version\V4_2_0_14480\Opcodes.cs" />
-    <Compile Include="Enums\Version\V4_2_0_14480\UpdateField.cs" />
+    <Compile Include="Enums\Version\V4_2_0_14480\UpdateFields.cs" />
     <Compile Include="Enums\Version\V4_2_2_14545\Opcodes.cs" />
-    <Compile Include="Enums\Version\V4_2_2_14545\UpdateField.cs" />
+    <Compile Include="Enums\Version\V4_2_2_14545\UpdateFields.cs" />
     <Compile Include="Enums\Version\V4_3_0_15005\Opcodes.cs" />
-    <Compile Include="Enums\Version\V4_3_0_15005\UpdateField.cs" />
+    <Compile Include="Enums\Version\V4_3_0_15005\UpdateFields.cs" />
     <Compile Include="Enums\Version\V4_3_2_15211\Opcodes.cs" />
-    <Compile Include="Enums\Version\V4_3_2_15211\UpdateField.cs" />
+    <Compile Include="Enums\Version\V4_3_2_15211\UpdateFields.cs" />
     <Compile Include="Enums\Version\V4_3_3_15354\Opcodes.cs" />
     <Compile Include="Enums\Version\V4_3_3_15354\UpdateFields.cs" />
     <Compile Include="Enums\Version\V4_3_4_15595\Opcodes.cs" />
     <Compile Include="Enums\Version\V4_3_4_15595\SplineFlag434.cs" />
     <Compile Include="Enums\Version\V4_3_4_15595\UpdateFields.cs" />
+    <Compile Include="Enums\Version\V5_0_4_16016\Opcodes.cs" />
+    <Compile Include="Enums\Version\V5_0_4_16016\UpdateFields.cs" />
+    <Compile Include="Enums\Version\V5_1_0_16309\Opcodes.cs" />
+    <Compile Include="Enums\Version\V5_1_0_16309\UpdateFields.cs" />
     <Compile Include="Enums\VictimStates.cs" />
     <Compile Include="Enums\VoidTransferError.cs" />
     <Compile Include="Enums\WardenCheckType.cs" />
@@ -361,21 +335,9 @@
     <Compile Include="Enums\WeatherState.cs" />
     <Compile Include="Loading\BinaryPacketReader.cs" />
     <Compile Include="Loading\IPacketReader.cs" />
-    <Compile Include="Loading\IzidorPacketReader.cs" />
-    <Compile Include="Loading\KSnifferZackReader.cs" />
-    <Compile Include="Loading\KSnifferZorReader.cs" />
-    <Compile Include="Loading\NewZorReader.cs" />
     <Compile Include="Loading\Reader.cs" />
-    <Compile Include="Loading\SniffitztReader.cs" />
-    <Compile Include="Loading\SQLitePacketReader.cs" />
     <Compile Include="Misc\BiDictionary.cs" />
     <Compile Include="Misc\Bit.cs" />
-    <Compile Include="Loading\WlpReader.cs" />
-    <Compile Include="Loading\ZorReader.cs" />
-    <Compile Include="Misc\IndexedTreeNode.cs" />
-    <Compile Include="Misc\ITreeNode.cs" />
-    <Compile Include="Misc\NamedTreeNode.cs" />
-    <Compile Include="Misc\StoreEntry.cs" />
     <Compile Include="Misc\ClientVersion.cs" />
     <Compile Include="Misc\Extensions.cs" />
     <Compile Include="Misc\Filters.cs" />
@@ -390,24 +352,13 @@
     <Compile Include="Misc\Quaternion.cs" />
     <Compile Include="Misc\Settings.cs" />
     <Compile Include="Misc\StoreGetters.cs" />
-    <Compile Include="Misc\TreeNodeEnumerator.cs" />
     <Compile Include="Misc\UpdateField.cs" />
-    <Compile Include="Processing\IPacketProcessor.cs" />
-    <Compile Include="Processing\RawFileOutput.cs" />
-    <Compile Include="Processing\SniffDataTableOutput.cs" />
-    <Compile Include="Processing\SplitRawFileOutput.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Processing\TextBuilder.cs" />
-    <Compile Include="Processing\SQLFileOutput.cs" />
-    <Compile Include="Processing\TextFileOutput.cs" />
-    <Compile Include="Processing\RawFileWriters\IBinaryPacketWriter.cs" />
-    <Compile Include="Processing\RawFileWriters\KSZorBinaryPacketWriter.cs" />
     <Compile Include="Misc\Utilities.cs" />
     <Compile Include="Misc\Vector2.cs" />
     <Compile Include="Misc\Vector3.cs" />
     <Compile Include="Misc\Vector4.cs" />
     <Compile Include="Parsing\Handler.cs" />
+    <Compile Include="Parsing\HasSniffDataAttribute.cs" />
     <Compile Include="Parsing\ParserAttribute.cs" />
     <Compile Include="Parsing\Parsers\AccountDataHandler.cs" />
     <Compile Include="Parsing\Parsers\AchievementHandler.cs" />
@@ -455,6 +406,8 @@
     <Compile Include="Parsing\Parsers\WorldStateHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Saving\BinaryPacketWriter.cs" />
+    <Compile Include="Saving\SplitBinaryPacketWriter.cs" />
     <Compile Include="SQL\Builder.cs" />
     <Compile Include="SQL\Builders\Miscellaneous.cs" />
     <Compile Include="SQL\Builders\QuestMisc.cs" />
@@ -470,14 +423,18 @@
     <Compile Include="SQL\SQLUtil.cs" />
     <Compile Include="SQL\SSHTunnel.cs" />
     <Compile Include="Store\Objects\Aura.cs" />
+    <Compile Include="Store\Objects\CreatureEquipment.cs" />
+    <Compile Include="Store\Objects\GameObjectTemplateNonWDB.cs" />
     <Compile Include="Store\Objects\CreatureText.cs" />
     <Compile Include="Store\Objects\GameObject.cs" />
     <Compile Include="Store\Objects\GameObjectTemplate.cs" />
     <Compile Include="Store\Objects\Gossip.cs" />
+    <Compile Include="Store\Objects\GossipPOI.cs" />
     <Compile Include="Store\Objects\Item.cs" />
     <Compile Include="Store\Objects\ItemTemplate.cs" />
     <Compile Include="Store\Objects\Loot.cs" />
     <Compile Include="Store\Objects\LootItem.cs" />
+    <Compile Include="Store\Objects\ModelData.cs" />
     <Compile Include="Store\Objects\NpcText.cs" />
     <Compile Include="Store\Objects\NpcTrainer.cs" />
     <Compile Include="Store\Objects\NpcVendor.cs" />
@@ -529,11 +486,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Parsing\SharpParser\Parsers\" />
-    <Folder Include="Parsing\WCellParser\Parsers\" />
-    <Folder Include="Processing\SqlOutput\Objects\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

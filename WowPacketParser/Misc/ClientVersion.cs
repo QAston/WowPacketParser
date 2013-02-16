@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using PacketParser.Enums;
-using PacketParser.Enums.Version;
-using PacketParser.Parsing;
+using WowPacketParser.Enums;
 
-namespace PacketParser.Misc
+namespace WowPacketParser.Misc
 {
     public static class ClientVersion
     {
@@ -63,39 +61,21 @@ namespace PacketParser.Misc
             new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V4_2_0a_14480, new DateTime(2011, 9, 8)),
             new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V4_2_2_14545, new DateTime(2011, 9, 30)),
             new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V4_3_0_15005, new DateTime(2011, 11, 30)),
-            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V4_3_0_15050, new DateTime(2011, 12, 2)),
+            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V4_3_0a_15050, new DateTime(2011, 12, 2)),
             new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V4_3_2_15211, new DateTime(2012, 1, 31)),
             new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V4_3_3_15354, new DateTime(2012, 2, 28)),
-            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V4_3_4_15595, new DateTime(2012, 4, 17))
+            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V4_3_4_15595, new DateTime(2012, 4, 17)),
+            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V5_0_4_16016, new DateTime(2012, 8, 28)),
+            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V5_0_5_16048 , new DateTime(2012, 9, 11)),
+            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V5_0_5a_16057, new DateTime(2012, 9, 13)),
+            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V5_0_5b_16135, new DateTime(2012, 10, 14)),
+            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V5_1_0_16309, new DateTime(2012, 11, 13)),
+            new KeyValuePair<ClientVersionBuild, DateTime>(ClientVersionBuild.V5_1_0a_16357, new DateTime(2012, 12, 3))
         };
 
-        [ThreadStatic]
         private static ClientType _expansion;
 
-        [ThreadStatic]
-        private static ClientVersionBuild _build;
-
-        public static ClientVersionBuild Build 
-        {
-            get
-            {
-                return _build;
-            }
-            private set
-            {
-                _build = value;
-            }
-        }
-
-        public static List<ClientVersionBuild>GetAvailableVersions()
-        {
-            var l = new List<ClientVersionBuild>(_clientBuilds.Length);
-            for (int i = 0; i < _clientBuilds.Length;++i)
-            {
-                l.Add(_clientBuilds[i].Key);
-            }
-            return l;
-        }
+        public static ClientVersionBuild Build { get; private set; }
 
         public static int BuildInt
         {
@@ -107,13 +87,10 @@ namespace PacketParser.Misc
             get { return Build.ToString(); }
         }
 
-        public static ClientType GetExpansion()
+        private static ClientType GetExpansion(ClientVersionBuild build)
         {
-            return GetExpansion(Build);
-        }
-
-        public static ClientType GetExpansion(ClientVersionBuild build)
-        {
+            if (build >= ClientVersionBuild.V5_0_4_16016)
+                return ClientType.MistsOfPandaria;
             if (build >= ClientVersionBuild.V4_0_3_13329)
                 return ClientType.Cataclysm;
             if (build >= ClientVersionBuild.V3_0_3_9183)
@@ -124,7 +101,7 @@ namespace PacketParser.Misc
             return ClientType.WorldOfWarcraft;
         }
 
-        public static ClientVersionBuild GetVersion(DateTime time)
+        private static ClientVersionBuild GetVersion(DateTime time)
         {
             if (time < _clientBuilds[0].Value)
                 return ClientVersionBuild.Zero;
@@ -138,13 +115,8 @@ namespace PacketParser.Misc
 
         public static void SetVersion(ClientVersionBuild version)
         {
-            if (version == Build)
-                return;
             Build = version;
             _expansion = GetExpansion(version);
-            UpdateFields.InitForClientVersion();
-            Opcodes.InitForClientVersion();
-            Handler.InitForClientVersion();
         }
 
         public static void SetVersion(DateTime time)

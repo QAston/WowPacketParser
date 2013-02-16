@@ -1,24 +1,36 @@
 using System;
 using System.Collections.Generic;
-using PacketParser.Enums;
-using PacketParser.Enums.Version;
-using PacketParser.Misc;
-using PacketParser.Processing;
-using PacketParser.DataStructures;
-using Guid = PacketParser.DataStructures.Guid;
+using System.Globalization;
+using WowPacketParser.Enums;
+using WowPacketParser.Enums.Version;
+using WowPacketParser.Misc;
+using WowPacketParser.Store;
+using WowPacketParser.Store.Objects;
+using Guid = WowPacketParser.Misc.Guid;
 
-namespace PacketParser.Parsing.Parsers
+namespace WowPacketParser.Parsing.Parsers
 {
     public static class NpcHandler
     {
+        public static uint LastGossipPOIEntry = 0;
+
         [Parser(Opcode.SMSG_GOSSIP_POI)]
         public static void HandleGossipPoi(Packet packet)
         {
-            packet.ReadEnum<UnknownFlags>("Flags", TypeCode.Int32);
-            packet.ReadVector2("Coordinates");
-            packet.ReadEnum<GossipPoiIcon>("Icon", TypeCode.UInt32);
-            packet.ReadInt32("Data");
-            packet.ReadCString("Icon Name");
+            LastGossipPOIEntry++;
+
+            var gossipPOI = new GossipPOI();
+
+            gossipPOI.Flags = (uint) packet.ReadEnum<UnknownFlags>("Flags", TypeCode.Int32);
+            var pos = packet.ReadVector2("Coordinates");
+            gossipPOI.Icon = packet.ReadEnum<GossipPOIIcon>("Icon", TypeCode.UInt32);
+            gossipPOI.Data = packet.ReadUInt32("Data");
+            gossipPOI.IconName = packet.ReadCString("Icon Name");
+
+            gossipPOI.XPos = pos.X;
+            gossipPOI.YPos = pos.Y;
+
+            Storage.GossipPOIs.Add(LastGossipPOIEntry, gossipPOI, packet.TimeSpan);
         }
 
         [Parser(Opcode.CMSG_TRAINER_BUY_SPELL, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
@@ -78,11 +90,10 @@ namespace PacketParser.Parsing.Parsers
             npcTrainer.Type = packet.ReadEnum<TrainerType>("Type", TypeCode.Int32);
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
-                packet.ReadInt32("Unk Int32 1"); // Same unk exists in CMSG_TRAINER_BUY_SPELL
+                packet.ReadInt32("Unk Int32"); // Same unk exists in CMSG_TRAINER_BUY_SPELL
 
             var count = packet.ReadInt32("Count");
             npcTrainer.TrainerSpells = new List<TrainerSpell>(count);
-            packet.StoreBeginList("Trainer spells");
             for (var i = 0; i < count; i++)
             {
                 var trainerSpell = new TrainerSpell();
@@ -98,8 +109,13 @@ namespace PacketParser.Parsing.Parsers
                     trainerSpell.RequiredLevel = packet.ReadByte("Required Level", i);
                     trainerSpell.RequiredSkill = packet.ReadUInt32("Required Skill", i);
                     trainerSpell.RequiredSkillLevel = packet.ReadUInt32("Required Skill Level", i);
-                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 1", i, 0);
-                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 2", i, 1);
+                    if (ClientVersion.RemovedInVersion(ClientVersionBuild.V5_1_0_16309))
+                    {
+                        packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID", i, 0);
+                        packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID", i, 1);
+                    }
+                    else
+                        packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Required Spell ID", i);
                 }
 
                 packet.ReadInt32("Profession Dialog", i);
@@ -110,20 +126,19 @@ namespace PacketParser.Parsing.Parsers
                     trainerSpell.RequiredLevel = packet.ReadByte("Required Level", i);
                     trainerSpell.RequiredSkill = packet.ReadUInt32("Required Skill", i);
                     trainerSpell.RequiredSkillLevel = packet.ReadUInt32("Required Skill Level", i);
-                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 1", i, 0);
-                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 2", i, 1);
+                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID", i, 0);
+                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID", i, 1);
                 }
 
                 if (ClientVersion.RemovedInVersion(ClientVersionBuild.V4_0_6a_13623))
-                    packet.ReadInt32("Unk Int32 2", i);
+                    packet.ReadInt32("Unk Int32", i);
 
                 npcTrainer.TrainerSpells.Add(trainerSpell);
             }
-            packet.StoreEndList();
 
             npcTrainer.Title = packet.ReadCString("Title");
 
-            packet.Store("NpcTrainerObject", npcTrainer);
+            Storage.NpcTrainers.Add(guid.GetEntry(), npcTrainer, packet.TimeSpan);
         }
 
         [Parser(Opcode.SMSG_LIST_INVENTORY, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
@@ -136,7 +151,6 @@ namespace PacketParser.Parsing.Parsers
             var itemCount = packet.ReadByte("Item Count");
 
             npcVendor.VendorItems = new List<VendorItem>(itemCount);
-            packet.StoreBeginList("Vendor items");
             for (var i = 0; i < itemCount; i++)
             {
                 var vendorItem = new VendorItem();
@@ -158,9 +172,8 @@ namespace PacketParser.Parsing.Parsers
                 if (vendorItem.Type == 2)
                     vendorItem.MaxCount = (int)buyCount;
             }
-            packet.StoreEndList();
 
-            packet.Store("NpcVendorObject", npcVendor);
+            Storage.NpcVendors.Add(guid.GetEntry(), npcVendor, packet.TimeSpan);
         }
 
         [Parser(Opcode.SMSG_LIST_INVENTORY, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
@@ -185,10 +198,10 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guidBytes, 7);
             packet.ReadXORByte(guidBytes, 6);
 
-            var guid = packet.StoreBitstreamGuid("GUID", guidBytes);
+            var guid = new Guid(BitConverter.ToUInt64(guidBytes, 0));
+            packet.WriteLine("GUID: {0}", guid);
 
             npcVendor.VendorItems = new List<VendorItem>((int)itemCount);
-            packet.StoreBeginList("Vendor items");
             for (var i = 0; i < itemCount; i++)
             {
                 var vendorItem = new VendorItem();
@@ -209,9 +222,8 @@ namespace PacketParser.Parsing.Parsers
 
                 npcVendor.VendorItems.Add(vendorItem);
             }
-            packet.StoreEndList();
 
-            packet.Store("NpcVendorObject", npcVendor);
+            Storage.NpcVendors.Add(guid.GetEntry(), npcVendor, packet.TimeSpan);
         }
 
         [Parser(Opcode.SMSG_LIST_INVENTORY, ClientVersionBuild.V4_3_4_15595)]
@@ -243,7 +255,6 @@ namespace PacketParser.Parsing.Parsers
             guidBytes[4] = packet.ReadBit();
 
             npcVendor.VendorItems = new List<VendorItem>((int)itemCount);
-            packet.StoreBeginList("Items");
             for (int i = 0; i < itemCount; ++i)
             {
                 var vendorItem = new VendorItem();
@@ -267,7 +278,6 @@ namespace PacketParser.Parsing.Parsers
 
                 npcVendor.VendorItems.Add(vendorItem);
             }
-            packet.StoreEndList();
 
             packet.ReadXORByte(guidBytes, 5);
             packet.ReadXORByte(guidBytes, 4);
@@ -283,9 +293,9 @@ namespace PacketParser.Parsing.Parsers
 
 
             var guid = new Guid(BitConverter.ToUInt64(guidBytes, 0));
-            packet.Store("GUID", guid);
+            packet.WriteLine("GUID: {0}", guid);
 
-            packet.Store("NpcVendorObject", npcVendor);
+            Storage.NpcVendors.Add(guid.GetEntry(), npcVendor, packet.TimeSpan);
         }
 
         [Parser(Opcode.CMSG_GOSSIP_HELLO)]
@@ -306,13 +316,16 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleNpcGossipSelectOption(Packet packet)
         {
             packet.ReadGuid("GUID");
-            packet.ReadUInt32("Menu Id");
-            packet.ReadUInt32("Gossip Id");
+            var menuEntry = packet.ReadUInt32("Menu Id");
+            var gossipId = packet.ReadUInt32("Gossip Id");
 
             if (packet.CanRead()) // if ( byte_F3777C[v3] & 1 )
                 packet.ReadCString("Box Text");
+
+            Storage.GossipSelects.Add(Tuple.Create(menuEntry, gossipId), null, packet.TimeSpan);
         }
 
+        [HasSniffData]
         [Parser(Opcode.SMSG_GOSSIP_MESSAGE)]
         public static void HandleNpcGossip(Packet packet)
         {
@@ -324,19 +337,19 @@ namespace PacketParser.Parsing.Parsers
             gossip.ObjectEntry = guid.GetEntry();
 
             var menuId = packet.ReadUInt32("Menu Id");
+
+            if (ClientVersion.AddedInVersion(ClientType.MistsOfPandaria))
+                packet.ReadUInt32("Unk int32");
+
             var textId = packet.ReadUInt32("Text Id");
 
             if (guid.GetObjectType() == ObjectType.Unit)
-            {
-                Object obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound(guid);
-                if (obj != null)
-                    ((Unit)obj).GossipId = menuId;
-            }
+                if (Storage.Objects.ContainsKey(guid))
+                        ((Unit) Storage.Objects[guid].Item1).GossipId = menuId;
 
             var count = packet.ReadUInt32("Amount of Options");
 
             gossip.GossipOptions = new List<GossipOption>((int) count);
-            packet.StoreBeginList("Gossip Options");
             for (var i = 0; i < count; i++)
             {
                 var gossipOption = new GossipOption
@@ -351,12 +364,10 @@ namespace PacketParser.Parsing.Parsers
 
                 gossip.GossipOptions.Add(gossipOption);
             }
-            packet.StoreEndList();
-
-            packet.Store("GossipObject", gossip);
+            Storage.Gossips.Add(Tuple.Create(menuId, textId), gossip, packet.TimeSpan);
+            packet.AddSniffData(StoreNameType.Gossip, (int)menuId, guid.GetEntry().ToString(CultureInfo.InvariantCulture));
 
             var questgossips = packet.ReadUInt32("Amount of Quest gossips");
-            packet.StoreBeginList("Quest Gossips");
             for (var i = 0; i < questgossips; i++)
             {
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Quest, "Quest ID", i);
@@ -364,10 +375,12 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadUInt32("Icon", i);
                 packet.ReadInt32("Level", i);
                 packet.ReadEnum<QuestFlags>("Flags", TypeCode.UInt32, i);
-                packet.ReadBoolean("Unk Bool", i);
+                if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
+                    packet.ReadUInt32("Unk UInt32", i); // if this flag is 0x100, quest icon is LegendaryQuestIcon
+
+                packet.ReadBoolean("Change Icon", i);
                 packet.ReadCString("Title", i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_THREAT_UPDATE)]
@@ -380,13 +393,11 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadPackedGuid("New Highest");
 
             var count = packet.ReadUInt32("Size");
-            packet.StoreBeginList("Threat lists");
             for (int i = 0; i < count; i++)
             {
                 packet.ReadPackedGuid("Hostile", i);
                 packet.ReadUInt32("Threat", i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_THREAT_CLEAR)]
@@ -397,37 +408,6 @@ namespace PacketParser.Parsing.Parsers
 
             if (packet.Opcode == Opcodes.GetOpcode(Opcode.SMSG_THREAT_REMOVE))
                 packet.ReadPackedGuid("Victim GUID");
-        }
-
-        [Parser(Opcode.CMSG_QUERY_COMPLETION_NPC_RESPONSE)] // 4.3.4
-        public static void HandleQueryCompletionNPCResponse(Packet packet)
-        {
-            var count = packet.ReadBits("Count", 24);
-            packet.StoreBeginList("Quests");
-            for (int i = 0; i < count; ++i)
-                packet.ReadEntryWithName<UInt32>(StoreNameType.Quest, "Quest", i);
-            packet.StoreEndList();
-        }
-
-        [Parser(Opcode.SMSG_COMPLETION_NPC_RESPONSE)] // 4.3.4
-        public static void HandleCompletionNPCResponse(Packet packet)
-        {
-            var count = packet.ReadBits("Count", 23);
-            var counts = new uint[count];
-
-            packet.StoreBeginList("Quests");
-            for (int i = 0; i < count; ++i)
-                counts[i] = packet.ReadBits("Count", 24, i);
-
-            for (int i = 0; i < count; ++i)
-            {
-                packet.ReadEntryWithName<UInt32>(StoreNameType.Quest, "Quest", i);
-                packet.StoreBeginList("Units", i);
-                for (int j = 0; j < counts[i]; ++j)
-                    packet.ReadEntryWithName<UInt32>(StoreNameType.Unit, "Unit", i, j);
-                packet.StoreEndList();
-            }
-            packet.StoreEndList();
         }
     }
 }

@@ -1,4 +1,4 @@
-namespace PacketParser.Enums
+namespace WowPacketParser.Enums
 {
     public enum DifficultyChangeType
     {
@@ -24,7 +24,7 @@ namespace PacketParser.Enums
         Time                            = 5,
         AlreadyStarted                  = 6,
         MapDifficultyRequirement        = 7,
-        Unk8                            = 8, // ERR_DIFFICULTY_CHANGE_OTHER_HEROIC_S
+        PlayerAlreadyLocked             = 8, // ERR_DIFFICULTY_CHANGE_OTHER_HEROIC_S
         HeroicInstanceAlreadyRunning    = 9,
         DisabledInLFG                   = 10,
         DifficultyChanged               = 11

@@ -1,11 +1,10 @@
 using System;
-using PacketParser.Enums;
-using PacketParser.Enums.Version;
-using PacketParser.Misc;
-using PacketParser.Processing;
-using PacketParser.DataStructures;
+using WowPacketParser.Enums;
+using WowPacketParser.Enums.Version;
+using WowPacketParser.Misc;
+using WowPacketParser.Store;
 
-namespace PacketParser.Parsing.Parsers
+namespace WowPacketParser.Parsing.Parsers
 {
     public static class MiscellaneousParsers
     {
@@ -13,6 +12,9 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleLogDisconnect(Packet packet)
         {
             packet.ReadUInt32("Unk");
+            // 4 is inability for client to decrypt RSA
+            // 3 is not receiving "WORLD OF WARCRAFT CONNECTION - SERVER TO CLIENT"
+            // 11 is sent on receiving opcode 0x140 with some specific data
         }
 
         [Parser(Opcode.CMSG_VIOLENCE_LEVEL)]
@@ -24,9 +26,9 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_HOTFIX_NOTIFY)]
         public static void HandleHotfixNotify(Packet packet)
         {
-            packet.ReadInt32("Unk int32 1");
-            packet.ReadUInt32("Unk int32 2");
-            packet.ReadUInt32("Unk int32 3");
+            packet.ReadInt32("Unk int32");
+            packet.ReadUInt32("Unk int32");
+            packet.ReadUInt32("Unk int32");
         }
 
         [Parser(Opcode.SMSG_HOTFIX_INFO)]
@@ -34,20 +36,24 @@ namespace PacketParser.Parsing.Parsers
         {
             var count = ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595) ? packet.ReadBits("Count", 22) : packet.ReadUInt32("Count");
 
-            packet.StoreBeginList("Hotfixes");
             for (var i = 0; i < count; i++)
             {
                 packet.ReadInt32("Hotfix type", i); // Also time?
                 packet.ReadTime("Hotfix date", i);
                 packet.ReadInt32("Hotfixed entry", i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.TEST_430_SYNC_PLAYER_MOVE)]
         public static void HandleUnk5(Packet packet)
         {
             packet.ReadVector4("Position");
+        }
+
+        [Parser(Opcode.CMSG_ENABLE_NAGLE)]
+        public static void HandleEnableNagle(Packet packet)
+        {
+            packet.ReadUInt32("Enable");
         }
 
         [Parser(Opcode.CMSG_SUSPEND_TOKEN)]
@@ -66,51 +72,82 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_COMPRESSED_MULTIPLE_PACKETS)]
         public static void HandleCompressedMultiplePackets(Packet packet)
         {
-            packet.Inflate(packet.ReadInt32());
-            HandleMultiplePackets(packet);
-         }
+            using (var packet2 = packet.Inflate(packet.ReadInt32()))
+                HandleMultiplePackets(packet2);
+        }
 
         [Parser(Opcode.SMSG_MULTIPLE_PACKETS)]
         public static void HandleMultiplePackets(Packet packet)
         {
-            var i = 0;
+            //packet.WriteLine("Starting Multiple_packets handler");
+            //packet.AsHex();
             // Testing: packet.WriteLine(packet.AsHex());
-            packet.StoreBeginList("Packets");
+            packet.WriteLine("{");
+            var i = 0;
             while (packet.CanRead())
             {
                 var opcode = 0;
                 var len = 0;
+                byte[] bytes = null;
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0_15005))
                 {
                     opcode = packet.ReadUInt16();
                     // Why are there so many 0s in some packets? Should we have some check if opcode == 0 here?
                     len = packet.ReadUInt16();
+                    bytes = packet.ReadBytes(len);
                 }
                 else if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
                 {
-                    len = packet.ReadUInt16() - 2;
+                    len = packet.ReadUInt16();
                     opcode = packet.ReadUInt16();
+                    bytes = packet.ReadBytes(len - 2);
+                }
+                else
+                {
+                    packet.ReadToEnd();
                 }
 
-                packet.ReadSubPacket(opcode, len, "Packet", i);
-                ++i;
+                if (bytes == null || len == 0)
+                    continue;
+
+                if (i > 0)
+                    packet.WriteLine();
+
+                packet.Write("[{0}] ", i++);
+
+                using (var newpacket = new Packet(bytes, opcode, packet.Time, packet.Direction, packet.Number, packet.Writer, packet.FileName))
+                    Handler.Parse(newpacket, true);
+
             }
-            packet.StoreEndList();
+            packet.WriteLine("}");
         }
 
         [Parser(Opcode.SMSG_MULTIPLE_PACKETS_2)]
         public static void HandleMultiplePackets2(Packet packet)
         {
-            // This opcode heavily relies on ALL of its contained packets
+
+            if (ClientVersion.AddedInVersion(ClientType.Cataclysm))
+            {
+                packet.ReadToEnd();
+                throw new NotImplementedException("This opcode heavily relies on ALL" +
+                                                  "of its contained packets to be parsed successfully");
+                // Some sort of infinite loop happens here...
+            }
+
+            packet.WriteLine("{");
             var i = 0;
-            packet.StoreBeginList("Packets");
             while (packet.CanRead())
             {
-                var opcode = packet.ReadUInt16();
-                packet.ReadSubPacket(opcode, "Packet", i);
-                ++i;
+                packet.Opcode = packet.ReadUInt16();
+
+                if (i > 0)
+                    packet.WriteLine();
+
+                packet.Write("[{0}] ", i++);
+
+                Handler.Parse(packet, isMultiple: true);
             }
-            packet.StoreEndList();
+            packet.WriteLine("}");
         }
 
         [Parser(Opcode.SMSG_STOP_DANCE)]
@@ -208,8 +245,7 @@ namespace PacketParser.Parsing.Parsers
             var data = packet.ReadInt32();
             var type = (ActionButtonType)((data & 0xFF000000) >> 24);
             var action = (data & 0x00FFFFFF);
-            packet.Store("Type", type);
-            packet.Store("actionID", action);
+            packet.WriteLine("Type: " + type + " ID: " + action);
         }
 
         [Parser(Opcode.SMSG_RESURRECT_REQUEST)]
@@ -237,7 +273,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadBoolean("Accept");
         }
 
-        [Parser(Opcode.SMSG_FEATURE_SYSTEM_STATUS, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
+        [Parser(Opcode.SMSG_FEATURE_SYSTEM_STATUS, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_0_15005)]
         public static void HandleFeatureSystemStatus(Packet packet)
         {
             packet.ReadByte("Unk byte");
@@ -250,6 +286,17 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadByte("Complain System Status");
                 packet.ReadInt32("Unknown Mail Url Related Value");
             }
+        }
+
+        [Parser(Opcode.SMSG_FEATURE_SYSTEM_STATUS, ClientVersionBuild.V4_3_0_15005, ClientVersionBuild.V4_3_4_15595)]
+        public static void HandleFeatureSystemStatus430(Packet packet)
+        {
+            packet.ReadInt32("Unk int32");
+            packet.ReadByte("Complain System Status");
+            packet.ReadInt32("Unknown Mail Url Related Value");
+            packet.ReadBit("IsVoiceChatAllowedByServer");
+            packet.ReadBit("CanSendSoRByText");
+            packet.ReadBit("HasTravelPass");
         }
 
         [Parser(Opcode.SMSG_FEATURE_SYSTEM_STATUS, ClientVersionBuild.V4_3_4_15595)]
@@ -324,7 +371,7 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_LEARNED_DANCE_MOVES)]
         public static void HandleLearnedDanceMoves(Packet packet)
         {
-            packet.ReadInt32("Dance Move Id");
+            packet.ReadInt32("Dance Move Id"); // Dance move is Int64?
             packet.ReadInt32("Unk int");
         }
 
@@ -347,6 +394,8 @@ namespace PacketParser.Parsing.Parsers
 
             if (packet.Opcode == Opcodes.GetOpcode(Opcode.SMSG_PLAY_OBJECT_SOUND))
                 packet.ReadGuid("GUID 2");
+
+            Storage.Sounds.Add(sound, packet.TimeSpan);
         }
 
         [Parser(Opcode.SMSG_WEATHER)]
@@ -360,16 +409,15 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_TUTORIAL_FLAG)]
         public static void HandleTutorialFlag(Packet packet)
         {
-            packet.ReadEnum<UnknownFlags>("Flag", TypeCode.Int32);
+            var flag = packet.ReadInt32();
+            packet.WriteLine("Flag: 0x" + flag.ToString("X8"));
         }
 
         [Parser(Opcode.SMSG_TUTORIAL_FLAGS)]
         public static void HandleTutorialFlags(Packet packet)
         {
-            packet.StoreBeginList("Flags");
             for (var i = 0; i < 8; i++)
-                packet.ReadEnum<UnknownFlags>("Flags", TypeCode.Int32, i);
-            packet.StoreEndList();
+                packet.ReadInt32("Flag", i);
         }
 
         [Parser(Opcode.CMSG_AREATRIGGER)]
@@ -503,16 +551,12 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadInt32("ClassMask");
 
             var zones = packet.ReadUInt32("Zones count");
-            packet.StoreBeginList("Zones");
             for (var i = 0; i < zones; ++i)
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id");
-            packet.StoreEndList();
 
             var patterns = packet.ReadUInt32("Pattern count");
-            packet.StoreBeginList("Patterns");
             for (var i = 0; i < patterns; ++i)
                 packet.ReadCString("Pattern", i);
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_WHO)]
@@ -521,7 +565,6 @@ namespace PacketParser.Parsing.Parsers
             var counter = packet.ReadUInt32("List count");
             packet.ReadUInt32("Online count");
 
-            packet.StoreBeginList("Players");
             for (var i = 0; i < counter; ++i)
             {
                 packet.ReadCString("Name", i);
@@ -532,7 +575,6 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadEnum<Gender>("Gender", TypeCode.Byte, i);
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id", i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_TIME_SYNC_RESP)]
@@ -563,7 +605,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadUInt32("Unk time"); // Time online?
 
             if (ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing)) // no idea when this was added exactly, doesn't exist in 2.4.0
-                packet.ReadUInt32("Unk int32 1");
+                packet.ReadUInt32("Unk int32");
         }
 
         [Parser(Opcode.CMSG_FAR_SIGHT)]
@@ -580,8 +622,29 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadCString("Message");
         }
 
-        [Parser(Opcode.SMSG_WORLD_SERVER_INFO)]
+        [Parser(Opcode.SMSG_WORLD_SERVER_INFO, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleWorldServerInfo(Packet packet)
+        {
+            packet.ReadByte("Unk Byte");
+            packet.ReadInt32("Unk Int32");
+            packet.ReadInt32("Unk Int32");
+
+            var b0 = packet.ReadBit("Unk Bit 1");
+            var b1 = packet.ReadBit("Unk Bit 2");
+            var b2 = packet.ReadBit("Unk Bit 3");
+
+            if (b2)
+                packet.ReadInt32("Unk Int32 (EVENT_INELIGIBLE_FOR_LOOT)");
+
+            if (b0)
+                packet.ReadInt32("Unk Int32");
+
+            if (b1)
+                packet.ReadInt32("Unk Int32");
+        }
+
+        [Parser(Opcode.SMSG_WORLD_SERVER_INFO, ClientVersionBuild.V4_3_4_15595)]
+        public static void HandleWorldServerInfo434(Packet packet)
         {
             var b0 = packet.ReadBit("Unk Bit 1");
             var b1 = packet.ReadBit("Unk Bit 2");
@@ -590,16 +653,16 @@ namespace PacketParser.Parsing.Parsers
             if (b2)
                 packet.ReadInt32("Unk Int32 (EVENT_INELIGIBLE_FOR_LOOT)");
 
-            packet.ReadByte("Unk Byte 4");
+            packet.ReadByte("Unk Byte");
 
             if (b1)
-                packet.ReadInt32("Unk Int32 5");
+                packet.ReadInt32("Unk Int32");
 
             if (b0)
-                packet.ReadInt32("Unk Int32 6");
+                packet.ReadInt32("Unk Int32");
 
-            packet.ReadTime("Unk Time 7");
-            packet.ReadInt32("Unk Int32 8");
+            packet.ReadTime("Unk Time");
+            packet.ReadInt32("Unk Int32");
         }
 
         [Parser(Opcode.MSG_INSPECT_HONOR_STATS)]
@@ -631,23 +694,31 @@ namespace PacketParser.Parsing.Parsers
 
             packet.ParseBitStream(guid, 7);
 
-            packet.StoreBitstreamGuid("Guid", guid);
+            packet.WriteGuid("Guid", guid);
         }
 
+        [HasSniffData]
         [Parser(Opcode.CMSG_LOAD_SCREEN, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)] // Also named CMSG_LOADING_SCREEN_NOTIFY
         public static void HandleClientEnterWorld(Packet packet)
         {
-            packet.ReadBit("Loading"); // Not sure on the meaning
+            packet.WriteLine("Loading: " + (packet.ReadBit() ? "true" : "false")); // Not sure on the meaning
             var mapId = packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map");
-            PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentMapId = (uint) mapId;
+            MovementHandler.CurrentMapId = (uint) mapId;
+
+            if (mapId >= 0 && mapId < 1000) // Getting some weird results in a couple of packets
+                packet.AddSniffData(StoreNameType.Map, mapId, "LOAD_SCREEN");
         }
 
+        [HasSniffData]
         [Parser(Opcode.CMSG_LOAD_SCREEN, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleClientEnterWorld434(Packet packet)
         {
             var mapId = packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map");
             packet.ReadBit("Loading");
-            PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentMapId = (uint)mapId;
+            MovementHandler.CurrentMapId = (uint)mapId;
+
+            if (mapId >= 0 && mapId < 1000) // Getting some weird results in a couple of packets
+                packet.AddSniffData(StoreNameType.Map, mapId, "LOAD_SCREEN");
         }
 
         [Parser(Opcode.MSG_VERIFY_CONNECTIVITY)]
@@ -698,13 +769,13 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleMiniGameSetup(Packet packet)
         {
             packet.ReadGuid("GUID");
-            packet.ReadByte("unk byte 1");
-            byte unk1 = packet.ReadByte("unk byte 2");
-            packet.ReadGuid("unk guid 3");
-            packet.ReadGuid("unk guid 4");
+            packet.ReadByte("unk byte");
+            byte unk1 = packet.ReadByte("unk byte");
+            packet.ReadGuid("unk guid");
+            packet.ReadGuid("unk guid");
             packet.ReadCString("string");
             if (unk1 == 2)
-                packet.ReadByte("unk byte 5");
+                packet.ReadByte("unk byte");
         }
 
         [Parser(Opcode.SMSG_SUMMON_REQUEST)]
@@ -739,9 +810,9 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleStartTimer(Packet packet)
         {
             // Unk use, related to EVENT_START_TIMER
-            packet.ReadInt32("Unk Int32 1");
-            packet.ReadInt32("Unk Int32 2");
-            packet.ReadInt32("Unk Int32 3");
+            packet.ReadInt32("Unk Int32");
+            packet.ReadInt32("Current time (secs)");
+            packet.ReadInt32("Max time (secs)");
         }
 
         [Parser(Opcode.CMSG_SET_PREFERED_CEMETERY)] // 4.3.4
@@ -755,10 +826,8 @@ namespace PacketParser.Parsing.Parsers
         {
             packet.ReadBit("Unk Bit");
             var count = packet.ReadBits("Count", 24);
-            packet.StoreBeginList("CemeteryList");
             for (int i = 0; i < count; ++i)
                 packet.ReadInt32("Cemetery Id", i); // not confirmed
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_FORCE_SET_VEHICLE_REC_ID)] // 4.3.4
@@ -769,7 +838,7 @@ namespace PacketParser.Parsing.Parsers
 
             var guid = packet.StartBitStream(3, 0, 1, 7, 2, 6, 5, 4);
             packet.ParseBitStream(guid, 5, 7, 4, 3, 2, 6, 1, 0);
-            packet.StoreBitstreamGuid("Player GUID", guid);
+            packet.WriteGuid("Player GUID", guid);
         }
 
         [Parser(Opcode.CMSG_SET_VEHICLE_REC_ID_ACK)] //  4.3.4
@@ -879,8 +948,8 @@ namespace PacketParser.Parsing.Parsers
 
                 packet.ReadXORByte(transportGuid, 6);
 
-                packet.StoreBitstreamGuid("Transport Guid", transportGuid);
-                packet.Store("Transport Position", tpos);
+                packet.WriteGuid("Transport Guid", transportGuid);
+                packet.WriteLine("Transport Position: {0}", tpos);
             }
 
             if (hasTime)
@@ -892,8 +961,8 @@ namespace PacketParser.Parsing.Parsers
             if (hasPitch)
                 packet.ReadSingle("Pitch");
 
-            packet.StoreBitstreamGuid("Guid", guid);
-            packet.Store("Position", pos);
+            packet.WriteGuid("Guid", guid);
+            packet.WriteLine("Position: {0}", pos);
         }
 
         [Parser(Opcode.SMSG_MEETINGSTONE_IN_PROGRESS)]
@@ -919,10 +988,8 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleStreamingMovie(Packet packet)
         {
             var count = packet.ReadBits("Count", 25);
-            packet.StoreBeginList("Files list");
             for (int i = 0; i < count; ++i)
                 packet.ReadInt16("File Data ID");
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_WEEKLY_LAST_RESET)]
@@ -936,10 +1003,8 @@ namespace PacketParser.Parsing.Parsers
         {
             packet.ReadInt32("unk int32");
             var count = packet.ReadInt32("Data Count");
-            packet.StoreBeginList("Unk bytes");
             for (var i = 0; i < count; i++)
                 packet.ReadByte("Unk Byte", i);
-            packet.StoreEndList();
         }
 
 
@@ -957,16 +1022,16 @@ namespace PacketParser.Parsing.Parsers
                 switch (err)
                 {
                     case 48: // ERR_SPELL_FAILED_S
-                        packet.Store("Spell Failed Id: {0}", AchieveOrSpellFailedIdOrCurrencyCount);
+                        packet.WriteLine("Spell Failed Id: {0}", AchieveOrSpellFailedIdOrCurrencyCount);
                         break;
                     case 784: // ERR_REQUIRES_ACHIEVEMENT_I
-                        packet.Store("Achievement Id", AchieveOrSpellFailedIdOrCurrencyCount);
+                        packet.WriteLine("Achievement Id: {0}", AchieveOrSpellFailedIdOrCurrencyCount);
                         break;
                     case 790: // ERR_INSUFF_TRACKED_CURRENCY_IS
-                        packet.Store("Currency Count", AchieveOrSpellFailedIdOrCurrencyCount);
+                        packet.WriteLine("Currency Count: {0}", AchieveOrSpellFailedIdOrCurrencyCount);
                         break;
                     default:
-                        packet.Store("Unk UInt32", AchieveOrSpellFailedIdOrCurrencyCount);
+                        packet.WriteLine("Unk UInt32: {0}", AchieveOrSpellFailedIdOrCurrencyCount);
                         break;
                 }
 
@@ -991,6 +1056,13 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleTimeSyncRespFailed(Packet packet)
         {
             packet.ReadUInt32("Unk Uint32");
+        }
+
+        [Parser(Opcode.SMSG_AREA_TRIGGER_MESSAGE)]
+        public static void HandleAreaTriggerMessage(Packet packet)
+        {
+            var length = packet.ReadUInt32("Length");
+            packet.ReadWoWString("Text", length);
         }
 
         [Parser(Opcode.SMSG_MINIGAME_STATE)]

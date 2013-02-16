@@ -1,9 +1,10 @@
 using System;
-using PacketParser.Enums;
-using PacketParser.Misc;
-using PacketParser.DataStructures;
+using WowPacketParser.Enums;
+using WowPacketParser.Misc;
+using WowPacketParser.Store;
+using WowPacketParser.Store.Objects;
 
-namespace PacketParser.Parsing.Parsers
+namespace WowPacketParser.Parsing.Parsers
 {
     public static class ChatHandler
     {
@@ -39,6 +40,9 @@ namespace PacketParser.Parsing.Parsers
         {
             var emote = packet.ReadEnum<EmoteType>("Emote ID", TypeCode.Int32);
             var guid = packet.ReadGuid("GUID");
+
+            if (guid.GetObjectType() == ObjectType.Unit)
+                Storage.Emotes.Add(guid, emote, packet.TimeSpan);
         }
 
         [Parser(Opcode.CMSG_TEXT_EMOTE)]
@@ -163,7 +167,7 @@ namespace PacketParser.Parsing.Parsers
 
             packet.ReadInt32("Text Length");
             text.Text = packet.ReadCString("Text");
-            packet.ReadEnum<ChatTag>("Chat Tag", TypeCode.Byte);
+            packet.ReadEnum<ChatTag>("Chat Tag", ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309) ? TypeCode.Int16 : TypeCode.Byte);
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_0_14333))
             {
@@ -177,7 +181,8 @@ namespace PacketParser.Parsing.Parsers
             if (text.Type == ChatMessageType.Achievement || text.Type == ChatMessageType.GuildAchievement)
                 packet.ReadInt32("Achievement ID");
 
-            packet.Store("CreatureTextObject", text);
+            if (entry != 0)
+                Storage.CreatureTexts.Add(entry, text, packet.TimeSpan);
         }
 
         [Parser(Opcode.CMSG_MESSAGECHAT)]
@@ -247,18 +252,18 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadWoWString("Message", msgLen);
         }
 
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_PARTY, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_GUILD, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_RAID, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_BATTLEGROUND, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_PARTY, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_3_15354)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_GUILD, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_3_15354)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_RAID, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_3_15354)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_BATTLEGROUND, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_3_15354)]
         public static void HandleClientChatMessageAddon(Packet packet)
         {
             packet.ReadCString("Message");
             packet.ReadCString("Prefix");
         }
 
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_GUILD, ClientVersionBuild.V4_3_4_15595)]
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_BATTLEGROUND, ClientVersionBuild.V4_3_4_15595)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_GUILD, ClientVersionBuild.V4_3_3_15354)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_BATTLEGROUND, ClientVersionBuild.V4_3_3_15354)]
         public static void HandleClientChatMessageAddon434(Packet packet)
         {
             var length1 = packet.ReadBits(9);
@@ -267,9 +272,9 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadWoWString("Prefix", length2);
         }
 
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_PARTY, ClientVersionBuild.V4_3_4_15595)]
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_RAID, ClientVersionBuild.V4_3_4_15595)]
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_OFFICER, ClientVersionBuild.V4_3_4_15595)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_PARTY, ClientVersionBuild.V4_3_3_15354)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_RAID, ClientVersionBuild.V4_3_3_15354)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_OFFICER, ClientVersionBuild.V4_3_3_15354)]
         public static void HandleClientChatMessageAddonRaid434(Packet packet)
         {
             var length1 = packet.ReadBits(5);
@@ -278,7 +283,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadWoWString("Message", length2);
         }
 
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_WHISPER, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_WHISPER, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_3_15354)]
         public static void HandleClientChatMessageAddonWhisper(Packet packet)
         {
             packet.ReadCString("Prefix");
@@ -286,7 +291,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadCString("Message");
         }
 
-        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_WHISPER, ClientVersionBuild.V4_3_4_15595)]
+        [Parser(Opcode.CMSG_MESSAGECHAT_ADDON_WHISPER, ClientVersionBuild.V4_3_3_15354)]
         public static void HandleClientChatMessageAddonWhisper434(Packet packet)
         {
             var msgLen = packet.ReadBits(9);
@@ -383,7 +388,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadGuid("GUID 2");
             packet.ReadInt32("Message Length");
             packet.ReadCString("Message");
-            packet.ReadEnum<ChatTag>("Chat Tag", TypeCode.Byte);
+            packet.ReadEnum<ChatTag>("Chat Tag", ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309) ? TypeCode.Int16 : TypeCode.Byte);
         }
 
         [Parser(Opcode.SMSG_CHAT_RESTRICTED)]

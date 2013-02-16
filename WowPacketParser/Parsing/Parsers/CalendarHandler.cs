@@ -1,9 +1,8 @@
 using System;
-using PacketParser.Enums;
-using PacketParser.Misc;
-using PacketParser.DataStructures;
+using WowPacketParser.Enums;
+using WowPacketParser.Misc;
 
-namespace PacketParser.Parsing.Parsers
+namespace WowPacketParser.Parsing.Parsers
 {
     public static class CalendarHandler
     {
@@ -11,7 +10,7 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleSendCalendar(Packet packet)
         {
             var invCount = packet.ReadInt32("Invite Count");
-            packet.StoreBeginList("Invites");
+
             for (var i = 0; i < invCount; i++)
             {
                 packet.ReadInt64("Event ID", i);
@@ -21,30 +20,29 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadBoolean("Guild Event", i);
                 packet.ReadPackedGuid("Creator GUID", i);
             }
-            packet.StoreEndList();
 
             var eventCount = packet.ReadInt32("Event Count");
-            packet.StoreBeginList("Events");
+
             for (var i = 0; i < eventCount; i++)
             {
                 packet.ReadInt64("Event ID", i);
-                packet.ReadCString("Event Title ", i);
+                packet.ReadCString("Event Title", i);
                 packet.ReadEnum<CalendarEventType>("Event Type", TypeCode.Int32, i);
                 packet.ReadPackedTime("Event Time", i);
                 packet.ReadEnum<CalendarFlag>("Event Flags", TypeCode.Int32, i);
                 packet.ReadEntryWithName<Int32>(StoreNameType.LFGDungeon, "Dungeon ID", i);
 
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
-                    packet.ReadInt64("Unk int64", i);
+                    packet.ReadGuid("Guild GUID", i);
 
                 packet.ReadPackedGuid("Creator GUID", i);
             }
-            packet.StoreEndList();
+
             packet.ReadTime("Current Time");
             packet.ReadPackedTime("Zone Time?");
 
             var instanceResetCount = packet.ReadInt32("Instance Reset Count");
-            packet.StoreBeginList("InstanceResets");
+
             for (var i = 0; i < instanceResetCount; i++)
             {
                 packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map ID", i);
@@ -52,22 +50,20 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Time left", i);
                 packet.ReadGuid("Instance ID", i);
             }
-            packet.StoreEndList();
 
             packet.ReadTime("Constant Date");
 
             var raidResetCount = packet.ReadInt32("Raid Reset Count");
-            packet.StoreBeginList("RaidResets");
+
             for (var i = 0; i < raidResetCount; i++)
             {
                 packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map ID", i);
                 packet.ReadInt32("Time left", i);
                 packet.ReadInt32("Unk Time", i);
             }
-            packet.StoreEndList();
 
             var holidayCount = packet.ReadInt32("Holiday Count");
-            packet.StoreBeginList("Holidays");
+
             for (var i = 0; i < holidayCount; i++)
             {
                 packet.ReadInt32("ID", i);
@@ -75,19 +71,14 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Looping (Region?)", i);
                 packet.ReadInt32("Priority", i);
                 packet.ReadInt32("Calendar FilterType", i);
-                packet.StoreBeginList("StartDates", i);
                 for (var j = 0; j < 26; j++)
                     packet.ReadPackedTime("Start Date", i, j);
-                packet.StoreEndList();
-                packet.StoreBeginList("Ocurrences", i);
                 for (var j = 0; j < 10; j++)
                     packet.ReadInt32("Duration", i, j);
                 for (var j = 0; j < 10; j++)
                     packet.ReadEnum<CalendarFlag>("Calendar Flags", TypeCode.Int32, i, j);
-                packet.StoreEndList();
                 packet.ReadCString("Holiday Name", i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_CALENDAR_GET_EVENT)]
@@ -117,7 +108,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Guild");
 
             var invCount = packet.ReadInt32("Invite Count");
-            packet.StoreBeginList("Invites");
+
             for (var i = 0; i < invCount; i++)
             {
                 packet.ReadPackedGuid("Invitee GUID", i);
@@ -129,7 +120,6 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadPackedTime("Status Time", i);
                 packet.ReadCString("Invite Text", i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_CALENDAR_GUILD_FILTER)]
@@ -151,13 +141,12 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleCalendarFilters(Packet packet)
         {
             var count = packet.ReadInt32("Count");
-            packet.StoreBeginList("Unknown Datas");
+
             for (var i = 0; i < count; i++)
             {
                 packet.ReadPackedGuid("GUID", i);
                 packet.ReadByte("Unk Byte", i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_CALENDAR_ADD_EVENT)]
@@ -178,14 +167,13 @@ namespace PacketParser.Parsing.Parsers
                 return;
 
             var count = packet.ReadInt32("Invite Count");
-            packet.StoreBeginList("Invites");
+
             for (var i = 0; i < count; i++)
             {
-                packet.ReadPackedGuid("Creator GUID", i);
-                packet.ReadEnum<CalendarEventStatus>("Status", TypeCode.Byte, i);
-                packet.ReadEnum<CalendarModerationRank>("Moderation Rank", TypeCode.Byte, i);
+                packet.ReadPackedGuid("Creator GUID");
+                packet.ReadEnum<CalendarEventStatus>("Status", TypeCode.Byte);
+                packet.ReadEnum<CalendarModerationRank>("Moderation Rank", TypeCode.Byte);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_CALENDAR_UPDATE_EVENT)]
@@ -289,14 +277,23 @@ namespace PacketParser.Parsing.Parsers
         }
 
         [Parser(Opcode.CMSG_CALENDAR_EVENT_STATUS)]
-        [Parser(Opcode.CMSG_CALENDAR_EVENT_MODERATOR_STATUS)]
         public static void HandleCalendarEventStatus(Packet packet)
         {
             packet.ReadPackedGuid("Invitee GUID");
             packet.ReadInt64("Event ID");
-            packet.ReadInt64("Invitee ID");
             packet.ReadInt64("Invite ID");
+            packet.ReadInt64("Owner Invite ID"); // sender's invite id?
             packet.ReadEnum<CalendarEventStatus>("Status", TypeCode.Int32);
+        }
+
+        [Parser(Opcode.CMSG_CALENDAR_EVENT_MODERATOR_STATUS)]
+        public static void HandleCalendarEventModeratorStatus(Packet packet)
+        {
+            packet.ReadPackedGuid("Invitee GUID");
+            packet.ReadInt64("Event ID");
+            packet.ReadInt64("Invite ID");
+            packet.ReadInt64("Owner Invite ID"); // sender's invite id?
+            packet.ReadEnum<CalendarModerationRank>("Rank", TypeCode.Int32);
         }
 
         [Parser(Opcode.SMSG_CALENDAR_EVENT_STATUS)]
@@ -316,7 +313,7 @@ namespace PacketParser.Parsing.Parsers
         {
             packet.ReadPackedGuid("Invitee GUID");
             packet.ReadInt64("Event ID");
-            packet.ReadEnum<CalendarEventStatus>("Status", TypeCode.Byte);
+            packet.ReadEnum<CalendarModerationRank>("Rank", TypeCode.Byte);
             packet.ReadBoolean("Unk Boolean");
         }
 
@@ -388,9 +385,9 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadEnum<CalendarEventType>("Type", TypeCode.Int32);
             packet.ReadEntryWithName<Int32>(StoreNameType.LFGDungeon, "Dungeon ID");
             packet.ReadInt64("Invite ID");
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0a_15050))
             {
-                packet.ReadInt64("Unk Int64");
+                packet.ReadGuid("Guild GUID");
             }
             packet.ReadEnum<CalendarEventStatus>("Status", TypeCode.Byte);
             packet.ReadEnum<CalendarModerationRank>("Moderation Rank", TypeCode.Byte);

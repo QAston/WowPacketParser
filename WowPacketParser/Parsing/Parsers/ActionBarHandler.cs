@@ -1,8 +1,11 @@
-using PacketParser.Enums;
-using PacketParser.Misc;
-using PacketParser.DataStructures;
+using System;
+using System.Collections.Generic;
+using WowPacketParser.Enums;
+using WowPacketParser.Misc;
+using WowPacketParser.Store;
+using WowPacketParser.Store.Objects;
 
-namespace PacketParser.Parsing.Parsers
+namespace WowPacketParser.Parsing.Parsers
 {
     public static class ActionBarHandler
     {
@@ -20,23 +23,36 @@ namespace PacketParser.Parsing.Parsers
 
             var buttonCount = ClientVersion.AddedInVersion(ClientVersionBuild.V3_2_0_10192) ? 144 : 132;
 
-            packet.StoreBeginList("Buttons");
+            var startAction = new StartAction { Actions = new List<Store.Objects.Action>(buttonCount) };
+
             for (var i = 0; i < buttonCount; i++)
             {
+                var action = new Store.Objects.Action { Button = (uint)i };
+
                 var packed = packet.ReadInt32();
 
                 if (packed == 0)
                     continue;
 
-                var actionId = (uint)(packed & 0x00FFFFFF);
-                packet.Store("Action", actionId, i);
+                action.Id = (uint)(packed & 0x00FFFFFF);
+                packet.WriteLine("Action " + i + ": " + action.Id);
 
-                var actionType = (ActionButtonType)((packed & 0xFF000000) >> 24);
-                packet.Store("Type", actionType, i);
+                action.Type = (ActionButtonType)((packed & 0xFF000000) >> 24);
+                packet.WriteLine("Type " + i + ": " + action.Type);
+
+                startAction.Actions.Add(action);
             }
-            packet.StoreEndList();
+
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
                 packet.ReadByte("Packet Type");
+
+            WoWObject character;
+            if (Storage.Objects.TryGetValue(SessionHandler.LoginGuid, out character))
+            {
+                var player = character as Player;
+                if (player != null && player.FirstLogin)
+                    Storage.StartActions.Add(new Tuple<Race, Class>(player.Race, player.Class), startAction, packet.TimeSpan);
+            }
         }
 
 

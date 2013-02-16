@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using PacketParser.DataStructures;
 
-namespace PacketParser.Misc
+namespace WowPacketParser.Misc
 {
     public static class Extensions
     {
@@ -26,13 +26,34 @@ namespace PacketParser.Misc
         /// <param name="value">An enum, int, ...</param>
         /// <param name="flag">An enum, int, ...</param>
         /// <returns>A boolean</returns>
-        public static bool HasAnyFlag<T>(this T value, T flag)where T: struct, IConvertible
+        public static bool HasAnyFlag(this IConvertible value, IConvertible flag)
         {
-            return Enum<T>.HasFlag(value, flag);
+            var uFlag = flag.ToUInt64(null);
+            var uThis = value.ToUInt64(null);
+
+            return (uThis & uFlag) != 0;
         }
 
         /// <summary>
-        /// // Return true if our string is a substring of any filter (case insensitive)
+        /// Returns true if bit is set in value (&)
+        /// </summary>
+        /// <param name="value">An enum, int, ...</param>
+        /// <param name="bit">An int</param>
+        /// <returns>A boolean</returns>
+        public static bool HasAnyFlagBit(this IConvertible value, IConvertible bit)
+        {
+            var uBit = bit.ToInt32(null);
+
+            Contract.Assert(uBit >= 0 && uBit <= 63);
+
+            var uFlag = (UInt64)(1 << uBit);
+            var uThis = value.ToUInt64(null);
+
+            return (uThis & uFlag) != 0;
+        }
+
+        /// <summary>
+        /// Return true if our string is a substring of any filter (case insensitive)
         /// </summary>
         /// <param name="value">String</param>
         /// <param name="filters">List of strings</param>
@@ -47,7 +68,7 @@ namespace PacketParser.Misc
         /// Shows our hex representation of a packet
         /// </summary>
         /// <param name="packet">A packet</param>
-        public static string ToHex(this Packet packet)
+        public static void AsHex(this Packet packet)
         {
             var n = Environment.NewLine;
             var hexDump = new StringBuilder();
@@ -97,7 +118,7 @@ namespace PacketParser.Misc
 
             hexDump.Append("|-------------------------------------------------|---------------------------------|");
 
-            return hexDump.ToString();
+            packet.WriteLine(hexDump.ToString());
         }
 
         /// <summary>

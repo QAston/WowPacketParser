@@ -1,7 +1,9 @@
-﻿using PacketParser.Enums;
-using PacketParser.Misc;
+﻿using System;
+using WowPacketParser.Enums;
+using WowPacketParser.Misc;
+using Guid = WowPacketParser.Misc.Guid;
 
-namespace PacketParser.DataStructures
+namespace WowPacketParser.Store.Objects
 {
     public class Aura
     {
@@ -9,7 +11,7 @@ namespace PacketParser.DataStructures
 
         public uint SpellId;
 
-        public AuraFlag AuraFlags;
+        public System.Enum AuraFlags;
 
         public uint Level;
 

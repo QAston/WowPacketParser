@@ -1,4 +1,4 @@
-﻿namespace PacketParser.Enums
+﻿namespace WowPacketParser.Enums
 {
     public enum  CalendarEventType
     {
@@ -6,6 +6,7 @@
         Dungeon = 1,
         PVP = 2,
         Meeting = 3,
-        Other = 4
+        Other = 4,
+        Heroic = 5
     }
 }

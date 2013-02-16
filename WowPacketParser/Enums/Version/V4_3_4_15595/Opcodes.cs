@@ -1,6 +1,6 @@
-using PacketParser.Misc;
+using WowPacketParser.Misc;
 
-namespace PacketParser.Enums.Version.V4_3_4_15595
+namespace WowPacketParser.Enums.Version.V4_3_4_15595
 {
     public static class Opcodes_4_3_4
     {
@@ -205,10 +205,9 @@ namespace PacketParser.Enums.Version.V4_3_4_15595
             {Opcode.CMSG_GUILD_BANK_BUY_TAB, 0x0C37},
             {Opcode.CMSG_GUILD_BANK_DEPOSIT_MONEY, 0x0707},
             {Opcode.CMSG_GUILD_BANK_LOG_QUERY, 0x3224},
+            {Opcode.CMSG_GUILD_BANK_MONEY_WITHDRAWN_QUERY, 0x1225},
             {Opcode.CMSG_GUILD_BANK_QUERY_TAB, 0x2E35},
             {Opcode.CMSG_GUILD_BANK_QUERY_TEXT, 0x3220},
-            {Opcode.CMSG_GUILD_BANK_REM_MONEY_WITHDRAW_QUERY, 0x1225},
-            {Opcode.CMSG_GUILD_BANK_SET_TAB_TEXT, 0x3023},
             {Opcode.CMSG_GUILD_BANK_SWAP_ITEMS, 0x2315},
             {Opcode.CMSG_GUILD_BANK_UPDATE_TAB, 0x0106},
             {Opcode.CMSG_GUILD_BANK_WITHDRAW_MONEY, 0x0037},
@@ -368,7 +367,6 @@ namespace PacketParser.Enums.Version.V4_3_4_15595
             {Opcode.CMSG_PUSHQUESTTOPARTY, 0x4B14},
             {Opcode.CMSG_PVP_LOG_DATA, 0x7308},
             {Opcode.CMSG_QUERY_BATTLEFIELD_STATE, 0x7202},
-            {Opcode.CMSG_QUERY_COMPLETION_NPC_RESPONSE, 0x7302},
             {Opcode.CMSG_QUERY_GUILD_MEMBERS_FOR_RECIPE, 0x1036},
             {Opcode.CMSG_QUERY_GUILD_MEMBER_RECIPES, 0x1037},
             {Opcode.CMSG_QUERY_GUILD_RECIPES, 0x3033},
@@ -387,6 +385,7 @@ namespace PacketParser.Enums.Version.V4_3_4_15595
             {Opcode.CMSG_QUESTGIVER_STATUS_QUERY, 0x4407},
             {Opcode.CMSG_QUESTLOG_REMOVE_QUEST, 0x0D16},
             {Opcode.CMSG_QUEST_CONFIRM_ACCEPT, 0x0D15},
+            {Opcode.CMSG_QUEST_NPC_QUERY, 0x7302},
             {Opcode.CMSG_QUEST_POI_QUERY, 0x4037},
             {Opcode.CMSG_QUEST_QUERY, 0x0D06},
             {Opcode.CMSG_RANDOMIZE_CHAR_NAME, 0x2413},
@@ -443,6 +442,7 @@ namespace PacketParser.Enums.Version.V4_3_4_15595
             {Opcode.CMSG_SET_EVERYONE_IS_ASSISTANT, 0x2530},
             {Opcode.CMSG_SET_FACTION_ATWAR, 0x0706},
             {Opcode.CMSG_SET_FACTION_INACTIVE, 0x0E37},
+            {Opcode.CMSG_SET_GUILD_BANK_TEXT, 0x3023},
             {Opcode.CMSG_SET_PET_SLOT, 0x3A04},
             {Opcode.CMSG_SET_PLAYER_DECLINED_NAMES, 0x6316},
             {Opcode.CMSG_SET_PREFERED_CEMETERY, 0x311E},
@@ -702,7 +702,6 @@ namespace PacketParser.Enums.Version.V4_3_4_15595
             {Opcode.SMSG_COMMENTATOR_SKIRMISH_QUEUE_RESULT2, 0x6814},
             {Opcode.SMSG_COMMENTATOR_STATE_CHANGED, 0x0737},
             {Opcode.SMSG_COMPLAIN_RESULT, 0x6D24},
-            {Opcode.SMSG_COMPLETION_NPC_RESPONSE, 0x75A1},
             {Opcode.SMSG_COMPRESSED_MOVES, 0x0517},
             {Opcode.SMSG_COMSAT_CONNECT_FAIL, 0x6317},
             {Opcode.SMSG_COMSAT_DISCONNECT, 0x0316},
@@ -798,7 +797,7 @@ namespace PacketParser.Enums.Version.V4_3_4_15595
             {Opcode.SMSG_GROUP_DECLINE, 0x6835},
             {Opcode.SMSG_GROUP_DESTROYED, 0x2207},
             {Opcode.SMSG_GROUP_INVITE, 0x31B2},
-            {Opcode.SMSG_GROUP_JOINED_BATTLEGROUND, 0x35A1}, // maybe 0x71A7
+            {Opcode.SMSG_BATTLEFIELD_STATUS_QUEUED, 0x35A1}, // maybe 0x71A7
             {Opcode.SMSG_GROUP_LIST, 0x4C24},
             {Opcode.SMSG_GROUP_SET_LEADER, 0x0526},
             {Opcode.SMSG_GROUP_SET_ROLE, 0x39A6},
@@ -810,7 +809,7 @@ namespace PacketParser.Enums.Version.V4_3_4_15595
             {Opcode.SMSG_GUILD_BANK_LIST, 0x78A5},
             {Opcode.SMSG_GUILD_BANK_LOG_QUERY_RESULTS, 0x30B2},
             {Opcode.SMSG_GUILD_BANK_QUERY_TEXT_RESULTS, 0x75A3},
-            {Opcode.SMSG_GUILD_BANK_REM_MONEY_WITHDRAW_QUERY, 0x5DB4},
+            {Opcode.SMSG_GUILD_BANK_MONEY_WITHDRAWN, 0x5DB4},
             {Opcode.SMSG_GUILD_CHALLENGE_COMPLETED, 0x39A3},
             {Opcode.SMSG_GUILD_CHALLENGE_UPDATED, 0x18B1},
             {Opcode.SMSG_GUILD_CHANGE_NAME_RESULT, 0x3CB1},
@@ -1070,6 +1069,7 @@ namespace PacketParser.Enums.Version.V4_3_4_15595
             {Opcode.SMSG_QUESTUPDATE_FAILEDTIMER, 0x6427},
             {Opcode.SMSG_QUEST_CONFIRM_ACCEPT, 0x6F07},
             {Opcode.SMSG_QUEST_FORCE_REMOVE, 0x6605},
+            {Opcode.SMSG_QUEST_NPC_QUERY_RESPONSE, 0x75A1},
             {Opcode.SMSG_QUEST_POI_QUERY_RESPONSE, 0x6304},
             {Opcode.SMSG_QUEST_QUERY_RESPONSE, 0x6936},
             {Opcode.SMSG_RAID_GROUP_ONLY, 0x0837},

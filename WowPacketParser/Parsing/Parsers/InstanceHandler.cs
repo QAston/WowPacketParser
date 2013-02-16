@@ -1,9 +1,8 @@
 using System;
-using PacketParser.Enums;
-using PacketParser.Misc;
-using PacketParser.DataStructures;
+using WowPacketParser.Enums;
+using WowPacketParser.Misc;
 
-namespace PacketParser.Parsing.Parsers
+namespace WowPacketParser.Parsing.Parsers
 {
     public static class InstanceHandler
     {
@@ -120,7 +119,7 @@ namespace PacketParser.Parsing.Parsers
                 case DifficultyChangeType434.MapDifficultyRequirement:
                     packet.ReadInt32("Map Difficulty Id");
                     break;
-                case DifficultyChangeType434.Unk8:
+                case DifficultyChangeType434.PlayerAlreadyLocked:
                     packet.ReadPackedGuid("Guid");
                     break;
                 case DifficultyChangeType434.DifficultyChanged:
@@ -217,22 +216,20 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleRaidInstanceInfo(Packet packet)
         {
             var counter = packet.ReadInt32("Counter");
-            packet.StoreBeginList("RaidInstances");
             for (var i = 0; i < counter; ++i)
             {
                 packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map ID", i);
                 packet.ReadEnum<MapDifficulty>("Map Difficulty", TypeCode.UInt32, i);
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
-                    packet.ReadUInt32("Unk1", i);
+                    packet.ReadUInt32("Heroic", i);
                 packet.ReadGuid("Instance GUID", i);
                 packet.ReadBoolean("Expired", i);
                 packet.ReadBoolean("Extended", i);
                 packet.ReadUInt32("Reset Time", i);
 
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
-                    packet.ReadUInt32("Unk2", i);
+                    packet.ReadUInt32("Completed Encounters Mask", i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_SAVE_CUF_PROFILES)] // 4.3.4
@@ -242,7 +239,6 @@ namespace PacketParser.Parsing.Parsers
 
             var strlen = new uint[count];
 
-            packet.StoreBeginList("Profiles");
             for (int i = 0; i < count; ++i)
             {
                 packet.ReadBit("Talent spec 2", i);
@@ -287,7 +283,6 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt16("Unk 154", i);
                 packet.ReadByte("Unk 148", i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_LOAD_CUF_PROFILES)] // 4.3.4
@@ -297,7 +292,6 @@ namespace PacketParser.Parsing.Parsers
 
             var strlen = new uint[count];
 
-            packet.StoreBeginList("Profiles");
             for (int i = 0; i < count; ++i)
             {
                 packet.ReadBit("Unk 157", i);
@@ -342,7 +336,6 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadByte("Unk 148", i);
                 packet.ReadWoWString("Name", (int)strlen[i], i);
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_RESET_INSTANCES)]

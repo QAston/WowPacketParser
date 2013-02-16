@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using PacketParser.Enums;
-using PacketParser.Misc;
+using WowPacketParser.Enums;
+using WowPacketParser.Misc;
 
-namespace PacketParser.DataStructures
+namespace WowPacketParser.Store.Objects
 {
     public sealed class Unit : WoWObject
     {
@@ -14,14 +14,25 @@ namespace PacketParser.DataStructures
 
         public override bool IsTemporarySpawn()
         {
+            if (ForceTemporarySpawn)
+                return true;
+
             // If our unit got any of the following update fields set,
             // it's probably a temporary spawn
             UpdateField uf;
-            if (UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_FIELD_SUMMONEDBY), out uf) ||
-                UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_CREATED_BY_SPELL), out uf) ||
-                UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_FIELD_CREATEDBY), out uf))
-                return uf.UInt32Value != 0;
-
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_0_5_16048))
+            {
+                if (UpdateFields.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(UnitField.UNIT_FIELD_SUMMONEDBY), out uf) ||
+                    UpdateFields.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(UnitField.UNIT_FIELD_CREATEDBY), out uf))
+                    return uf.UInt32Value != 0;
+            }
+            else
+            {
+                if (UpdateFields.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(UnitField.UNIT_FIELD_SUMMONEDBY), out uf) ||
+                    UpdateFields.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(UnitField.UNIT_CREATED_BY_SPELL), out uf) ||
+                    UpdateFields.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(UnitField.UNIT_FIELD_CREATEDBY), out uf))
+                    return uf.UInt32Value != 0;
+            }
             return false;
         }
 
@@ -71,11 +82,11 @@ namespace PacketParser.DataStructures
 
             PowerType = (PowerType) ((Bytes0 & 0x7FFFFFFF) >> 24);
             Gender    = (Gender)    ((Bytes0 & 0x00FF0000) >> 16);
-            Class     = (Class)     ((Bytes0 & 0x0000FF00) >> 08);
-            Race      = (Race)      ((Bytes0 & 0x000000FF) >> 00);
+            Class     = (Class)     ((Bytes0 & 0x0000FF00) >>  8);
+            Race      = (Race)      ((Bytes0 & 0x000000FF) >>  0);
         }
 
-        public void LoadValuesFromUpdateFields()
+        public override void LoadValuesFromUpdateFields()
         {
             Size          = UpdateFields.GetValue<ObjectField, float?>(ObjectField.OBJECT_FIELD_SCALE_X);
             Bytes0        = UpdateFields.GetValue<UnitField, uint?>(UnitField.UNIT_FIELD_BYTES_0);
@@ -115,7 +126,7 @@ namespace PacketParser.DataStructures
         /// <param name="dict">The dictionary</param>
         /// <param name="updateField">The update field we want</param>
         /// <returns></returns>
-        public static TK GetValue<T, TK>(this Dictionary<int, UpdateField> dict, T updateField) where T : struct,IConvertible
+        public static TK GetValue<T, TK>(this Dictionary<int, UpdateField> dict, T updateField)
         {
             var isInt = false;
             var type = typeof(TK);
@@ -147,7 +158,7 @@ namespace PacketParser.DataStructures
             }
 
             UpdateField uf;
-            if (dict.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(updateField), out uf))
+            if (dict.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(updateField), out uf))
             {
                 if (isInt)
                     return (TK)(object)uf.UInt32Value;
@@ -166,7 +177,7 @@ namespace PacketParser.DataStructures
         /// <param name="firstUpdateField">The first update field of the sequence</param>
         /// <param name="count">Number of values to retrieve</param>
         /// <returns></returns>
-        public static TK[] GetArray<T, TK>(this Dictionary<int, UpdateField> dict, T firstUpdateField, int count) where T : struct,IConvertible
+        public static TK[] GetArray<T, TK>(this Dictionary<int, UpdateField> dict, T firstUpdateField, int count)
         {
             var isInt = false;
             var type = typeof(TK);
@@ -199,17 +210,16 @@ namespace PacketParser.DataStructures
 
             var result = new TK[count];
             UpdateField uf;
-            int firstOffset = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset(firstUpdateField);
             if (isInt)
             {
                 for (var i = 0; i < count; i++)
-                    if (dict.TryGetValue(firstOffset + i, out uf))
+                    if (dict.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(firstUpdateField) + i, out uf))
                         result[i] = (TK)(object)uf.UInt32Value;
             }
             else
             {
                 for (var i = 0; i < count; i++)
-                    if (dict.TryGetValue(firstOffset + i, out uf))
+                    if (dict.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(firstUpdateField) + i, out uf))
                         result[i] = (TK)(object)uf.SingleValue;
             }
 
@@ -224,7 +234,7 @@ namespace PacketParser.DataStructures
         /// <param name="dict">The dictionary</param>
         /// <param name="updateField">The update field we want</param>
         /// <returns></returns>
-        public static TK GetEnum<T, TK>(this Dictionary<int, UpdateField> dict, T updateField) where T:struct,IConvertible
+        public static TK GetEnum<T, TK>(this Dictionary<int, UpdateField> dict, T updateField)
         {
             // typeof (TK) is a nullable type (ObjectField?)
             // typeof (TK).GetGenericArguments()[0] is the non nullable equivalent (ObjectField)
@@ -233,7 +243,7 @@ namespace PacketParser.DataStructures
             try
             {
                 UpdateField uf;
-                if (dict.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(updateField), out uf))
+                if (dict.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(updateField), out uf))
                     return (TK)Enum.Parse(typeof(TK).GetGenericArguments()[0], uf.UInt32Value.ToString(CultureInfo.InvariantCulture));
             }
             catch (OverflowException) // Data wrongly parsed can result in very wtfy values

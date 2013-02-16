@@ -10,59 +10,14 @@ namespace WowPacketParser.Store
 {
     public abstract class Store
     {
-        public static SQLOutputFlags Flags { protected get; set; }
-        public string Type { get; protected set; }
+        public static int SQLEnabledFlags { protected get; set; }
+        public List<SQLOutput> Types { get; protected set; }
 
-        protected static bool ProcessFlags(string type, SQLOutputFlags flags)
+        protected bool ProcessFlags()
         {
-            switch (type)
-            {
-                case "Objects":
-                    return flags.HasAnyFlag(SQLOutputFlags.CreatureSpawns) ||
-                           flags.HasAnyFlag(SQLOutputFlags.GameObjectSpawns) ||
-                           flags.HasAnyFlag(SQLOutputFlags.CreatureMovement) ||
-                           flags.HasAnyFlag(SQLOutputFlags.CreatureEquip) ||
-                           flags.HasAnyFlag(SQLOutputFlags.StartInformation);
-                case "GameObjectTemplates":
-                    return flags.HasAnyFlag(SQLOutputFlags.GameObjectTemplate);
-                case "ItemTemplates":
-                    return false; //return flags.HasAnyFlag(SQLOutputFlags.ItemTemplate;
-                case "QuestTemplates":
-                case "QuestOffers":
-                case "QuestRewards":
-                    return flags.HasAnyFlag(SQLOutputFlags.QuestTemplate);
-                case "Gossips":
-                    return flags.HasAnyFlag(SQLOutputFlags.Gossip);
-                case "Loots":
-                    return flags.HasAnyFlag(SQLOutputFlags.Loot);
-                case "UnitTemplates":
-                case "SpellsX":
-                case "CreatureTexts":
-                case "Emotes":
-                case "Sounds":
-                    return flags.HasAnyFlag(SQLOutputFlags.CreatureTemplate);
-                case "NpcTrainers":
-                    return flags.HasAnyFlag(SQLOutputFlags.NpcTrainer);
-                case "NpcVendors":
-                    return flags.HasAnyFlag(SQLOutputFlags.NpcVendor);
-                case "PageTexts":
-                    return flags.HasAnyFlag(SQLOutputFlags.PageText);
-                case "NpcTexts":
-                    return flags.HasAnyFlag(SQLOutputFlags.NpcText);
-                case "StartActions":
-                case "StartSpells":
-                case "StartPositions":
-                    return flags.HasAnyFlag(SQLOutputFlags.StartInformation);
-                case "QuestPOIs":
-                    return flags.HasAnyFlag(SQLOutputFlags.QuestPOI);
-                case "ObjectNames":
-                    return flags.HasAnyFlag(SQLOutputFlags.ObjectNames);
-                case "SniffData":
-                    return flags.HasAnyFlag(SQLOutputFlags.SniffData) ||
-                           flags.HasAnyFlag(SQLOutputFlags.SniffDataOpcodes);
-                default:
-                    throw new ArgumentException("type is not assigned to any SQLOutput flag", "type");
-            }
+            return Types.Count == 0 ||
+                Settings.DumpFormat == DumpFormatType.SniffDataOnly ||
+                Types.Any(sqlOutput => SQLEnabledFlags.HasAnyFlagBit(sqlOutput));
         }
 
         public abstract void Clear();
@@ -77,15 +32,15 @@ namespace WowPacketParser.Store
 
         public StoreDictionary()
         {
-            Type = "None";
+            Types = new List<SQLOutput>();
             Enabled = true;
             _dictionary = new Dictionary<T, Tuple<TK, TimeSpan?>>();
         }
 
-        public StoreDictionary(string type)
+        public StoreDictionary(List<SQLOutput> types)
         {
-            Type = type;
-            Enabled = ProcessFlags(Type, Flags);
+            Types = types;
+            Enabled = ProcessFlags();
             _dictionary = Enabled ? new Dictionary<T, Tuple<TK, TimeSpan?>>() : null;
         }
 
@@ -96,11 +51,11 @@ namespace WowPacketParser.Store
             foreach (var pair in dict)
                 _dictionary.Add(pair.Key, new Tuple<TK, TimeSpan?>(pair.Value, null));
 
-            Type = string.Empty;
+            Types = new List<SQLOutput>();
             Enabled = true;
         }
 
-        public void Add(T key, TK value, TimeSpan? time)
+        public void Add(T key, TK value, TimeSpan? time = null)
         {
             if (!Enabled)
                 return;
@@ -111,11 +66,14 @@ namespace WowPacketParser.Store
             _dictionary.Add(key, new Tuple<TK, TimeSpan?>(value, time));
         }
 
+        public bool Remove(T key)
+        {
+            return !Enabled || _dictionary.Remove(key);
+        }
+
         public bool ContainsKey(T key)
         {
-            if (Enabled)
-                return _dictionary.ContainsKey(key);
-            return false;
+            return Enabled && _dictionary.ContainsKey(key);
         }
 
         public bool TryGetValue(T key, out TK value)
@@ -146,11 +104,8 @@ namespace WowPacketParser.Store
         {
             get
             {
-                if (Enabled)
-                    return _dictionary[key];
-                return null;
+                return Enabled ? _dictionary[key] : null;
             }
-
             set
             {
                 if (Enabled)
@@ -166,16 +121,12 @@ namespace WowPacketParser.Store
 
         public override bool IsEmpty()
         {
-            if (Enabled)
-                return _dictionary.Count == 0;
-            return true;
+            return !Enabled || _dictionary.Count == 0;
         }
 
         public IEnumerator<KeyValuePair<T, Tuple<TK, TimeSpan?>>> GetEnumerator()
         {
-            if (Enabled)
-                return _dictionary.GetEnumerator();
-            return null;
+            return Enabled ? _dictionary.GetEnumerator() : new Dictionary<T, Tuple<TK, TimeSpan?>>().GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -185,9 +136,7 @@ namespace WowPacketParser.Store
 
         public List<T> Keys()
         {
-            if (Enabled)
-                return _dictionary.Keys.ToList();
-            return null;
+            return Enabled ? _dictionary.Keys.ToList() : new List<T>();
         }
     }
 
@@ -197,19 +146,19 @@ namespace WowPacketParser.Store
 
         public StoreMulti()
         {
-            Type = "None";
+            Types = new List<SQLOutput>();
             Enabled = true;
             _dictionary = new MultiDictionary<T, Tuple<TK, TimeSpan?>>(true);
         }
 
-        public StoreMulti(string type)
+        public StoreMulti(List<SQLOutput> types)
         {
-            Type = type;
-            Enabled = ProcessFlags(Type, Flags);
+            Types = types;
+            Enabled = ProcessFlags();
             _dictionary = Enabled ? new MultiDictionary<T, Tuple<TK, TimeSpan?>>(true) : null;
         }
 
-        public StoreMulti(MultiDictionary<T, TK> dict)
+        public StoreMulti(IEnumerable<KeyValuePair<T, ICollection<TK>>> dict)
         {
             _dictionary = new MultiDictionary<T, Tuple<TK, TimeSpan?>>(true);
 
@@ -218,7 +167,7 @@ namespace WowPacketParser.Store
                     _dictionary.Add(pair.Key, new Tuple<TK, TimeSpan?>(k, null));
 
 
-            Type = string.Empty;
+            Types = new List<SQLOutput>();
             Enabled = true;
         }
 
@@ -230,6 +179,11 @@ namespace WowPacketParser.Store
             _dictionary.Add(key, new Tuple<TK, TimeSpan?>(value, time));
         }
 
+        public bool Remove(T key)
+        {
+            return !Enabled || _dictionary.Remove(key);
+        }
+
         public override void Clear()
         {
             if (Enabled)
@@ -238,16 +192,12 @@ namespace WowPacketParser.Store
 
         public override bool IsEmpty()
         {
-            if (Enabled)
-                return _dictionary.Count == 0;
-            return true;
+            return !Enabled || _dictionary.Count == 0;
         }
 
         public IEnumerator<KeyValuePair<T, ICollection<Tuple<TK, TimeSpan?>>>> GetEnumerator()
         {
-            if (Enabled)
-                return _dictionary.GetEnumerator();
-            return null;
+            return Enabled ? _dictionary.GetEnumerator() : new MultiDictionary<T, Tuple<TK, TimeSpan?>>(true).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -257,25 +207,19 @@ namespace WowPacketParser.Store
 
         public List<T> Keys()
         {
-            if (Enabled)
-                return _dictionary.Keys.ToList();
-            return null;
+            return Enabled ? _dictionary.Keys.ToList() : new List<T>();
         }
 
         public bool ContainsKey(T key)
         {
-            if (Enabled)
-                return _dictionary.ContainsKey(key);
-            return false;
+            return Enabled && _dictionary.ContainsKey(key);
         }
 
         public ICollection<Tuple<TK, TimeSpan?>> this[T key]
         {
             get
             {
-                if (Enabled)
-                    return _dictionary[key];
-                return null;
+                return Enabled ? _dictionary[key] : null;
             }
 
             set
@@ -290,10 +234,10 @@ namespace WowPacketParser.Store
     {
         private readonly Bag<Tuple<T, TimeSpan?>> _bag;
 
-        public StoreBag(string type)
+        public StoreBag(List<SQLOutput> types)
         {
-            Type = type;
-            Enabled = ProcessFlags(Type, Flags);
+            Types = types;
+            Enabled = ProcessFlags();
             _bag = Enabled ? new Bag<Tuple<T, TimeSpan?>>() : null;
         }
 
@@ -311,16 +255,12 @@ namespace WowPacketParser.Store
 
         public override bool IsEmpty()
         {
-            if (Enabled)
-                return _bag.Count == 0;
-            return true;
+            return !Enabled || _bag.Count == 0;
         }
 
         public IEnumerator<Tuple<T, TimeSpan?>> GetEnumerator()
         {
-            if (Enabled)
-                return _bag.GetEnumerator();
-            return null;
+            return Enabled ? _bag.GetEnumerator() : new Bag<Tuple<T, TimeSpan?>>().GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()

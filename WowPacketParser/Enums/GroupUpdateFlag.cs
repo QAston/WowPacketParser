@@ -1,6 +1,6 @@
 using System;
 
-namespace PacketParser.Enums
+namespace WowPacketParser.Enums
 {
     [Flags]
     public enum GroupUpdateFlag: uint
@@ -65,7 +65,7 @@ namespace PacketParser.Enums
         PetMaxPower = 0x00040000,
         PetAuras = 0x00080000,
         VehicleSeat = 0x00100000,
-        Unk200000 = 0x00200000,
+        Phase = 0x00200000,
         Unk400000 = 0x00400000,
         Unk800000 = 0x00800000,
         Unk1000000 = 0x01000000,

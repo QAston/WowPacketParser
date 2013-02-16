@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using WowPacketParser.Enums;
-using WowPacketParser.Enums.Version;
 using WowPacketParser.Misc;
 using WowPacketParser.Store;
 using WowPacketParser.Store.Objects;
+using Guid = WowPacketParser.Misc.Guid;
 
 namespace WowPacketParser.SQL.Builders
 {
@@ -14,10 +14,10 @@ namespace WowPacketParser.SQL.Builders
         {
             var result = String.Empty;
 
-            if (!Storage.StartActions.IsEmpty())
+            if (!Storage.StartActions.IsEmpty() && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.playercreateinfo_action))
             {
                 var rows = new List<QueryBuilder.SQLInsertRow>();
-                foreach (KeyValuePair<Tuple<Race, Class>, Tuple<StartAction, TimeSpan?>> startActions in Storage.StartActions)
+                foreach (var startActions in Storage.StartActions)
                 {
                     var comment = new QueryBuilder.SQLInsertRow();
                     comment.HeaderComment = startActions.Key.Item1 + " - " + startActions.Key.Item2;
@@ -44,7 +44,7 @@ namespace WowPacketParser.SQL.Builders
                 result = new QueryBuilder.SQLInsert("playercreateinfo_action", rows, 2).Build();
             }
 
-            if (!Storage.StartPositions.IsEmpty())
+            if (!Storage.StartPositions.IsEmpty() && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.playercreateinfo))
             {
                 var rows = new List<QueryBuilder.SQLInsertRow>();
                 foreach (KeyValuePair<Tuple<Race, Class>, Tuple<StartPosition, TimeSpan?>> startPosition in Storage.StartPositions)
@@ -72,7 +72,7 @@ namespace WowPacketParser.SQL.Builders
                 result += new QueryBuilder.SQLInsert("playercreateinfo", rows, 2).Build();
             }
 
-            if (!Storage.StartSpells.IsEmpty())
+            if (!Storage.StartSpells.IsEmpty() && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.playercreateinfo_spell))
             {
                 var rows = new List<QueryBuilder.SQLInsertRow>();
                 foreach (var startSpells in Storage.StartSpells)
@@ -94,7 +94,7 @@ namespace WowPacketParser.SQL.Builders
                     }
                 }
 
-                result += new QueryBuilder.SQLInsert("playercreateinfo_spell", rows, 2).Build();
+                result = new QueryBuilder.SQLInsert("playercreateinfo_spell", rows, 2).Build();
             }
 
             return result;
@@ -103,9 +103,12 @@ namespace WowPacketParser.SQL.Builders
         public static string ObjectNames()
         {
             if (Storage.ObjectNames.IsEmpty())
-                return String.Empty;
+                return string.Empty;
 
             const string tableName = "ObjectNames";
+
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.ObjectNames))
+                return string.Empty;
 
             var rows = new List<QueryBuilder.SQLInsertRow>();
             foreach (var data in Storage.ObjectNames)
@@ -129,6 +132,10 @@ namespace WowPacketParser.SQL.Builders
 
             const string tableName = "SniffData";
 
+            if (Settings.DumpFormat != DumpFormatType.SniffDataOnly)
+                if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.SniffData) && !Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.SniffDataOpcodes))
+                    return string.Empty;
+
             var rows = new List<QueryBuilder.SQLInsertRow>();
             foreach (var data in Storage.SniffData)
             {
@@ -143,7 +150,47 @@ namespace WowPacketParser.SQL.Builders
                 rows.Add(row);
             }
 
-            return new QueryBuilder.SQLInsert(tableName, rows, ignore: true, withDelete: false, deleteDuplicates: true).Build();
+            return new QueryBuilder.SQLInsert(tableName, rows, ignore: true, withDelete: false).Build();
+        }
+
+        // Non-WDB data but nevertheless data that should be saved to gameobject_template
+        public static string GameobjectTemplateNonWDB(Dictionary<Guid, GameObject> gameobjects)
+        {
+            if (gameobjects.Count == 0)
+                return string.Empty;
+
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.gameobject_template))
+                return string.Empty;
+
+            var templates = new StoreDictionary<uint, GameObjectTemplateNonWDB>();
+            foreach (var goT in gameobjects)
+            {
+                if (templates.ContainsKey(goT.Key.GetEntry()))
+                    continue;
+
+                var go = goT.Value;
+                var template = new GameObjectTemplateNonWDB
+                {
+                    Size = go.Size.GetValueOrDefault(1.0f),
+                    Faction = go.Faction.GetValueOrDefault(0),
+                    Flags = go.Flags.GetValueOrDefault(GameObjectFlag.None)
+                };
+
+                if (template.Faction == 1 || template.Faction == 2 || template.Faction == 3 ||
+                    template.Faction == 4 || template.Faction == 5 || template.Faction == 6 ||
+                    template.Faction == 115 || template.Faction == 116 || template.Faction == 1610 ||
+                    template.Faction == 1629 || template.Faction == 2203 || template.Faction == 2204) // player factions
+                    template.Faction = 0;
+
+                template.Flags &= ~GameObjectFlag.Triggered;
+                template.Flags &= ~GameObjectFlag.Damaged;
+                template.Flags &= ~GameObjectFlag.Destroyed;
+
+                templates.Add(goT.Key.GetEntry(), template, null);
+            }
+
+            var templatesDb = SQLDatabase.GetDict<uint, GameObjectTemplateNonWDB>(templates.Keys());
+            return SQLUtil.CompareDicts(templates, templatesDb, StoreNameType.GameObject);
         }
     }
 }

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using PacketParser.Enums;
-using PacketParser.Processing;
-using PacketParser.Misc;
+using WowPacketParser.Enums;
+using WowPacketParser.Misc;
+using WowPacketParser.Store;
 
-namespace PacketParser.SQL
+namespace WowPacketParser.SQL
 {
     public static class SQLUtil
     {
@@ -128,15 +128,16 @@ namespace PacketParser.SQL
         /// <para>Compare two dictionaries (of the same types) and creates SQL inserts
         ///  or updates accordingly.</para>
         /// <remarks>Second dictionary can be null (only inserts queries will be produced)</remarks>
+        /// <remarks>Use DBTableName and DBFieldName attributes to specify table and field names, in TK</remarks>
         /// </summary>
         /// <typeparam name="T">Type of the primary key (uint)</typeparam>
-        /// <typeparam name="TK">Type of the WDB struct (field names and types must match DB field name and types)</typeparam>
+        /// <typeparam name="TK">Type of the WDB struct (field types must match DB field)</typeparam>
         /// <param name="dict1">Dictionary retrieved from  parser</param>
         /// <param name="dict2">Dictionary retrieved from  DB</param>
         /// <param name="storeType">Are we dealing with Spells, Quests, Units, ...?</param>
         /// <param name="primaryKeyName">The name of the primary key, usually "entry"</param>
         /// <returns>A string containing full SQL queries</returns>
-        public static string CompareDicts<T, TK>(TimeSpanDictionary<T, TK> dict1, TimeSpanDictionary<T, TK> dict2, StoreNameType storeType, string primaryKeyName = "entry")
+        public static string CompareDicts<T, TK>(StoreDictionary<T, TK> dict1, StoreDictionary<T, TK> dict2, StoreNameType storeType, string primaryKeyName = "entry")
         {
             var tableAttrs = (DBTableNameAttribute[])typeof(TK).GetCustomAttributes(typeof(DBTableNameAttribute), false);
             if (tableAttrs.Length <= 0)
@@ -149,8 +150,6 @@ namespace PacketParser.SQL
 
             var rowsIns = new List<QueryBuilder.SQLInsertRow>();
             var rowsUpd = new List<QueryBuilder.SQLUpdateRow>();
-
-            var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
 
             foreach (var elem1 in dict1)
             {
@@ -184,6 +183,9 @@ namespace PacketParser.SQL
                             continue;
                         }
 
+                        if ((val2 is Array) && val1 == null)
+                            continue;
+
                         if (!Utilities.EqualValues(val1, val2))
                             row.AddValue(field.Item2.Name, val1);
                     }
@@ -191,23 +193,38 @@ namespace PacketParser.SQL
                     var key = Convert.ToUInt32(elem1.Key);
 
                     row.AddWhere(primaryKeyName, key);
-                    row.Comment = names.GetName(storeType, (int)key, false);
+                    row.Comment = StoreGetters.GetName(storeType, (int)key, false);
                     row.Table = tableName;
 
-                    if (row.ValueCount != 0)
-                        rowsUpd.Add(row);
+                    if (row.ValueCount == 0)
+                        continue;
+
+                    var lastField = fields[fields.Count - 1];
+                    if (lastField.Item2.Name == "WDBVerified")
+                    {
+                        var wdbvSniff = (int)lastField.Item1.GetValue(elem1.Value.Item1);
+                        var wdbvDB = (int)lastField.Item1.GetValue(dict2[elem1.Key].Item1);
+
+                        if (wdbvDB > wdbvSniff) // skip update if DB already has a WDBVerified higher than this one
+                            continue;
+                    }
+
+                    rowsUpd.Add(row);
                 }
                 else // insert new
                 {
                     var row = new QueryBuilder.SQLInsertRow();
                     row.AddValue(primaryKeyName, elem1.Key);
-                    row.Comment = names.GetName(storeType, Convert.ToInt32(elem1.Key), false);
+                    row.Comment = StoreGetters.GetName(storeType, Convert.ToInt32(elem1.Key), false);
 
                     foreach (var field in fields)
                     {
                         if (field.Item1.FieldType.BaseType == typeof(Array))
                         {
                             var arr = (Array)field.Item1.GetValue(elem1.Value.Item1);
+                            if (arr == null)
+                                continue;
+
                             for (var i = 0; i < arr.Length; i++)
                                 row.AddValue(field.Item2.Name + (field.Item2.StartAtZero ? i : i + 1), arr.GetValue(i));
 
@@ -230,6 +247,7 @@ namespace PacketParser.SQL
         /// <para>Compare two dictionaries (of the same types) and creates SQL inserts
         ///  or updates accordingly.</para>
         /// <remarks>Second dictionary can be null (only inserts queries will be produced)</remarks>
+        /// <remarks>Use DBTableName and DBFieldName attributes to specify table and field names, in TK</remarks>
         /// </summary>
         /// <typeparam name="T">Type of the first primary key</typeparam>
         /// /// <typeparam name="TG">Type of the second primary key</typeparam>
@@ -240,9 +258,8 @@ namespace PacketParser.SQL
         /// <param name="primaryKeyName1">The name of the first primary key</param>
         /// <param name="primaryKeyName2">The name of the second primary key</param>
         /// <returns>A string containing full SQL queries</returns>
-        public static string CompareDicts<T, TG, TK>(TimeSpanDictionary<Tuple<T, TG>, TK> dict1, TimeSpanDictionary<Tuple<T, TG>, TK> dict2, StoreNameType storeType, string primaryKeyName1, string primaryKeyName2)
+        public static string CompareDicts<T, TG, TK>(StoreDictionary<Tuple<T, TG>, TK> dict1, StoreDictionary<Tuple<T, TG>, TK> dict2, StoreNameType storeType, string primaryKeyName1, string primaryKeyName2)
         {
-            var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
             var tableAttrs = (DBTableNameAttribute[])typeof(TK).GetCustomAttributes(typeof(DBTableNameAttribute), false);
             if (tableAttrs.Length <= 0)
                 return string.Empty;
@@ -296,24 +313,39 @@ namespace PacketParser.SQL
 
                     row.AddWhere(primaryKeyName1, key1);
                     row.AddWhere(primaryKeyName2, key2);
-                    row.Comment = names.GetName(storeType, (int)key1, false);
+                    row.Comment = StoreGetters.GetName(storeType, (int)key1, false);
                     row.Table = tableName;
 
-                    if (row.ValueCount != 0)
-                        rowsUpd.Add(row);
+                    if (row.ValueCount == 0)
+                        continue;
+
+                    var lastField = fields[fields.Count - 1];
+                    if (lastField.Item2.Name == "WDBVerified")
+                    {
+                        var wdbvSniff = (int)lastField.Item1.GetValue(elem1.Value.Item1);
+                        var wdbvDB = (int)lastField.Item1.GetValue(dict2[elem1.Key].Item1);
+
+                        if (wdbvDB > wdbvSniff) // skip update if DB already has a WDBVerified higher than this one
+                            continue;
+                    }
+
+                    rowsUpd.Add(row);
                 }
                 else // insert new
                 {
                     var row = new QueryBuilder.SQLInsertRow();
                     row.AddValue(primaryKeyName1, elem1.Key.Item1);
                     row.AddValue(primaryKeyName2, elem1.Key.Item2);
-                    row.Comment = names.GetName(storeType, Convert.ToInt32(elem1.Key.Item1), false);
+                    row.Comment = StoreGetters.GetName(storeType, Convert.ToInt32(elem1.Key.Item1), false);
 
                     foreach (var field in fields)
                     {
                         if (field.Item1.FieldType.BaseType == typeof(Array))
                         {
                             var arr = (Array)field.Item1.GetValue(elem1.Value.Item1);
+                            if (arr == null)
+                                continue;
+
                             for (var i = 0; i < arr.Length; i++)
                                 row.AddValue(field.Item2.Name + (field.Item2.StartAtZero ? i : i + 1), arr.GetValue(i));
 

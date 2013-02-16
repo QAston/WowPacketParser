@@ -1,5 +1,6 @@
 ﻿using System;
 using WowPacketParser.Enums;
+using WowPacketParser.Misc;
 using WowPacketParser.Store;
 using WowPacketParser.Store.Objects;
 
@@ -12,6 +13,9 @@ namespace WowPacketParser.SQL.Builders
             if (Storage.QuestTemplates.IsEmpty())
                 return String.Empty;
 
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.quest_template))
+                return string.Empty;
+
             var entries = Storage.QuestTemplates.Keys();
             var templatesDb = SQLDatabase.GetDict<uint, QuestTemplate>(entries, "Id");
 
@@ -22,6 +26,9 @@ namespace WowPacketParser.SQL.Builders
         {
             if (Storage.UnitTemplates.IsEmpty())
                 return String.Empty;
+
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_template))
+                return string.Empty;
 
             var entries = Storage.UnitTemplates.Keys();
             var templatesDb = SQLDatabase.GetDict<uint, UnitTemplate>(entries);
@@ -34,16 +41,36 @@ namespace WowPacketParser.SQL.Builders
             if (Storage.GameObjectTemplates.IsEmpty())
                 return String.Empty;
 
-            var entries = Storage.GameObjectTemplates.Keys();
-            var tempatesDb = SQLDatabase.GetDict<uint, GameObjectTemplate>(entries);
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.gameobject_template))
+                return string.Empty;
 
-            return SQLUtil.CompareDicts(Storage.GameObjectTemplates, tempatesDb, StoreNameType.GameObject);
+            var entries = Storage.GameObjectTemplates.Keys();
+            var templatesDb = SQLDatabase.GetDict<uint, GameObjectTemplate>(entries);
+
+            return SQLUtil.CompareDicts(Storage.GameObjectTemplates, templatesDb, StoreNameType.GameObject);
+        }
+
+        public static string Item()
+        {
+            if (Storage.ItemTemplates.IsEmpty())
+                return String.Empty;
+
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.item_template))
+                return string.Empty;
+
+            var entries = Storage.ItemTemplates.Keys();
+            var templatesDb = SQLDatabase.GetDict<uint, ItemTemplate>(entries);
+
+            return SQLUtil.CompareDicts(Storage.ItemTemplates, templatesDb, StoreNameType.Item);
         }
 
         public static string PageText()
         {
             if (Storage.PageTexts.IsEmpty())
                 return String.Empty;
+
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.page_text))
+                return string.Empty;
 
             var entries = Storage.PageTexts.Keys();
             var templatesDb = SQLDatabase.GetDict<uint, PageText>(entries);
@@ -55,6 +82,9 @@ namespace WowPacketParser.SQL.Builders
         {
             if (Storage.NpcTexts.IsEmpty())
                 return String.Empty;
+
+            if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.npc_text))
+                return string.Empty;
 
             foreach (var npcText in Storage.NpcTexts)
                 npcText.Value.Item1.ConvertToDBStruct();

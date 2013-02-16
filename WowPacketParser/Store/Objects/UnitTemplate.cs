@@ -1,11 +1,10 @@
-﻿using PacketParser.Enums;
-using PacketParser.SQL;
-using PacketParser.Misc;
+﻿using WowPacketParser.Enums;
+using WowPacketParser.SQL;
 
-namespace PacketParser.DataStructures
+namespace WowPacketParser.Store.Objects
 {
     [DBTableName("creature_template")]
-    public class UnitTemplate : ITextOutputDisabled
+    public class UnitTemplate
     {
         [DBFieldName("name")]
         public string Name;
@@ -39,7 +38,7 @@ namespace PacketParser.DataStructures
 
         public int UnkInt; // pre 3.1
 
-        [DBFieldName("PetSpellDataId")]
+        //[DBFieldName("PetSpellDataId")]
         public uint PetSpellData;
 
         [DBFieldName("modelid", Count = 4)]

@@ -2,18 +2,23 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using WowPacketParser.Misc;
 
-namespace PacketParser.SQL
+namespace WowPacketParser.SQL
 {
     public class SQLFile : IDisposable
     {
         private StreamWriter _file;
 
+        private readonly string _fileName;
+
         private readonly List<string> _sqls = new List<string>();
 
-        public SQLFile(string file, bool overwrite)
+        public SQLFile(string file)
         {
-            _file = new StreamWriter(file, !overwrite);
+            if (string.IsNullOrWhiteSpace(Settings.SQLFileName)) // only delete file if no global
+                File.Delete(file);                               // file name was specified
+            _fileName = file;
         }
 
         ~SQLFile()
@@ -23,9 +28,6 @@ namespace PacketParser.SQL
 
         public void WriteData(string sql)
         {
-            if (_file == null)
-                return;
-
             if (string.IsNullOrWhiteSpace(sql))
                 return;
 
@@ -34,11 +36,10 @@ namespace PacketParser.SQL
 
         public bool WriteToFile(string header)
         {
-            if (_file == null)
-                return false;
-
             if (_sqls.All(String.IsNullOrWhiteSpace))
                 return false;
+
+            _file = new StreamWriter(_fileName, true);
 
             _file.WriteLine(header);
 

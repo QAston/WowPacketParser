@@ -1,6 +1,6 @@
-namespace PacketParser.Enums
+namespace WowPacketParser.Enums
 {
-    public enum ItemSpellTriggerType
+    public enum ItemSpellTriggerType : sbyte
     {
         OnUse = 0,
         OnEquip = 1,

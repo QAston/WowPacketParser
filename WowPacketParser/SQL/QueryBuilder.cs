@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace PacketParser.SQL
+namespace WowPacketParser.SQL
 {
-    public static class QueryBuilder
+    static class QueryBuilder
     {
         public class SQLUpdate : ISQLQuery
         {
@@ -76,8 +76,10 @@ namespace PacketParser.SQL
             /// <param name="noQuotes">If value is a string and this is set to true, value will not be 'quoted' (SQL variables)</param>
             public void AddValue(string field, object value, bool isFlag = false, bool noQuotes = false)
             {
-                if (value != null)
-                    _values.Add(new KeyValuePair<string, object>(SQLUtil.AddBackQuotes(field), SQLUtil.ToSQLValue(value, isFlag, noQuotes)));
+                if (value == null)
+                    value = "";
+
+                _values.Add(new KeyValuePair<string, object>(SQLUtil.AddBackQuotes(field), SQLUtil.ToSQLValue(value, isFlag, noQuotes)));
             }
 
             /// <summary>

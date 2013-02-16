@@ -1,7 +1,8 @@
-namespace PacketParser.Enums
+namespace WowPacketParser.Enums
 {
-    public enum ItemModType
+    public enum ItemModType : sbyte
     {
+        None = -1,
         Mana = 0,
         Health = 1,
         Agility = 3,
@@ -46,5 +47,6 @@ namespace PacketParser.Enums
         HealthRegeneration = 46,
         SpellPenetration = 47,
         BlockValue = 48,
+        Mastery = 49,
     }
 }
