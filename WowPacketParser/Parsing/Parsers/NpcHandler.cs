@@ -331,7 +331,6 @@ namespace PacketParser.Parsing.Parsers
             Storage.GossipSelects.Add(Tuple.Create(menuEntry, gossipId), null, packet.TimeSpan);
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_GOSSIP_MESSAGE)]
         public static void HandleNpcGossip(Packet packet)
         {
@@ -424,11 +423,5 @@ namespace PacketParser.Parsing.Parsers
             if (packet.Opcode == Opcodes.GetOpcode(Opcode.SMSG_THREAT_REMOVE))
                 packet.ReadPackedGuid("Victim GUID");
         }
-            packet.StoreBeginList("Quests");
-            packet.StoreEndList();
-            packet.StoreBeginList("Quests");
-                packet.StoreBeginList("Units", i);
-                packet.StoreEndList();
-            packet.StoreEndList();
     }
 }

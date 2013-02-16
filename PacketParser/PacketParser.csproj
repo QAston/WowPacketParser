@@ -68,6 +68,9 @@
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\Dependencies\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
+    <Reference Include="Ionic.Zlib">
+      <HintPath>..\Dependencies\Ionic.Zlib.dll</HintPath>
+    </Reference>
     <Reference Include="MySql.Data">
       <HintPath>..\Dependencies\MySql.Data.dll</HintPath>
     </Reference>
@@ -624,8 +627,8 @@
     <Compile Include="..\wowpacketparser\enums\UnknownFlags.cs">
       <Link>Enums\UnknownFlags.cs</Link>
     </Compile>
-    <Compile Include="..\wowpacketparser\enums\UpdateField.cs">
-      <Link>Enums\UpdateField.cs</Link>
+    <Compile Include="..\wowpacketparser\enums\UpdateFields.cs">
+      <Link>Enums\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\UpdateFlag.cs">
       <Link>Enums\UpdateFlag.cs</Link>
@@ -642,14 +645,14 @@
     <Compile Include="..\wowpacketparser\enums\version\UpdateFields.cs">
       <Link>Enums\Version\UpdateFields.cs</Link>
     </Compile>
-    <Compile Include="..\wowpacketparser\enums\version\v3_3_0_10958\UpdateField.cs">
-      <Link>Enums\Version\V3_3_0_10958\UpdateField.cs</Link>
+    <Compile Include="..\wowpacketparser\enums\version\v3_3_0_10958\UpdateFields.cs">
+      <Link>Enums\Version\V3_3_0_10958\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\version\v3_3_5a_12340\Opcodes.cs">
       <Link>Enums\Version\V3_3_5a_12340\Opcodes.cs</Link>
     </Compile>
-    <Compile Include="..\wowpacketparser\enums\version\v3_3_5a_12340\UpdateField.cs">
-      <Link>Enums\Version\V3_3_5a_12340\UpdateField.cs</Link>
+    <Compile Include="..\wowpacketparser\enums\version\v3_3_5a_12340\UpdateFields.cs">
+      <Link>Enums\Version\V3_3_5a_12340\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\version\v4_0_3_13329\Opcodes.cs">
       <Link>Enums\Version\V4_0_3_13329\Opcodes.cs</Link>
@@ -657,8 +660,8 @@
     <Compile Include="..\wowpacketparser\enums\version\v4_0_6_13596\Opcodes.cs">
       <Link>Enums\Version\V4_0_6_13596\Opcodes.cs</Link>
     </Compile>
-    <Compile Include="..\wowpacketparser\enums\version\v4_0_6_13596\UpdateField.cs">
-      <Link>Enums\Version\V4_0_6_13596\UpdateField.cs</Link>
+    <Compile Include="..\wowpacketparser\enums\version\v4_0_6_13596\UpdateFields.cs">
+      <Link>Enums\Version\V4_0_6_13596\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\version\v4_1_0_13914\Opcodes.cs">
       <Link>Enums\Version\V4_1_0_13914\Opcodes.cs</Link>
@@ -666,26 +669,26 @@
     <Compile Include="..\wowpacketparser\enums\version\v4_2_0_14480\Opcodes.cs">
       <Link>Enums\Version\V4_2_0_14480\Opcodes.cs</Link>
     </Compile>
-    <Compile Include="..\wowpacketparser\enums\version\v4_2_0_14480\UpdateField.cs">
-      <Link>Enums\Version\V4_2_0_14480\UpdateField.cs</Link>
+    <Compile Include="..\wowpacketparser\enums\version\v4_2_0_14480\UpdateFields.cs">
+      <Link>Enums\Version\V4_2_0_14480\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\version\v4_2_2_14545\Opcodes.cs">
       <Link>Enums\Version\V4_2_2_14545\Opcodes.cs</Link>
     </Compile>
-    <Compile Include="..\wowpacketparser\enums\version\v4_2_2_14545\UpdateField.cs">
-      <Link>Enums\Version\V4_2_2_14545\UpdateField.cs</Link>
+    <Compile Include="..\wowpacketparser\enums\version\v4_2_2_14545\UpdateFields.cs">
+      <Link>Enums\Version\V4_2_2_14545\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\version\v4_3_0_15005\Opcodes.cs">
       <Link>Enums\Version\V4_3_0_15005\Opcodes.cs</Link>
     </Compile>
-    <Compile Include="..\wowpacketparser\enums\version\v4_3_0_15005\UpdateField.cs">
-      <Link>Enums\Version\V4_3_0_15005\UpdateField.cs</Link>
+    <Compile Include="..\wowpacketparser\enums\version\v4_3_0_15005\UpdateFields.cs">
+      <Link>Enums\Version\V4_3_0_15005\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\version\v4_3_2_15211\Opcodes.cs">
       <Link>Enums\Version\V4_3_2_15211\Opcodes.cs</Link>
     </Compile>
-    <Compile Include="..\wowpacketparser\enums\version\v4_3_2_15211\UpdateField.cs">
-      <Link>Enums\Version\V4_3_2_15211\UpdateField.cs</Link>
+    <Compile Include="..\wowpacketparser\enums\version\v4_3_2_15211\UpdateFields.cs">
+      <Link>Enums\Version\V4_3_2_15211\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\version\v4_3_3_15354\Opcodes.cs">
       <Link>Enums\Version\V4_3_3_15354\Opcodes.cs</Link>
@@ -696,7 +699,25 @@
     <Compile Include="..\wowpacketparser\enums\version\v4_3_4_15595\Opcodes.cs">
       <Link>Enums\Version\V4_3_4_15595\Opcodes.cs</Link>
     </Compile>
-    <Compile Include="..\WowPacketParser\Enums\Version\V4_3_4_15595\SplineFlag434.cs">
+    <Compile Include="..\wowpacketparser\enums\version\v5_0_4_16016\Opcodes.cs">
+      <Link>Enums\Version\V5_0_4_16016\Opcodes.cs</Link>
+    </Compile>
+    <Compile Include="..\wowpacketparser\enums\version\v5_0_5_16048\Opcodes.cs">
+      <Link>Enums\Version\V5_0_5_16048\Opcodes.cs</Link>
+    </Compile>
+    <Compile Include="..\wowpacketparser\enums\version\v5_1_0_16309\Opcodes.cs">
+      <Link>Enums\Version\V5_1_0_16309\Opcodes.cs</Link>
+    </Compile>
+    <Compile Include="..\wowpacketparser\enums\version\v5_0_4_16016\UpdateFields.cs">
+      <Link>Enums\Version\V5_0_4_16016\UpdateFields.cs</Link>
+    </Compile>
+    <Compile Include="..\wowpacketparser\enums\version\v5_0_5_16048\UpdateFields.cs">
+      <Link>Enums\Version\V5_0_5_16048\UpdateFields.cs</Link>
+    </Compile>
+    <Compile Include="..\wowpacketparser\enums\version\v5_1_0_16309\UpdateFields.cs">
+      <Link>Enums\Version\V5_1_0_16309\UpdateFields.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Enums\Version\v4_3_4_15595\SplineFlag434.cs">
       <Link>Enums\SplineFlag434.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\version\v4_3_4_15595\UpdateFields.cs">
@@ -778,7 +799,7 @@
       <Link>DataStructures\Quaternion.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\misc\UpdateField.cs">
-      <Link>DataStructures\UpdateField.cs</Link>
+      <Link>DataStructures\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\misc\Utilities.cs">
       <Link>Misc\Utilities.cs</Link>

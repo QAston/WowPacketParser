@@ -857,8 +857,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(charGuids[c], 2);
                 packet.ReadXORByte(charGuids[c], 3);
 
-                packet.WriteGuid("Character GUID", charGuids[c], c);
-                packet.WriteGuid("Guild GUID", guildGuids[c], c);
+                packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
+                packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
             }
         }
 
@@ -951,25 +951,12 @@ namespace PacketParser.Parsing.Parsers
 
                 var playerGuid = new Guid(BitConverter.ToUInt64(charGuids[c], 0));
 
-                packet.WriteGuid("Character GUID", charGuids[c], c);
-                packet.WriteGuid("Guild GUID", guildGuids[c], c);
-
-                if (firstLogins[c])
-                {
-                    var startPos = new StartPosition();
-                    startPos.Map = mapId;
-                    startPos.Position = new Vector3(x, y, z);
-                    startPos.Zone = zone;
-
-                    Storage.StartPositions.Add(new Tuple<Race, Class>(race, clss), startPos, packet.TimeSpan);
-                }
+                packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
+                packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
 
                 var playerInfo = new Player { Race = race, Class = clss, Name = name, FirstLogin = firstLogins[c], Level = level };
-                if (Storage.Objects.ContainsKey(playerGuid))
-                    Storage.Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
-                else
-                    Storage.Objects.Add(playerGuid, playerInfo, packet.TimeSpan);
-                StoreGetters.AddName(playerGuid, name);
+                PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
+                PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(playerGuid, name);
             }
 
             for (var i = 0; i < unkCounter; ++i)
@@ -1198,7 +1185,7 @@ namespace PacketParser.Parsing.Parsers
 
             var guid = packet.StartBitStream(5, 7, 4, 2, 3, 1, 6, 0);
             packet.ParseBitStream(guid, 0, 6, 1, 2, 4, 7, 3, 5);
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.SMSG_XP_GAIN_ABORTED, ClientVersionBuild.V4_3_4_15595)] // 4.3.4, related to EVENT_TRIAL_CAP_REACHED_LEVEL
@@ -1301,7 +1288,6 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Value", i);
             }
             packet.StoreEndList();
-                character.Level = level;
         }
 
         [Parser(Opcode.SMSG_HEALTH_UPDATE)]

@@ -323,7 +323,6 @@ namespace PacketParser.Parsing.Parsers
             return aura;
         }
 
-        [HasSniffData] // in ReadAuraUpdateBlock and ReadAuraUpdateBlock505
         [Parser(Opcode.SMSG_AURA_UPDATE_ALL)]
         [Parser(Opcode.SMSG_AURA_UPDATE)]
         public static void HandleAuraUpdate(Packet packet)
@@ -540,7 +539,7 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadXORByte(transportGuid, 0);
                     packet.ReadXORByte(transportGuid, 3);
 
-                    packet.WriteGuid("Transport Guid", transportGuid);
+                    packet.StoreBitstreamGuid("Transport Guid", transportGuid);
                     packet.WriteLine("Transport Position: {0}", tpos);
                 }
 
@@ -571,7 +570,7 @@ namespace PacketParser.Parsing.Parsers
                 if (hasSplineElev)
                     packet.ReadSingle("Spline Elevation");
 
-                packet.WriteGuid("Guid", guid);
+                packet.StoreBitstreamGuid("Guid", guid);
                 packet.WriteLine("Position: {0}", pos);
             }
         }
@@ -708,7 +707,6 @@ namespace PacketParser.Parsing.Parsers
             }
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_SPELL_START)]
         [Parser(Opcode.SMSG_SPELL_GO)]
         public static void HandleSpellStart(Packet packet)
@@ -976,7 +974,7 @@ namespace PacketParser.Parsing.Parsers
 
             var guid = packet.StartBitStream(0, 4, 3, 6, 5, 7, 2, 1);
             packet.ParseBitStream(guid, 5, 7, 6, 1, 4, 3, 2, 0);
-            packet.WriteGuid("Caster Guid", guid);
+            packet.StoreBitstreamGuid("Caster Guid", guid);
         }
 
         [Parser(Opcode.SMSG_PLAY_SPELL_VISUAL_KIT, ClientVersionBuild.V4_3_4_15595)] // 4.3.4

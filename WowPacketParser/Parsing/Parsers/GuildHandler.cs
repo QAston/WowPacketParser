@@ -121,8 +121,8 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid2, 5);
             packet.ReadXORByte(guid1, 1);
             packet.ReadXORByte(guid1, 7);
-            packet.WriteGuid("Guid1", guid1);
-            packet.WriteGuid("Guid2", guid2);
+            packet.StoreBitstreamGuid("Guid1", guid1);
+            packet.StoreBitstreamGuid("Guid2", guid2);
         }
 
         [Parser(Opcode.CMSG_GUILD_ROSTER, ClientVersionBuild.V4_3_3_15354, ClientVersionBuild.V4_3_4_15595)]
@@ -164,8 +164,8 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid2, 2);
             packet.ReadXORByte(guid1, 7);
             packet.ReadXORByte(guid1, 6);
-            packet.WriteGuid("Guid1", guid1);
-            packet.WriteGuid("Guid2", guid2);
+            packet.StoreBitstreamGuid("Guid1", guid1);
+            packet.StoreBitstreamGuid("Guid2", guid2);
         }
 
         [Parser(Opcode.CMSG_GUILD_ROSTER, ClientVersionBuild.V4_3_4_15595)]
@@ -207,8 +207,8 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid2, 3);
             packet.ReadXORByte(guid2, 1);
             packet.ReadXORByte(guid1, 6);
-            packet.WriteGuid("Guid1", guid1);
-            packet.WriteGuid("Guid2", guid2);
+            packet.StoreBitstreamGuid("Guid1", guid1);
+            packet.StoreBitstreamGuid("Guid2", guid2);
         }
 
         [Parser(Opcode.SMSG_GUILD_ROSTER, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6_13596)]
@@ -467,7 +467,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(6, 5, 2, 4, 1, 3, 7, 0);
             packet.ParseBitStream(guid, 1, 3, 5, 0, 4, 2, 6, 7);
-            packet.WriteGuid("Guild Guid", guid);
+            packet.StoreBitstreamGuid("Guild Guid", guid);
         }
 
         [Parser(Opcode.CMSG_REQUEST_GUILD_PARTY_STATE, ClientVersionBuild.V4_3_3_15354, ClientVersionBuild.V4_3_4_15595)]
@@ -475,7 +475,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(0, 3, 2, 5, 6, 1, 4, 7);
             packet.ParseBitStream(guid, 2, 5, 3, 0, 1, 4, 7, 6);
-            packet.WriteGuid("Guild Guid", guid);
+            packet.StoreBitstreamGuid("Guild Guid", guid);
         }
 
         [Parser(Opcode.CMSG_REQUEST_GUILD_PARTY_STATE, ClientVersionBuild.V4_3_4_15595)]
@@ -1360,7 +1360,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(6, 5, 2, 3, 0, 4, 7, 1);
             packet.ParseBitStream(guid, 1, 6, 4, 5, 3, 7, 0, 2);
-            packet.WriteGuid("GUID", guid);
+            packet.StoreBitstreamGuid("GUID", guid);
         }
 
         [Parser(Opcode.CMSG_QUERY_GUILD_XP, ClientVersionBuild.V4_3_0_15005, ClientVersionBuild.V4_3_4_15595)]
@@ -1368,7 +1368,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(2, 4, 5, 6, 1, 0, 3, 7);
             packet.ParseBitStream(guid, 0, 1, 4, 3, 2, 6, 7, 5);
-            packet.WriteGuid("GUID", guid);
+            packet.StoreBitstreamGuid("GUID", guid);
         }
 
         [Parser(Opcode.CMSG_GUILD_REQUEST_MAX_DAILY_XP, ClientVersionBuild.V4_3_4_15595)]
@@ -1400,7 +1400,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(7, 2, 0, 4, 6, 5, 1, 3);
             packet.ParseBitStream(guid, 7, 5, 2, 6, 1, 4, 0, 3);
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.CMSG_GUILD_QUERY_RANKS, ClientVersionBuild.V4_3_3_15354, ClientVersionBuild.V4_3_4_15595)]
@@ -1408,7 +1408,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(2, 6, 1, 0, 5, 3, 7, 4);
             packet.ParseBitStream(guid, 3, 6, 5, 4, 0, 7, 2, 1);
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.CMSG_GUILD_QUERY_RANKS, ClientVersionBuild.V4_3_4_15595)]

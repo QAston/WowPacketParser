@@ -9,7 +9,7 @@ using PacketDumper.Misc;
 using PacketParser.Misc;
 using PacketParser.SQL;
 
-namespace WowPacketParser
+namespace PacketParser
 {
     public static class Program
     {

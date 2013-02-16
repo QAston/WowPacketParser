@@ -9,6 +9,9 @@ using PacketParser.Enums.Version.V4_3_0_15005;
 using PacketParser.Enums.Version.V4_3_2_15211;
 using PacketParser.Enums.Version.V4_3_3_15354;
 using PacketParser.Enums.Version.V4_3_4_15595;
+using PacketParser.Enums.Version.V5_0_4_16016;
+using PacketParser.Enums.Version.V5_0_5_16048;
+using PacketParser.Enums.Version.V5_1_0_16309;
 using PacketParser.Misc;
 using System;
 
@@ -21,7 +24,7 @@ namespace PacketParser.Enums.Version
 
         private static BiDictionary<Opcode, int> GetOpcodeDictionary(ClientVersionBuild build)
         {
-            switch (build)
+switch (build)
             {
                 case ClientVersionBuild.V2_4_3_8606:
                 case ClientVersionBuild.V3_0_2_9056:
@@ -70,7 +73,7 @@ namespace PacketParser.Enums.Version
                     return Opcodes_4_2_2.Opcodes();
                 }
                 case ClientVersionBuild.V4_3_0_15005:
-                case ClientVersionBuild.V4_3_0_15050:
+                case ClientVersionBuild.V4_3_0a_15050:
                 {
                     return Opcodes_4_3_0.Opcodes();
                 }
@@ -85,6 +88,21 @@ namespace PacketParser.Enums.Version
                 case ClientVersionBuild.V4_3_4_15595:
                 {
                     return Opcodes_4_3_4.Opcodes();
+                }
+                case ClientVersionBuild.V5_0_4_16016:
+                {
+                    return Opcodes_5_0_4.Opcodes();
+                }
+                case ClientVersionBuild.V5_0_5_16048:
+                case ClientVersionBuild.V5_0_5a_16057:
+                case ClientVersionBuild.V5_0_5b_16135:
+                {
+                    return Opcodes_5_0_5.Opcodes();
+                }
+                case ClientVersionBuild.V5_1_0_16309:
+                case ClientVersionBuild.V5_1_0a_16357:
+                {
+                    return Opcodes_5_1_0.Opcodes();
                 }
                 default:
                 {

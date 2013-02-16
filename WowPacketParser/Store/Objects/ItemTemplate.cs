@@ -1,9 +1,11 @@
 ﻿using PacketParser.Enums;
-using WowPacketParser.SQL;
+using PacketParser.SQL;
+using PacketParser.Misc;
 
 namespace PacketParser.DataStructures
 {
     [DBTableName("item_template")]
+    public class ItemTemplate : ITextOutputDisabled
     {
         [DBFieldName("class")]
         public ItemClass Class;

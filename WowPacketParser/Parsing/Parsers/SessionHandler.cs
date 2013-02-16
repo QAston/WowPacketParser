@@ -12,6 +12,7 @@ namespace PacketParser.Parsing.Parsers
     public static class SessionHandler
     {
         public static Dictionary<int, ZlibCodec> z_streams = new Dictionary<int, ZlibCodec>();
+
         [Parser(Opcode.SMSG_AUTH_CHALLENGE, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_1a_13205)]
         public static void HandleServerAuthChallenge(Packet packet)
         {
@@ -53,37 +54,6 @@ namespace PacketParser.Parsing.Parsers
 
             packet.ReadUInt32("Key pt5");
             packet.ReadUInt32("Key pt8");            
-            packet.ReadUInt32("Server Seed");
-            packet.ReadUInt32("Key pt1");
-            packet.ReadByte("Unk Byte");
-            packet.ReadUInt32("Key pt7");
-            packet.ReadUInt32("Key pt4");
-            packet.ReadUInt32("Key pt3");
-            packet.ReadUInt32("Key pt6");
-            packet.ReadUInt32("Key pt2");
-            }
-        }
-
-        [Parser(Opcode.SMSG_AUTH_CHALLENGE, ClientVersionBuild.V4_0_1a_13205, ClientVersionBuild.V4_0_3_13329)]
-        public static void HandleServerAuthChallenge401(Packet packet)
-        {
-            packet.ReadUInt32("Key pt3");
-            packet.ReadUInt32("Key pt5");
-            packet.ReadByte("Unk Byte");
-            packet.ReadUInt32("Server Seed");
-            packet.ReadUInt32("Key pt7");
-            packet.ReadUInt32("Key pt6");
-            packet.ReadUInt32("Key pt1");
-            packet.ReadUInt32("Key pt2");
-            packet.ReadUInt32("Key pt8");
-            packet.ReadUInt32("Key pt4");
-        }
-
-        [Parser(Opcode.SMSG_AUTH_CHALLENGE, ClientVersionBuild.V4_0_3_13329, ClientVersionBuild.V4_2_2_14545)]
-        public static void HandleServerAuthChallenge403(Packet packet)
-        {
-            packet.ReadUInt32("Key pt5");
-            packet.ReadUInt32("Key pt8");
             packet.ReadUInt32("Server Seed");
             packet.ReadUInt32("Key pt1");
             packet.ReadByte("Unk Byte");

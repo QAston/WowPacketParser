@@ -467,7 +467,6 @@ namespace PacketParser.Parsing.Parsers
             }
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_NEW_WORLD, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
         [Parser(Opcode.SMSG_LOGIN_VERIFY_WORLD)]
         public static void HandleEnterWorld(Packet packet)
@@ -476,7 +475,6 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadVector4("Position");
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_NEW_WORLD, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleNewWorld422(Packet packet)
         {
@@ -485,7 +483,6 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadSingle("Orientation");
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_NEW_WORLD, ClientVersionBuild.V4_3_4_15595, ClientVersionBuild.V5_1_0_16309)]
         public static void HandleNewWorld434(Packet packet)
         {
@@ -497,7 +494,6 @@ namespace PacketParser.Parsing.Parsers
             packet.AddSniffData(StoreNameType.Map, (int)CurrentMapId, "NEW_WORLD");
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_NEW_WORLD, ClientVersionBuild.V5_1_0_16309)]
         public static void HandleNewWorld510(Packet packet)
         {
@@ -2839,7 +2835,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ParseBitStream(guid, 2, 4, 3);
             packet.ReadSingle("Speed");
             packet.ParseBitStream(guid, 0, 6, 5, 1, 7);
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
 
@@ -3966,7 +3962,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(7, 2, 0, 4, 3, 5, 6, 1);
             packet.ParseBitStream(guid, 1, 3, 2, 6, 0, 5, 4, 7);
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.CMSG_SET_ACTIVE_MOVER, ClientVersionBuild.V4_3_4_15595)]
@@ -4021,14 +4017,12 @@ namespace PacketParser.Parsing.Parsers
             ReadMovementInfo(ref packet, guid);
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_SET_PHASE_SHIFT, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6a_13623)]
         public static void HandlePhaseShift(Packet packet)
         {
             PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentPhaseMask = packet.ReadInt32("Phase Mask");
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_SET_PHASE_SHIFT, ClientVersionBuild.V4_0_6a_13623, ClientVersionBuild.V4_1_0_13914)]
         public static void HandlePhaseShift406(Packet packet)
         {
@@ -4062,7 +4056,6 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadUInt32("Flag"); // can be 0, 4 or 8, 8 = normal world, others are unknown
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_SET_PHASE_SHIFT, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
         public static void HandlePhaseShift422(Packet packet)
         {
@@ -8588,7 +8581,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadInt32("Unk Int32"); // ##
             var guid = packet.StartBitStream(3, 0, 1, 5, 7, 4, 6, 2);
             packet.ParseBitStream(guid, 2, 7, 1, 4, 5, 0, 3, 6);
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.SMSG_MOVE_SET_ACTIVE_MOVER, ClientVersionBuild.V4_3_0_15005, ClientVersionBuild.V4_3_4_15595)]

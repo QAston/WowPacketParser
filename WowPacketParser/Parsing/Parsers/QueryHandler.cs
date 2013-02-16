@@ -82,7 +82,6 @@ namespace PacketParser.Parsing.Parsers
             ReadQueryHeader(ref packet);
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_CREATURE_QUERY_RESPONSE)]
         public static void HandleCreatureQueryResponse(Packet packet)
         {
@@ -168,7 +167,6 @@ namespace PacketParser.Parsing.Parsers
             ReadQueryHeader(ref packet);
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_PAGE_TEXT_QUERY_RESPONSE)]
         public static void HandlePageTextResponse(Packet packet)
         {
@@ -189,7 +187,6 @@ namespace PacketParser.Parsing.Parsers
             ReadQueryHeader(ref packet);
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_NPC_TEXT_UPDATE)]
         public static void HandleNpcTextUpdate(Packet packet)
         {

@@ -20,10 +20,9 @@ namespace PacketParser.Parsing.Parsers
 
             var buttonCount = ClientVersion.AddedInVersion(ClientVersionBuild.V3_2_0_10192) ? 144 : 132;
 
-            var startAction = new StartAction { Actions = new List<Store.Objects.Action>(buttonCount) };
+            packet.StoreBeginList("Buttons");
             for (var i = 0; i < buttonCount; i++)
             {
-                var action = new Store.Objects.Action { Button = (uint)i };
                 var packed = packet.ReadInt32();
 
                 if (packed == 0)
@@ -38,14 +37,6 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreEndList();
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
                 packet.ReadByte("Packet Type");
-
-            WoWObject character;
-            if (Storage.Objects.TryGetValue(SessionHandler.LoginGuid, out character))
-            {
-                var player = character as Player;
-                if (player != null && player.FirstLogin)
-                    Storage.StartActions.Add(new Tuple<Race, Class>(player.Race, player.Class), startAction, packet.TimeSpan);
-            }
         }
 
 

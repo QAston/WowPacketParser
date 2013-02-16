@@ -13,7 +13,6 @@ namespace PacketParser.Parsing.Parsers
 {
     public static class UpdateHandler
     {
-        [HasSniffData] // in ReadCreateObjectBlock
         [Parser(Opcode.SMSG_UPDATE_OBJECT)]
         public static void HandleUpdateObject(Packet packet)
         {
@@ -466,7 +465,7 @@ namespace PacketParser.Parsing.Parsers
                         if (splineType == SplineType.FacingTarget)
                         {
                             packet.ParseBitStream(facingTargetGuid, 3, 2, 0, 5, 6, 7, 4, 1);
-                            packet.WriteGuid("Facing Target GUID", facingTargetGuid, index);
+                            packet.StoreBitstreamGuid("Facing Target GUID", facingTargetGuid, index);
                         }
 
                         packet.ReadUInt32("Spline Time", index);
@@ -659,7 +658,7 @@ namespace PacketParser.Parsing.Parsers
             if (hasAttackingTarget)
             {
                 packet.ParseBitStream(attackingTargetGuid, 3, 4, 2, 5, 1, 6, 7, 0);
-                packet.WriteGuid("Attacking Target GUID", attackingTargetGuid, index);
+                packet.StoreBitstreamGuid("Attacking Target GUID", attackingTargetGuid, index);
             }
 
             if (hasStationaryPosition)
@@ -968,7 +967,7 @@ namespace PacketParser.Parsing.Parsers
                         else if (splineType == SplineType.FacingTarget)
                         {
                             packet.ParseBitStream(facingTargetGuid, 5, 6, 0, 1, 2, 4, 7, 3);
-                            packet.WriteGuid("Facing Target GUID", facingTargetGuid, index);
+                            packet.StoreBitstreamGuid("Facing Target GUID", facingTargetGuid, index);
                         }
 
                         packet.ReadUInt32("Spline Time", index);
@@ -1185,7 +1184,7 @@ namespace PacketParser.Parsing.Parsers
             if (hasAttackingTarget)
             {
                 packet.ParseBitStream(attackingTargetGuid, 3, 6, 4, 1, 5, 7, 0, 2);
-                packet.WriteGuid("Attacking Target GUID", attackingTargetGuid, index);
+                packet.StoreBitstreamGuid("Attacking Target GUID", attackingTargetGuid, index);
             }
 
             if (transport)

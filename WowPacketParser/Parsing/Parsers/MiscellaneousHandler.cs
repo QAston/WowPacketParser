@@ -676,7 +676,6 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBitstreamGuid("Guid", guid);
         }
 
-        [HasSniffData]
         [Parser(Opcode.CMSG_LOAD_SCREEN, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)] // Also named CMSG_LOADING_SCREEN_NOTIFY
         public static void HandleClientEnterWorld(Packet packet)
         {
@@ -685,7 +684,6 @@ namespace PacketParser.Parsing.Parsers
             PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentMapId = (uint) mapId;
         }
 
-        [HasSniffData]
         [Parser(Opcode.CMSG_LOAD_SCREEN, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleClientEnterWorld434(Packet packet)
         {

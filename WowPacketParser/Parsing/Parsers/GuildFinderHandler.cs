@@ -367,7 +367,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 1);
             packet.ReadXORByte(guid, 3);
 
-            packet.WriteGuid("Guild GUID", guid);
+            packet.StoreBitstreamGuid("Guild GUID", guid);
         }
 
         [Parser(Opcode.CMSG_LF_GUILD_POST_REQUEST)]

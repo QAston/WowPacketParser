@@ -14,7 +14,6 @@ namespace PacketParser.Parsing.Parsers
             QueryHandler.ReadQueryHeader(ref packet);
         }
 
-        [HasSniffData]
         [Parser(Opcode.SMSG_GAMEOBJECT_QUERY_RESPONSE)]
         public static void HandleGameObjectQueryResponse(Packet packet)
         {

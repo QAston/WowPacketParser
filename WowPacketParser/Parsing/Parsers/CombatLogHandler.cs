@@ -3,8 +3,7 @@ using System.IO;
 using PacketParser.Enums;
 using PacketParser.Enums.Version;
 using PacketParser.Misc;
-using WowPacketParser.Store;
-using WowPacketParser.Store.Objects;
+using PacketParser.DataStructures;
 
 namespace PacketParser.Parsing.Parsers
 {
@@ -115,15 +114,15 @@ namespace PacketParser.Parsing.Parsers
                         case SpellEffect.PowerBurn:
                         {
                             packet.ReadPackedGuid("Target GUID", i, j);
-                            packet.ReadInt32("Power taken", index, i, j);
-                            packet.ReadInt32("Power type", index, i, j);
-                            packet.ReadSingle("Multiplier", index, i, j);
+                            packet.ReadInt32("Power taken", i, j);
+                            packet.ReadInt32("Power type", i, j);
+                            packet.ReadSingle("Multiplier", i, j);
                             break;
                         }
                         case SpellEffect.AddExtraAttacks:
                         {
                             packet.ReadPackedGuid("Target GUID", i, j);
-                            packet.ReadInt32("Amount", index, i, j);
+                            packet.ReadInt32("Amount", i, j);
                             break;
                         }
                         case SpellEffect.InterruptCast:
@@ -136,7 +135,7 @@ namespace PacketParser.Parsing.Parsers
                         {
                             packet.ReadPackedGuid("Target GUID", i, j);
                             packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Item", index, i, j);
-                            packet.ReadInt32("Slot", index, i, j);
+                            packet.ReadInt32("Slot", i, j);
                             break;
                         }
                         case SpellEffect.OpenLock:
@@ -163,7 +162,7 @@ namespace PacketParser.Parsing.Parsers
                         case SpellEffect.SummonObjectSlot4:
                         case SpellEffect.Unk171:
                         {
-                            var guid = packet.ReadPackedGuid("Summoned GUID", index, i, j);
+                            var guid = packet.ReadPackedGuid("Summoned GUID", i, j);
 
                             WoWObject obj;
                             if (Storage.Objects.TryGetValue(guid, out obj))
