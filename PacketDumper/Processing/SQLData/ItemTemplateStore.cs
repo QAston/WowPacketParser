@@ -7,6 +7,8 @@ using PacketParser.Processing;
 using PacketParser.SQL;
 using PacketParser.DataStructures;
 using System.Reflection;
+using PacketDumper.Enums;
+using PacketDumper.Misc;
 
 namespace PacketDumper.Processing.SQLData
 {

@@ -115,7 +115,7 @@ namespace PacketParser.Parsing.Parsers
         private static void ProcessExistingObject(ref WoWObject obj, WoWObject newObj, Guid guid)
         {
             obj.PhaseMask |= newObj.PhaseMask;
-            if (guid.GetHighType() == HighGuidType.Unit) // skip if not an unit
+            if (guid.GetHighType() == HighGuidType.Unit) // skip if not a unit
             {
                 if (!obj.Movement.HasWpsOrRandMov)
                     if (obj.Movement.Position != newObj.Movement.Position)
@@ -158,11 +158,7 @@ namespace PacketParser.Parsing.Parsers
                     continue;
 
                 var blockVal = packet.ReadUpdateField();
-
-                // Don't spam 0 values at create
-                if (isCreating && blockVal.UInt32Value == 0)
-                    continue;
-
+                StringBuilder keyBuilder = new StringBuilder(30);
 
                 var enumType = UpdateFields.GetUpdateFieldEnumByOffset(i, type);
                 var name = UpdateFields.GetUpdateFieldName(i, enumType);
@@ -176,11 +172,7 @@ namespace PacketParser.Parsing.Parsers
                     keyBuilder.Append(name);
                     keyBuilder.Append(" (");
                     keyBuilder.Append(i);
-                        case ObjectType.AreaTrigger:
-                        {
-                            key = UpdateFields.GetUpdateFieldName<AreaTriggerField>(i);
-                            break;
-                        }
+                    keyBuilder.Append(")");
                 }
                 packet.Store(keyBuilder.ToString(), blockVal, index, i);
                 dict.Add(i, blockVal);
@@ -230,7 +222,8 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadBit("Self", index);
             var hasGameObjectRotation = packet.ReadBit("Has GameObject Rotation", index);
             var hasAttackingTarget = packet.ReadBit("Has Attacking Target", index);
-            /*var bit2 = */ packet.ReadBit();
+            /*var bit2 = */
+            packet.ReadBit();
             var bit520 = packet.ReadBit("Has bit520", index);
             var unkLoopCounter = packet.ReadBits(24);
             var transport = packet.ReadBit("Transport", index);
@@ -433,6 +426,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ResetBitReader();
 
             // Reading data
+            packet.StoreBeginList("UnknownList1", index);
             for (var i = 0; i < bits360; ++i)
             {
                 packet.ReadSingle();
@@ -442,9 +436,12 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadSingle();
                 packet.ReadSingle();
             }
+            packet.StoreEndList();
 
+            packet.StoreBeginList("UnknownList2", index);
             for (var i = 0u; i < unkLoopCounter; ++i)
                 packet.ReadUInt32("Unk UInt32", index, (int)i);
+            packet.StoreEndList();
 
             if (living)
             {
@@ -455,11 +452,13 @@ namespace PacketParser.Parsing.Parsers
                     {
                         if (hasUnkSplineCounter)
                         {
+                            packet.StoreBeginList("UnknownSplineList", index);
                             for (var i = 0; i < unkSplineCounter; ++i)
                             {
                                 packet.ReadSingle("Unk Spline Float1", index, (int)i);
                                 packet.ReadSingle("Unk Spline Float2", index, (int)i);
                             }
+                            packet.StoreEndList();
                         }
 
                         if (splineType == SplineType.FacingTarget)
@@ -486,13 +485,14 @@ namespace PacketParser.Parsing.Parsers
                                 Y = packet.ReadSingle(),
                             };
 
-                            packet.WriteLine("[{0}] Facing Spot: {1}", index, point);
+                            packet.Store("Facing Spot", point, index);
                         }
 
                         if (hasSplineStartTime)
                             packet.ReadUInt32("Spline Start Time", index);
 
-                        for (var i = 0u; i < splineCount; ++i)
+                        packet.StoreBeginList("SplineWaypoints", index);
+                        for (var i = 0; i < splineCount; ++i)
                         {
                             var wp = new Vector3
                             {
@@ -501,8 +501,9 @@ namespace PacketParser.Parsing.Parsers
                                 X = packet.ReadSingle(),
                             };
 
-                            packet.WriteLine("[{0}][{1}] Spline Waypoint: {2}", index, i, wp);
+                            packet.Store("Spline Waypoint", wp, index, i);
                         }
+                        packet.StoreEndList();
 
                         if (splineType == SplineType.FacingAngle)
                             packet.ReadSingle("Facing Angle", index);
@@ -516,7 +517,7 @@ namespace PacketParser.Parsing.Parsers
                     };
 
                     packet.ReadUInt32("Spline Id", index);
-                    packet.WriteLine("[{0}] Spline Endpoint: {1}", index, endPoint);
+                    packet.Store("Spline Endpoint", endPoint, index);
                 }
 
                 packet.ReadSingle("Swim Speed", index);
@@ -558,8 +559,8 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadXORByte(transportGuid, 3);
 
                     moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(transportGuid, 0));
-                    packet.WriteLine("[{0}] Transport GUID {1}", index, moveInfo.TransportGuid);
-                    packet.WriteLine("[{0}] Transport Position: {1}", index, moveInfo.TransportOffset);
+                    packet.Store("Transport GUID", moveInfo.TransportGuid, index);
+                    packet.Store("Transport Position", moveInfo.TransportOffset, index);
                 }
 
                 packet.ReadXORByte(guid2, 1);
@@ -576,8 +577,10 @@ namespace PacketParser.Parsing.Parsers
 
                 packet.ReadXORByte(guid2, 0);
                 packet.ReadXORByte(guid2, 6);
+                packet.StoreBeginList("UnknownList3");
                 for (var i = 0u; i < unkLoopCounter2; ++i)
                     packet.ReadUInt32("Unk2 UInt32", index, (int)i);
+                packet.StoreEndList();
 
                 moveInfo.Position.X = packet.ReadSingle();
                 if (hasTimestamp)
@@ -599,9 +602,9 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(guid2, 4);
                 packet.ReadSingle("Turn Speed", index);
 
-                packet.WriteLine("[{0}] GUID 2: {1}", index, new Guid(BitConverter.ToUInt64(guid2, 0)));
-                packet.WriteLine("[{0}] Position: {1}", index, moveInfo.Position);
-                packet.WriteLine("[{0}] Orientation: {1}", index, moveInfo.Orientation);
+                packet.Store("GUID 2", new Guid(BitConverter.ToUInt64(guid2, 0)), index);
+                packet.Store("Position", moveInfo.Position, index);
+                packet.Store("Orientation", moveInfo.Orientation, index);
             }
 
             if (bit520)
@@ -667,7 +670,7 @@ namespace PacketParser.Parsing.Parsers
                 moveInfo.Orientation = packet.ReadSingle("Stationary Orientation", index);
                 moveInfo.Position.Y = packet.ReadSingle();
                 moveInfo.Position.Z = packet.ReadSingle();
-                packet.WriteLine("[{0}] Stationary Position: {1}", index, moveInfo.Position);
+                packet.Store("Stationary Position", moveInfo.Position, index);
             }
 
             if (hasGameObjectPosition)
@@ -694,8 +697,8 @@ namespace PacketParser.Parsing.Parsers
                 moveInfo.TransportOffset.O = packet.ReadSingle();
 
                 moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(goTransportGuid, 0));
-                packet.WriteLine("[{0}] GO Transport GUID {1}", index, moveInfo.TransportGuid);
-                packet.WriteLine("[{0}] GO Transport Position: {1}", index, moveInfo.TransportOffset);
+                packet.Store("GO Transport GUID", moveInfo.TransportGuid, index);
+                packet.Store("GO Transport Position", moveInfo.TransportOffset, index);
             }
 
             if (hasAnimKits)
@@ -886,7 +889,8 @@ namespace PacketParser.Parsing.Parsers
                             packet.ReadBits(2);
                         }
 
-                        /*splineFlags =*/ packet.WriteLine("[{0}] Spline flags 0x{1}", index, packet.ReadBits(25).ToString("X8"));
+                        /*splineFlags =*/
+                        packet.Store("Spline flags", packet.ReadBits(25).ToString("X8"), index);
                         hasSplineStartTime = packet.ReadBit();
                         splineCount = packet.ReadBits("Spline Waypoints", 22, index);
                         var bits57 = packet.ReadBits(2);
@@ -910,7 +914,7 @@ namespace PacketParser.Parsing.Parsers
                         if (splineType == SplineType.FacingTarget)
                             facingTargetGuid = packet.StartBitStream(4, 5, 0, 7, 1, 3, 2, 6);
 
-                        packet.WriteLine("[{0}] Spline type: {1}", index, splineType);
+                        packet.Store("Spline type", splineType, index);
                     }
                 }
 
@@ -944,8 +948,10 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadSingle();
             }
 
+            packet.StoreBeginList("UnknownList1", index);
             for (var i = 0u; i < unkLoopCounter; ++i)
                 packet.ReadUInt32("Unk UInt32", index, (int)i);
+            packet.StoreEndList();
 
             if (living)
             {
@@ -962,7 +968,7 @@ namespace PacketParser.Parsing.Parsers
                                 Y = packet.ReadSingle(),
                             };
 
-                            packet.WriteLine("[{0}] Facing Spot: {1}", index, point);
+                            packet.Store("Facing Spot", point, index);
                         }
                         else if (splineType == SplineType.FacingTarget)
                         {
@@ -986,7 +992,8 @@ namespace PacketParser.Parsing.Parsers
                         if (splineType == SplineType.FacingAngle)
                             packet.ReadSingle("Facing Angle", index);
 
-                        for (var i = 0u; i < splineCount; ++i)
+                        packet.StoreBeginList("SplineWaypoints", index);
+                        for (var i = 0; i < splineCount; ++i)
                         {
                             var wp = new Vector3
                             {
@@ -995,8 +1002,9 @@ namespace PacketParser.Parsing.Parsers
                                 Z = packet.ReadSingle(),
                             };
 
-                            packet.WriteLine("[{0}][{1}] Spline Waypoint: {2}", index, i, wp);
+                            packet.Store("Spline Waypoint", wp, index, i);
                         }
+                        packet.StoreEndList();
 
                         packet.ReadSingle("Spline Duration Multiplier", index);
                         packet.ReadUInt32("Spline Full Time", index);
@@ -1009,7 +1017,7 @@ namespace PacketParser.Parsing.Parsers
                     endPoint.X = packet.ReadSingle();
                     endPoint.Y = packet.ReadSingle();
 
-                    packet.WriteLine("[{0}] Spline Endpoint: {1}", index, endPoint);
+                    packet.Store("Spline Endpoint", endPoint, index);
                 }
 
                 for (var i = 0; i < field9C; ++i)
@@ -1039,8 +1047,8 @@ namespace PacketParser.Parsing.Parsers
                         packet.ReadUInt32("Transport Time 2", index);
 
                     moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(transportGuid, 0));
-                    packet.WriteLine("[{0}] Transport GUID {1}", index, moveInfo.TransportGuid);
-                    packet.WriteLine("[{0}] Transport Position: {1}", index, moveInfo.TransportOffset);
+                    packet.Store("Transport GUID", moveInfo.TransportGuid, index);
+                    packet.Store("Transport Position", moveInfo.TransportOffset, index);
                 }
 
                 packet.ReadXORByte(guid2, 2);
@@ -1091,9 +1099,9 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadSingle("RunBack Speed", index);
                 packet.ReadXORByte(guid2, 0);
 
-                packet.WriteLine("[{0}] GUID 2: {1}", index, new Guid(BitConverter.ToUInt64(guid2, 0)));
-                packet.WriteLine("[{0}] Position: {1}", index, moveInfo.Position);
-                packet.WriteLine("[{0}] Orientation: {1}", index, moveInfo.Orientation);
+                packet.Store("GUID 2", new Guid(BitConverter.ToUInt64(guid2, 0)), index);
+                packet.Store("Position", moveInfo.Position, index);
+                packet.Store("Orientation", moveInfo.Orientation, index);
             }
 
             if (bit208)
@@ -1168,8 +1176,8 @@ namespace PacketParser.Parsing.Parsers
                 moveInfo.TransportOffset.Y = packet.ReadSingle();
 
                 moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(goTransportGuid, 0));
-                packet.WriteLine("[{0}] GO Transport GUID {1}", index, moveInfo.TransportGuid);
-                packet.WriteLine("[{0}] GO Transport Position: {1}", index, moveInfo.TransportOffset);
+                packet.Store("GO Transport GUID", moveInfo.TransportGuid, index);
+                packet.Store("GO Transport Position", moveInfo.TransportOffset, index);
             }
 
             if (hasStationaryPosition)
@@ -1177,7 +1185,7 @@ namespace PacketParser.Parsing.Parsers
                 moveInfo.Position.Y = packet.ReadSingle();
                 moveInfo.Position.Z = packet.ReadSingle();
                 moveInfo.Position.X = packet.ReadSingle();
-                packet.WriteLine("[{0}] Stationary Position: {1}", index, moveInfo.Position);
+                packet.Store("Stationary Position", moveInfo.Position, index);
                 moveInfo.Orientation = packet.ReadSingle("Stationary Orientation", index);
             }
 
@@ -1481,8 +1489,8 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadXORByte(transportGuid, 2);
                     packet.ReadXORByte(transportGuid, 4);
                     moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(transportGuid, 0));
-                    packet.WriteLine("[{0}] Transport GUID {1}", index, moveInfo.TransportGuid);
-                    packet.WriteLine("[{0}] Transport Position: {1}", index, moveInfo.TransportOffset);
+                    packet.Store("Transport GUID", moveInfo.TransportGuid, index);
+                    packet.Store("Transport Position", moveInfo.TransportOffset, index);
                 }
 
                 moveInfo.Position.X = packet.ReadSingle();
@@ -1550,8 +1558,8 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadUInt32("GO Transport Time 2", index);
 
                 moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(goTransportGuid, 0));
-                packet.WriteLine("[{0}] GO Transport GUID {1}", index, moveInfo.TransportGuid);
-                packet.WriteLine("[{0}] GO Transport Position: {1}", index, moveInfo.TransportOffset);
+                packet.Store("GO Transport GUID", moveInfo.TransportGuid, index);
+                packet.Store("GO Transport Position", moveInfo.TransportOffset, index);
             }
 
             if (hasGameObjectRotation)
@@ -1830,8 +1838,8 @@ namespace PacketParser.Parsing.Parsers
 
                     moveInfo.TransportOffset.Y = packet.ReadSingle();
                     moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(transportGuid, 0));
-                    packet.WriteLine("[{0}] Transport GUID: {1}", index, moveInfo.TransportGuid);
-                    packet.WriteLine("[{0}] Transport Position: {1}", index, moveInfo.TransportOffset);
+                    packet.Store("Transport GUID", moveInfo.TransportGuid, index);
+                    packet.Store("Transport Position", moveInfo.TransportOffset, index);
                     packet.ReadByte("Transport Seat", index);
                     packet.ReadInt32("Transport Time", index);
                 }
@@ -1931,8 +1939,8 @@ namespace PacketParser.Parsing.Parsers
                 moveInfo.TransportOffset.X = packet.ReadSingle();
                 moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(goTransportGuid, 0));
                 packet.ReadSingle("GO Transport Time", index);
-                packet.WriteLine("[{0}] GO Transport Position: {1}", index, moveInfo.TransportOffset);
-                packet.WriteLine("[{0}] GO Transport GUID {1}", index, moveInfo.TransportGuid);
+                packet.Store("GO Transport Position", moveInfo.TransportOffset, index);
+                packet.Store("GO Transport GUID", moveInfo.TransportGuid, index);
             }
 
             if (hasAttackingTarget)
@@ -2168,8 +2176,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(goTransportGuid, 3);
 
                 moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(goTransportGuid, 0));
-                packet.WriteLine("[{0}] GO Transport Position: {1}", index, moveInfo.TransportOffset);
-                packet.WriteLine("[{0}] GO Transport GUID {1}", index, moveInfo.TransportGuid);
+                packet.Store("GO Transport Position", moveInfo.TransportOffset, index);
+                packet.Store("GO Transport GUID", moveInfo.TransportGuid, index);
             }
 
             if (living)
@@ -2259,8 +2267,8 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadXORByte(transportGuid, 2);
 
                     moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(transportGuid, 0));
-                    packet.WriteLine("[{0}] Transport GUID: {1}", index, moveInfo.TransportGuid);
-                    packet.WriteLine("[{0}] Transport Position: {1}", index, moveInfo.TransportOffset);
+                    packet.Store("Transport GUID", moveInfo.TransportGuid, index);
+                    packet.Store("Transport Position", moveInfo.TransportOffset, index);
                 }
 
                 moveInfo.Position = new Vector3();
@@ -2567,8 +2575,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(goTransportGuid, 0);
 
                 moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(goTransportGuid, 0));
-                packet.WriteLine("[{0}] GO Transport Position: {1}", index, moveInfo.TransportOffset);
-                packet.WriteLine("[{0}] GO Transport GUID {1}", index, moveInfo.TransportGuid);
+                packet.Store("GO Transport Position", moveInfo.TransportOffset, index);
+                packet.Store("GO Transport GUID", moveInfo.TransportGuid, index);
             }
 
             if (living)
@@ -2659,8 +2667,8 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadXORByte(transportGuid, 0);
 
                     moveInfo.TransportGuid = new Guid(BitConverter.ToUInt64(transportGuid, 0));
-                    packet.WriteLine("[{0}] Transport GUID: {1}", index, moveInfo.TransportGuid);
-                    packet.WriteLine("[{0}] Transport Position: {1}", index, moveInfo.TransportOffset);
+                    packet.Store("Transport GUID", moveInfo.TransportGuid, index);
+                    packet.Store("Transport Position", moveInfo.TransportOffset, index);
                 }
 
                 packet.ReadSingle("FlyBack Speed", index);

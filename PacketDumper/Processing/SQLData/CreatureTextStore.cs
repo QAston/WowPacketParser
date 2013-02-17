@@ -101,7 +101,7 @@ namespace PacketDumper.Processing.SQLData
             const string tableName = "creature_text";
 
             var rows = new List<QueryBuilder.SQLInsertRow>();
-            foreach (var text in Storage.CreatureTexts)
+            foreach (var text in CreatureTexts)
             {
                 foreach (var textValue in text.Value)
                 {

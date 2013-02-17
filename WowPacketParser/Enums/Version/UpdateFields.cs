@@ -79,71 +79,69 @@ namespace PacketParser.Enums.Version
 
         public static Type GetUpdateFieldEnumByOffset(Int32 offset, ObjectType type)
         {
-            /*
             switch (type)
             {
                 case ObjectType.Object:
                     return typeof(ObjectField);
                 case ObjectType.Item:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(ItemField);
                     }
                 case ObjectType.Container:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ItemField), out max);
+                        int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ItemField>(ItemField.ITEM_END);
                         if (offset < max)
                             goto case ObjectType.Item;
                         return typeof(ContainerField);
                     }
                 case ObjectType.Unit:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(UnitField);
                     }
                 case ObjectType.Player:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(UnitField), out max);
+                        int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<UnitField>(UnitField.UNIT_END);
                         if (offset < max)
                             goto case ObjectType.Unit;
                         return typeof(PlayerField);
                     }
                 case ObjectType.GameObject:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(GameObjectField);
                     }
                 case ObjectType.DynamicObject:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(DynamicObjectField);
                     }
                 case ObjectType.Corpse:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(CorpseField);
                     }
+                case ObjectType.AreaTrigger:
+                    {
+                        int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
+                        if (offset < max)
+                            goto case ObjectType.Object;
+                        return typeof(AreaTriggerField);
+                    }
                 default:
                     return typeof(Object);
-            }*/
-            return null;
+            }
         }
 
         public static string GetUpdateFieldNameByOffset(Int32 offset, ObjectType type)

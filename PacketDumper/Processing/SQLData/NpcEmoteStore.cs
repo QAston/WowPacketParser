@@ -23,7 +23,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanMultiDictionary<Guid, EmoteType> Emotes = new TimeSpanMultiDictionary<Guid, EmoteType>();
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureTemplate);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_template);
         }
 
         public void ProcessPacket(Packet packet)

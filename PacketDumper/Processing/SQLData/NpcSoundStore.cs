@@ -22,7 +22,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanBag<uint> Sounds = new TimeSpanBag<uint>();
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureTemplate);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_template);
         }
 
         public void ProcessPacket(Packet packet)

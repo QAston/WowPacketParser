@@ -304,8 +304,10 @@ namespace PacketParser.Parsing.Parsers
 
             if (flags.HasAnyFlag(SplineFlag434.UncompressedPath))
             {
+                packet.StoreBeginList("Waypoints");
                 for (var i = 0; i < waypoints; i++)
                     packet.ReadVector3("Waypoint", i);
+                packet.StoreEndList();
             }
             else
             {
@@ -322,7 +324,8 @@ namespace PacketParser.Parsing.Parsers
                     vec.X += mid.X;
                     vec.Y += mid.Y;
                     vec.Z += mid.Z;
-                    packet.WriteLine("[0] Waypoint: " + vec);
+                    packet.StoreBeginList("Waypoints");
+                    packet.Store("Waypoint", vec, 0);
 
                     if (waypoints > 2)
                     {
@@ -333,9 +336,10 @@ namespace PacketParser.Parsing.Parsers
                             vec.Y += mid.Y;
                             vec.Z += mid.Z;
 
-                            packet.WriteLine("[" + i + "]" + " Waypoint: " + vec);
+                            packet.Store("Waypoint", vec, i);
                         }
                     }
+                    packet.StoreEndList();
                 }
             }
 
@@ -348,11 +352,13 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadSingle("Unk Float 2");
                 packet.ReadUInt16("Unk UInt16 3");
 
+                packet.StoreBeginList("UnkList");
                 for (var i = 0; i < unkLoopCounter; i++)
                 {
                     packet.ReadUInt16("Unk UInt16 1", i);
                     packet.ReadUInt16("Unk UInt16 2", i);
                 }
+                packet.StoreEndList();
             }
         }
 
@@ -497,7 +503,7 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_NEW_WORLD, ClientVersionBuild.V5_1_0_16309)]
         public static void HandleNewWorld510(Packet packet)
         {
-            CurrentMapId = (uint)packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map");
+            PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentMapId = (uint)packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map");
             packet.ReadSingle("Y");
             packet.ReadSingle("Orientation");
             packet.ReadSingle("X");
@@ -4128,7 +4134,8 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 4);
 
             var count = packet.ReadUInt32() / 2;
-            packet.WriteLine("WorldMapArea swap count: {0}", count);
+            packet.Store("WorldMapArea swap count", count);
+            packet.StoreBeginList("WorldMapAreaSwaps");
             for (var i = 0; i < count; ++i)
                 packet.ReadUInt16("WorldMapArea swap", i);
             packet.StoreEndList();
@@ -4141,7 +4148,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 6);
 
             count = packet.ReadUInt32() / 2;
-            packet.WriteLine("Inactive Terrain swap count: {0}", count);
+            packet.Store("Inactive Terrain swap count", count);
             packet.StoreBeginList("Terrarin Swaps");
             for (var i = 0; i < count; ++i)
                 packet.ReadEntryWithName<Int16>(StoreNameType.Map, "Inactive Terrain swap", i);
@@ -4158,7 +4165,8 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 0);
 
             count = packet.ReadUInt32() / 2;
-            packet.WriteLine("Active Terrain swap count: {0}", count);
+            packet.Store("Active Terrain swap count", count);
+            packet.StoreBeginList("ActiveTerrarinSwaps");
             for (var i = 0; i < count; ++i)
                 packet.ReadEntryWithName<Int16>(StoreNameType.Map, "Active Terrain swap", i);
             packet.StoreEndList();
@@ -4174,25 +4182,31 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 4);
 
             var count = packet.ReadUInt32() / 2;
-            packet.WriteLine("WorldMapArea swap count: {0}", count);
+            packet.Store("WorldMapArea swap count", count);
+            packet.StoreBeginList("WorldMapAreas");
             for (var i = 0; i < count; ++i)
                 packet.ReadUInt16("WorldMapArea swap", i);
+            packet.StoreEndList();
 
             packet.ReadXORByte(guid, 2);
             packet.ReadXORByte(guid, 3);
 
             count = packet.ReadUInt32() / 2;
-            packet.WriteLine("Phases count: {0}", count);
+            packet.Store("Phases count", count);
+            packet.StoreBeginList("Phases");
             for (var i = 0; i < count; ++i)
                 packet.ReadUInt16("Phase id", i); // Phase.dbc
+            packet.StoreEndList();
 
             packet.ReadXORByte(guid, 1);
             packet.ReadXORByte(guid, 6);
 
             count = packet.ReadUInt32() / 2;
-            packet.WriteLine("Active Terrain swap count: {0}", count);
+            packet.Store("Active Terrain swap count", count);
+            packet.StoreBeginList("ActiveTerrarinSwaps");
             for (var i = 0; i < count; ++i)
                 packet.ReadEntryWithName<Int16>(StoreNameType.Map, "Active Terrain swap", i);
+            packet.StoreEndList();
 
             packet.ReadUInt32("UInt32");
             packet.ReadXORByte(guid, 0);
@@ -4200,11 +4214,13 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 5);
 
             count = packet.ReadUInt32() / 2;
-            packet.WriteLine("Inactive Terrain swap count: {0}", count);
+            packet.Store("Inactive Terrain swap count", count);
+            packet.StoreBeginList("InactiveTerrarinSwaps");
             for (var i = 0; i < count; ++i)
                 packet.ReadEntryWithName<Int16>(StoreNameType.Map, "Inactive Terrain swap", i);
+            packet.StoreEndList();
 
-            packet.WriteLine("GUID {0}", new Guid(BitConverter.ToUInt64(guid, 0)));
+            packet.Store("GUID", new Guid(BitConverter.ToUInt64(guid, 0)));
         }
 
         [Parser(Opcode.SMSG_TRANSFER_PENDING, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_0_15005)]
