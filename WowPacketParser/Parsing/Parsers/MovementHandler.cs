@@ -491,7 +491,6 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadSingle("Y");
             PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentMapId = (uint)packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map");
             packet.ReadSingle("Z"); // seriously...
-            packet.AddSniffData(StoreNameType.Map, (int)CurrentMapId, "NEW_WORLD");
         }
 
         [Parser(Opcode.SMSG_NEW_WORLD, ClientVersionBuild.V5_1_0_16309)]

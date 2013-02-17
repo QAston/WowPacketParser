@@ -38,19 +38,22 @@ namespace PacketDumper.Misc
         public static readonly int ReaderFilterPacketNumLow = GetInt32("ReaderFilterPacketNumLow", 0);
         public static readonly int ReaderFilterPacketNumHigh = GetInt32("ReaderFilterPacketNumHigh", 0);
 
-        public static readonly string[] TextOutputFilterIgnoreEntry = GetStringList("TextOutputFilterIgnoreEntry", new string[0]);
-        public static readonly string[] SpawnDumpFilterArea = GetStringList("SpawnDumpFilterArea", new string[0]);
-
         public static readonly ClientVersionBuild ClientBuild = GetEnum("ClientBuild", ClientVersionBuild.Zero);
         public static readonly string PacketFileType = GetString("PacketFileType", string.Empty);
+
         public static readonly string RawOutputType = GetString("RawOutputType", string.Empty);
         public static readonly bool SplitRawOutput = GetBoolean("SplitRawOutput", false);
+
         public static readonly bool TextOutput = GetBoolean("TextOutput", false);
-        public static readonly SQLOutputFlags SQLOutput = GetEnum("SQLOutput", SQLOutputFlags.None);
+        public static readonly string[] TextOutputFilterIgnoreEntry = GetStringList("TextOutputFilterIgnoreEntry", new string[0]);
+
+        public static readonly int SQLOutputFlag = GetSQLOutputFlag();
+        public static readonly string[] SpawnDumpFilterArea = GetStringList("SpawnDumpFilterArea", new string[0]);
         public static readonly string SQLFileName = GetString("SQLFileName", string.Empty);
+        
         public static readonly bool ShowEndPrompt = GetBoolean("ShowEndPrompt", false);
-        public static readonly bool LogPacketErrors = GetBoolean("LogPacketErrors", false);
         public static readonly bool LogEnumErrors = GetBoolean("LogEnumErrors", false);
+        public static readonly bool LogPacketErrors = GetBoolean("LogPacketErrors", false);
         public static readonly bool ParsingLog = GetBoolean("ParsingLog", false);
 
         private static KeyValueConfigurationCollection GetConfiguration()
@@ -168,6 +171,24 @@ namespace PacketDumper.Misc
             }
 
             return (T)aux;
+        }
+
+        private static int GetSQLOutputFlag()
+        {
+            if (!GetBoolean("SQLOutput", false))
+                return 0;
+            var names = Enum.GetNames(typeof(SQLOutput));
+            var values = Enum.GetValues(typeof(SQLOutput));
+
+            var result = 0;
+
+            for (var i = 0; i < names.Length; ++i)
+            {
+                if (GetBoolean("SQLOutput_" + names[i], true))
+                    result += (1 << (int)values.GetValue(i));
+            }
+
+            return result;
         }
     }
 }

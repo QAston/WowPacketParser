@@ -2,6 +2,7 @@
 using Guid = PacketParser.DataStructures.Guid;
 using PacketParser.DataStructures;
 using System;
+using Ionic.Zlib;
 
 namespace PacketParser.Processing
 {
@@ -19,6 +20,7 @@ namespace PacketParser.Processing
         public int CurrentAreaId = -1;
         public uint CurrentMapId = 0;
         public int CurrentPhaseMask = 0;
+        public Dictionary<uint, ZlibCodec> Zstreams = new Dictionary<uint, ZlibCodec>();
 
         private Player LastPlayer = null;
 

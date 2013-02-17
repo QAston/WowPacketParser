@@ -26,7 +26,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanDictionary<uint, SpellsX> Spells = new TimeSpanDictionary<uint, SpellsX>(); // `creature_template`.`spellsX`
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureTemplate);
+            return (Settings.SQLOutputFlag & (1<<(int)SQLOutput.creature_)) != 0;
         }
 
         public void ProcessPacket(Packet packet)

@@ -11,8 +11,6 @@ namespace PacketParser.Parsing.Parsers
 {
     public static class SessionHandler
     {
-        public static Dictionary<int, ZlibCodec> z_streams = new Dictionary<int, ZlibCodec>();
-
         [Parser(Opcode.SMSG_AUTH_CHALLENGE, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_1a_13205)]
         public static void HandleServerAuthChallenge(Packet packet)
         {

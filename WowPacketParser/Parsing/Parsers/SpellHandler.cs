@@ -273,8 +273,6 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadInt32("Effect 2 Value", i);
             }
 
-            packet.AddSniffData(StoreNameType.Spell, (int)aura.SpellId, "AURA_UPDATE");
-
             return aura;
         }
 

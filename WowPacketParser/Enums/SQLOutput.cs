@@ -1,4 +1,4 @@
-﻿namespace WowPacketParser.Enums
+﻿namespace PacketDumper.Enums
 {
     public enum SQLOutput
     {

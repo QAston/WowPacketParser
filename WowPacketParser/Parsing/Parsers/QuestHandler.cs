@@ -566,8 +566,6 @@ namespace PacketParser.Parsing.Parsers
             quest.RequiredFactionValue = new int[2];
             quest.ObjectiveText = new string[4];
 
-            packet.AddSniffData(StoreNameType.Quest, id.Key, "QUERY_RESPONSE");
-
             Storage.QuestTemplates.Add((uint)id.Key, quest, packet.TimeSpan);
         }
 

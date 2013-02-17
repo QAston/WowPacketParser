@@ -4,6 +4,7 @@ using PacketParser.Enums;
 using PacketParser.Enums.Version;
 using PacketParser.Misc;
 using PacketParser.DataStructures;
+using PacketParser.Processing;
 
 namespace PacketParser.Parsing.Parsers
 {
@@ -134,7 +135,7 @@ namespace PacketParser.Parsing.Parsers
                         case SpellEffect.DurabilityDamage:
                         {
                             packet.ReadPackedGuid("Target GUID", i, j);
-                            packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Item", index, i, j);
+                            packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Item", i, j);
                             packet.ReadInt32("Slot", i, j);
                             break;
                         }
@@ -164,8 +165,8 @@ namespace PacketParser.Parsing.Parsers
                         {
                             var guid = packet.ReadPackedGuid("Summoned GUID", i, j);
 
-                            WoWObject obj;
-                            if (Storage.Objects.TryGetValue(guid, out obj))
+                            WoWObject obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound(guid);
+                            if (obj != null)
                                 obj.ForceTemporarySpawn = true;
 
                             break;

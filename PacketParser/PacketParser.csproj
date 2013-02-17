@@ -150,6 +150,9 @@
     <Compile Include="..\wowpacketparser\enums\BillingFlag.cs">
       <Link>Enums\BillingFlag.cs</Link>
     </Compile>
+    <Compile Include="..\WowPacketParser\Enums\BuyResult.cs">
+      <Link>Enums\BuyResult.cs</Link>
+    </Compile>
     <Compile Include="..\wowpacketparser\enums\CalendarError.cs">
       <Link>Enums\CalendarError.cs</Link>
     </Compile>

@@ -46,7 +46,7 @@ namespace PacketParser
                 throw new ConstraintException("FilterPacketNumLow must be less or equal than ReaderFilterPacketNumHigh");
 
             // Disable DB when we don't need its data (dumping to a binary file)
-            if (!(Settings.TextOutput || Settings.SQLOutput != 0))
+            if (!(Settings.TextOutput || Settings.SQLOutputFlag != 0))
             {
                 SQLConnector.Enabled = false;
                 SSHTunnel.Enabled = false;

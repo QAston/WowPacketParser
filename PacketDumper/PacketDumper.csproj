@@ -83,6 +83,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\WowPacketParser\Enums\SQLOutput.cs">
+      <Link>Enums\SQLOutput.cs</Link>
+    </Compile>
     <Compile Include="..\wowpacketparser\misc\Filters.cs">
       <Link>Misc\Filters.cs</Link>
     </Compile>
@@ -146,9 +149,6 @@
     <Compile Include="Processing\SQLData\NpcSoundStore.cs" />
     <Compile Include="Processing\TextFileOutput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="..\WowPacketParser\Enums\SQLOutputFlags.cs">
-      <Link>Enums\SQLOutputFlags.cs</Link>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\WowPacketParser\App.config">
@@ -162,6 +162,7 @@
       <Name>PacketParser</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -981,8 +981,6 @@ namespace PacketParser.Parsing.Parsers
             var type = packet.ReadUInt32("Type");
             packet.ReadTime("Hotfix date");
             var itemId = (uint)packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
-
-            packet.AddSniffData(StoreNameType.Item, (int)itemId, "DB_REPLY");
         }
 
         [Parser(Opcode.SMSG_DB_REPLY, ClientVersionBuild.V4_3_4_15595)]
@@ -1153,7 +1151,6 @@ namespace PacketParser.Parsing.Parsers
                     break;
                 }
             }
-            packet.AddSniffData(StoreNameType.Item, (int)itemId, "DB_REPLY");
         }
 
         [Parser(Opcode.SMSG_UPDATE_ITEM_ENCHANTMENTS)]

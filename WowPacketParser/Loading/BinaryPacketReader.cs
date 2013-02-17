@@ -146,6 +146,8 @@ namespace PacketParser.Loading
             Direction direction;
             byte[] data;
 
+            uint cIndex = 0;
+
             {
                 switch (_pktVersion)
                 {
@@ -184,7 +186,7 @@ namespace PacketParser.Loading
                         }
                         else
                         {
-                            _reader.ReadUInt32(); // session id
+                            cIndex = _reader.ReadUInt32(); // session id, connection index
                             var tickCount = _reader.ReadUInt32();
                             time = _startTime.AddMilliseconds(tickCount - _startTickCount);
                         }
@@ -213,7 +215,7 @@ namespace PacketParser.Loading
             if (opcode >= 1312 && ClientVersion.Build <= ClientVersionBuild.V3_3_5a_12340 && ClientVersion.Build > ClientVersionBuild.Zero)
                 return null;
 
-            var packet = new Packet(data, opcode, time, direction, number, fileName);
+            var packet = new Packet(data, opcode, time, direction, number, fileName, cIndex);
             return packet;
         }
 

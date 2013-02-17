@@ -7,13 +7,15 @@ using ICSharpCode.SharpZipLib.Zip.Compression;
 using PacketParser.Enums;
 using PacketParser.Enums.Version;
 using PacketParser.Misc;
+using Ionic.Zlib;
+using PacketParser.Processing;
 
 namespace PacketParser.DataStructures
 {
     public sealed partial class Packet : BinaryReader, ITreeNode
     {
         [SuppressMessage("Microsoft.Reliability", "CA2000", Justification = "MemoryStream is disposed in ClosePacket().")]
-        public Packet(byte[] input, int opcode, DateTime time, Direction direction, int number, string fileName)
+        public Packet(byte[] input, int opcode, DateTime time, Direction direction, int number, string fileName, uint sessionId = 0)
             : base(new MemoryStream(input.Length), Encoding.UTF8)
         {
             this.BaseStream.Write(input, 0, input.Length);
@@ -28,8 +30,9 @@ namespace PacketParser.DataStructures
             StoreObjects = new Stack<Tuple<NamedTreeNode, LinkedList<Tuple<NamedTreeNode, IndexedTreeNode>>>>();
             FileName = fileName;
             Status = ParsedStatus.None;
-            SubPacketNumber = 0;
+            SubPacketNumber = 0;;
             Parent = null;
+            ConnectionIndex = sessionId;
 
             if (number == 0)
                 _firstPacketTime = Time;
@@ -53,6 +56,7 @@ namespace PacketParser.DataStructures
             StoreObjects = new Stack<Tuple<NamedTreeNode, LinkedList<Tuple<NamedTreeNode, IndexedTreeNode>>>>();
             FileName = parent.FileName;
             Status = ParsedStatus.None;
+            ConnectionIndex = parent.ConnectionIndex;
             Parent = (parent.Parent != null) ? parent.Parent : parent;
             SubPacketNumber = ++Parent.SubPacketCount;
         }
@@ -65,6 +69,7 @@ namespace PacketParser.DataStructures
         public int Number { get; private set; }
         public string FileName { get; private set; }
         public ParsedStatus Status { get; set; }
+        public uint ConnectionIndex { get; private set; }
         public string ErrorMessage = "";
 
         public Packet Parent;
@@ -104,6 +109,8 @@ namespace PacketParser.DataStructures
             output.Append(Opcode.ToString("X4"));
             output.Append(") Length: ");
             output.Append(Length);
+            output.Append("ConnId: ");
+            output.Append(ConnectionIndex);
             output.Append(" Time: ");
             output.Append(Time.ToString("MM/dd/yyyy HH:mm:ss.fff"));
             output.Append(" Number: ");
@@ -120,7 +127,7 @@ namespace PacketParser.DataStructures
             return output.ToString();
         }
 
-        public void Inflate(int inflatedSize, int bytesToInflate)
+        public void Inflate(int inflatedSize, int bytesToInflate, bool keepStream = true)
         {
             var oldPos = Position;
             var decompress = ReadBytes(bytesToInflate);
@@ -128,25 +135,40 @@ namespace PacketParser.DataStructures
             this.BaseStream.SetLength(oldPos + inflatedSize + tailData.Length);
             
             var newarr = new byte[inflatedSize];
-            try
+            if (!ClientVersion.RemovedInVersion(ClientVersionBuild.V4_3_0_15005) && keepStream)
             {
-                var inflater = new Inflater();
-                inflater.SetInput(decompress, 0, bytesToInflate);
-                inflater.Inflate(newarr, 0, inflatedSize);
+                var streams = PacketFileProcessor.Current.GetProcessor<SessionStore>().Zstreams;
+                if (!streams.ContainsKey(ConnectionIndex))
+                    streams[ConnectionIndex] = new ZlibCodec(CompressionMode.Decompress);
+                var stream = streams[ConnectionIndex];
+                stream.InputBuffer = decompress;
+                stream.NextIn = 0;
+                stream.AvailableBytesIn = decompress.Length;
+                stream.OutputBuffer = newarr;
+                stream.NextOut = 0;
+                stream.AvailableBytesOut = inflatedSize;
+                stream.Inflate(FlushType.Sync);
             }
-            catch (ICSharpCode.SharpZipLib.SharpZipBaseException)
+            else
             {
-                var inflater = new Inflater(true);
-                inflater.SetInput(decompress, 0, bytesToInflate);
-                inflater.Inflate(newarr, 0, inflatedSize);
+                ZlibCodec stream = new ZlibCodec(CompressionMode.Decompress);
+                stream.InputBuffer = decompress;
+                stream.NextIn = 0;
+                stream.AvailableBytesIn = decompress.Length;
+                stream.OutputBuffer = newarr;
+                stream.NextOut = 0;
+                stream.AvailableBytesOut = inflatedSize;
+                stream.Inflate(FlushType.None);
+                stream.Inflate(FlushType.Finish);
+                stream.EndInflate();
             }
             SetPosition(oldPos);
             this.BaseStream.Write(newarr, 0, inflatedSize);
             this.BaseStream.Write(tailData, 0, tailData.Length);
             SetPosition(oldPos);
         }
-            
-        public void Inflate(int inflatedSize)
+
+        public void Inflate(int inflatedSize, bool keepStream = true)
         {
             Inflate(inflatedSize, (int)(Length - Position));
         }
