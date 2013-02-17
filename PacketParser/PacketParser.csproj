@@ -246,6 +246,9 @@
     <Compile Include="..\wowpacketparser\enums\Direction.cs">
       <Link>Enums\Direction.cs</Link>
     </Compile>
+    <Compile Include="..\WowPacketParser\Enums\DismountResult.cs">
+      <Link>Enums\DismountResult.cs</Link>
+    </Compile>
     <Compile Include="..\wowpacketparser\enums\DrunkenState.cs">
       <Link>Enums\DrunkenState.cs</Link>
     </Compile>
@@ -446,6 +449,9 @@
     </Compile>
     <Compile Include="..\wowpacketparser\enums\MirrorTimerType.cs">
       <Link>Enums\MirrorTimerType.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Enums\MountResult.cs">
+      <Link>Enums\MountResult.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\MovementAnimationState.cs">
       <Link>Enums\MovementAnimationState.cs</Link>

@@ -33,6 +33,20 @@ namespace PacketParser.Misc
         }
 
         /// <summary>
+        /// Returns true if flag exists in value (&)
+        /// </summary>
+        /// <param name="value">An enum, int, ...</param>
+        /// <param name="flag">An enum, int, ...</param>
+        /// <returns>A boolean</returns>
+        public static bool HasAnyFlag(this IConvertible value, IConvertible flag)
+        {
+            var uFlag = flag.ToUInt64(null);
+            var uThis = value.ToUInt64(null);
+
+            return (uThis & uFlag) != 0;
+        }
+
+        /// <summary>
         /// Returns true if bit is set in value (&)
         /// </summary>
         /// <param name="value">An enum, int, ...</param>

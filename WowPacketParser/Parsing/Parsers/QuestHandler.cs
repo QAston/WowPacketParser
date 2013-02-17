@@ -12,6 +12,7 @@ namespace PacketParser.Parsing.Parsers
     {
         private static void ReadExtraQuestInfo510(ref Packet packet, bool readFlags = true)
         {
+            packet.StoreBeginList("ChoiceItems");
             packet.ReadUInt32("Choice Item Count");
             for (var i = 0; i < 6; i++)
             {
@@ -19,15 +20,18 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadUInt32("Choice Item Count", i);
                 packet.ReadUInt32("Choice Item Display Id", i);
             }
+            packet.StoreEndList();
 
             packet.ReadUInt32("Reward Item Count");
 
+            packet.StoreBeginList("RewardItems");
             for (var i = 0; i < 4; i++)
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Reward Item Id", i);
             for (var i = 0; i < 4; i++)
                 packet.ReadUInt32("Reward Item Count", i);
             for (var i = 0; i < 4; i++)
                 packet.ReadUInt32("Reward Item Display Id", i);
+            packet.StoreEndList();
 
             packet.ReadUInt32("Money");
             packet.ReadUInt32("XP");
@@ -35,20 +39,24 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadUInt32("Bonus Talents");
             packet.ReadUInt32("Reward Reputation Mask");
 
+            packet.StoreBeginList("Reputations");
             for (var i = 0; i < 5; i++)
                 packet.ReadUInt32("Reputation Faction", i);
             for (var i = 0; i < 5; i++)
                 packet.ReadUInt32("Reputation Value Id", i);
             for (var i = 0; i < 5; i++)
                 packet.ReadInt32("Reputation Value", i);
+            packet.StoreEndList();
 
             packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell Id");
             packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell Cast Id");
 
+            packet.StoreBeginList("Currencies");
             for (var i = 0; i < 4; i++)
                 packet.ReadUInt32("Currency Id", i);
             for (var i = 0; i < 4; i++)
                 packet.ReadUInt32("Currency Count", i);
+            packet.StoreEndList();
 
             packet.ReadUInt32("Reward SkillId");
             packet.ReadUInt32("Reward Skill Points");
@@ -453,24 +461,29 @@ namespace PacketParser.Parsing.Parsers
 
             quest.RewardItemId = new uint[4];
             quest.RewardItemCount = new uint[4];
+            packet.StoreBeginList("RewardItems");
             for (var i = 0; i < 4; i++)
             {
                 quest.RewardItemId[i] = (uint)packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Reward Item ID", i);
                 quest.RewardItemCount[i] = packet.ReadUInt32("Reward Item Count", i);
             }
+            packet.StoreEndList();
 
             quest.RewardChoiceItemId = new uint[6];
             quest.RewardChoiceItemCount = new uint[6];
+            packet.StoreBeginList("ChoiceItems");
             for (var i = 0; i < 6; i++)
             {
                 quest.RewardChoiceItemId[i] = (uint)packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Reward Choice Item ID", i);
                 quest.RewardChoiceItemCount[i] = packet.ReadUInt32("Reward Choice Item Count", i);
             }
+            packet.StoreEndList();
 
             const int repCount = 5;
             quest.RewardFactionId = new uint[repCount];
             quest.RewardFactionValueId = new int[repCount];
             quest.RewardFactionValueIdOverride = new uint[repCount];
+            packet.StoreBeginList("Reputations");
             for (var i = 0; i < repCount; i++)
                 quest.RewardFactionId[i] = packet.ReadUInt32("Reward Faction ID", i);
 
@@ -479,14 +492,17 @@ namespace PacketParser.Parsing.Parsers
 
             for (var i = 0; i < repCount; i++)
                 quest.RewardFactionValueIdOverride[i] = packet.ReadUInt32("Reward Reputation ID Override", i);
+            packet.StoreEndList();
 
             quest.RewardCurrencyId = new uint[4];
             quest.RewardCurrencyCount = new uint[4];
+            packet.StoreBeginList("Currencies");
             for (var i = 0; i < 4; i++)
             {
                 quest.RewardCurrencyId[i] = packet.ReadUInt32("Reward Currency ID", i);
                 quest.RewardCurrencyCount[i] = packet.ReadUInt32("Reward Currency Count", i);
             }
+            packet.StoreEndList();
 
             quest.PointMapId = packet.ReadUInt32("Point Map ID");
             quest.PointX = packet.ReadSingle("Point X");
@@ -508,13 +524,17 @@ namespace PacketParser.Parsing.Parsers
 
             quest.RequiredSourceItemId = new uint[4];
             quest.RequiredSourceItemCount = new uint[4];
+            packet.StoreBeginList("RequiredSoureItems");
             for (var i = 0; i < 4; i++)
             {
                 quest.RequiredSourceItemId[i] = (uint)packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Required Source Item ID", i);
                 quest.RequiredSourceItemCount[i] = packet.ReadUInt32("Source Item Count", i);
             }
+            packet.StoreEndList();
 
+            
             var requirementCount = packet.ReadByte("Requirement Count");
+            packet.StoreBeginList("Requirements");
             for (var i = 0; i < requirementCount; i++)
             {
                 packet.ReadUInt32("Unk UInt32", i);
@@ -551,9 +571,12 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadCString("Objective Text", i);
                 packet.ReadByte("Unk Byte", i);
                 var count = packet.ReadByte("Unk Byte", i);
+                packet.StoreBeginList("Unks");
                 for (var j = 0; j < count; j++)
                     packet.ReadUInt32("Unk UInt32", i, j);
+                packet.StoreEndList();
             }
+            packet.StoreEndList();
 
             // unused in MoP, but required for SQL building
             quest.RequiredNpcOrGo = new int[4];
@@ -585,8 +608,10 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleQuestNPCQuery430(Packet packet)
         {
             var count = packet.ReadBits("Count", 24);
+            packet.StoreBeginList("Quests");
             for (int i = 0; i < count; ++i)
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Quest, "Quest", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_QUEST_NPC_QUERY_RESPONSE, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
@@ -621,19 +646,24 @@ namespace PacketParser.Parsing.Parsers
             var count = packet.ReadBits("Count", 23);
             var counts = new uint[count];
 
+            packet.StoreBeginList("Quests");
             for (int i = 0; i < count; ++i)
                 counts[i] = packet.ReadBits("Count", 24, i);
 
+            var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
             for (int i = 0; i < count; ++i)
             {
                 packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Quest ID", i);
                 for (int j = 0; j < counts[i]; ++j)
                 {
                     var entry = packet.ReadEntry();
-                    packet.WriteLine("[{0}] [{1}] {2}: {3}", i, j, entry.Value ? "GameObject" : "Creature",
-                        StoreGetters.GetName(entry.Value ? StoreNameType.GameObject : StoreNameType.Unit, entry.Key));
+                    if (entry.Value)
+                        packet.Store("GameObject", names.GetName(StoreNameType.GameObject, entry.Key), i, j);
+                    else
+                        packet.Store("Creature", names.GetName(StoreNameType.Unit, entry.Key), i, j);
                 }
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_QUEST_POI_QUERY_RESPONSE)]
@@ -751,11 +781,13 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadInt32("Unk Int32");
 
             var emoteCount = packet.ReadUInt32("Quest Emote Count");
+            packet.StoreBeginList("Emotes");
             for (var i = 0; i < emoteCount; i++)
             {
                 packet.ReadUInt32("Emote Delay (ms)", i);
                 packet.ReadUInt32("Emote Id", i);
             }
+            packet.StoreEndList();
 
             ReadExtraQuestInfo(ref packet);
         }
@@ -767,8 +799,10 @@ namespace PacketParser.Parsing.Parsers
             // Prints ~4k lines of quest IDs, should be DEBUG only or something...
             packet.Store("Comment", "Packet contains a lot of quest ids, data is ignored to save space");
 
+            packet.StoreBeginList("QuestIds");
             for (var i = 0; i < count; i++)
                 packet.ReadInt32();
+            packet.StoreEndList();
                 //packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Rewarded Quest");
         }
 
@@ -919,17 +953,21 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadBoolean("Starts at AreaTrigger");
 
             var reqSpellCount = packet.ReadUInt32("Required Spell Count");
+            packet.StoreBeginList("RequiredSpells");
             for (var i = 0; i < reqSpellCount; i++)
                 packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Required Spell", i);
+            packet.StoreEndList();
 
             ReadExtraQuestInfo(ref packet, false);
 
             var emoteCount = packet.ReadUInt32("Quest Emote Count");
+            packet.StoreBeginList("Emotes");
             for (var i = 0; i < emoteCount; i++)
             {
                 packet.ReadUInt32("Emote Id", i);
                 packet.ReadUInt32("Emote Delay (ms)", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_QUESTGIVER_COMPLETE_QUEST)]
@@ -1044,27 +1082,29 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadUInt32("Delay");
             packet.ReadUInt32("Close Window on Cancel");
 
-            Storage.QuestRewards.Add((uint)entry, new QuestReward { RequestItemsText = text }, null);
-
             packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32);
             packet.ReadUInt32("Unk UInt32");
             packet.ReadUInt32("Suggested Players");
             packet.ReadUInt32("Money");
 
             var countItems = packet.ReadUInt32("Number of Required Items");
+            packet.StoreBeginList("Required items");
             for (var i = 0; i < countItems; i++)
             {
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Required Item Id", i);
                 packet.ReadUInt32("Required Item Count", i);
                 packet.ReadUInt32("Required Item Display Id", i);
             }
+            packet.StoreEndList();
 
             var countCurrencies = packet.ReadUInt32("Number of Required Currencies");
+            packet.StoreBeginList("Required Currencies");
             for (var i = 0; i < countCurrencies; i++)
             {
                 packet.ReadUInt32("Required Currency Id", i);
                 packet.ReadUInt32("Required Currency Count", i);
             }
+            packet.StoreEndList();
 
             // flags, if any of these flags is 0 quest is not completable
             packet.ReadUInt32("Unk flags 1"); // 2
