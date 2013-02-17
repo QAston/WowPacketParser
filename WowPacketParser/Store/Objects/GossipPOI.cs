@@ -1,10 +1,10 @@
-﻿using WowPacketParser.Enums;
-//using WowPacketParser.SQL;
+﻿using PacketParser.Enums;
+using PacketParser.Misc;
 
-namespace WowPacketParser.Store.Objects
+namespace PacketParser.DataStructures
 {
     //[DBTableName("points_of_interest")]
-    public sealed class GossipPOI
+    public sealed class GossipPOI : ITextOutputDisabled
     {
         //[DBFieldName("x")]
         public float XPos;

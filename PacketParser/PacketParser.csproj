@@ -993,6 +993,9 @@
     <Compile Include="..\WowPacketParser\Store\Objects\Gossip.cs">
       <Link>DataStructures\Gossip.cs</Link>
     </Compile>
+    <Compile Include="..\WowPacketParser\Store\Objects\GossipPOI.cs">
+      <Link>DataStructures\GossipPOI.cs</Link>
+    </Compile>
     <Compile Include="..\wowpacketparser\store\objects\Item.cs">
       <Link>DataStructures\Item.cs</Link>
     </Compile>
@@ -1013,6 +1016,9 @@
     </Compile>
     <Compile Include="..\wowpacketparser\store\objects\NpcVendor.cs">
       <Link>DataStructures\NpcVendor.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Store\Objects\ObjectName.cs">
+      <Link>DataStructures\ObjectName.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\store\objects\PageText.cs">
       <Link>DataStructures\PageText.cs</Link>

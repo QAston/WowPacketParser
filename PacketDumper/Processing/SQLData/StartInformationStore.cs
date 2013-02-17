@@ -28,7 +28,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanDictionary<Tuple<Race, Class>, StartPosition> StartPositions = new TimeSpanDictionary<Tuple<Race, Class>, StartPosition>();
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.StartInformation);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.playercreateinfo_action) || Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.playercreateinfo) || Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.playercreateinfo_spell);
         }
 
         public void ProcessPacket(Packet packet)
@@ -40,6 +40,8 @@ namespace PacketDumper.Processing.SQLData
             {
                 case Opcode.SMSG_CHAR_ENUM:
                     {
+                        if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.playercreateinfo))
+                            break;
                         var characters = packet.GetData().GetNode<IndexedTreeNode>("Characters");
                         foreach (var c in characters)
                         {
@@ -61,6 +63,8 @@ namespace PacketDumper.Processing.SQLData
                     }
                 case Opcode.SMSG_ACTION_BUTTONS:
                     {
+                        if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.playercreateinfo_action))
+                            break;
                         Player character = PacketFileProcessor.Current.GetProcessor<SessionStore>().LoggedInCharacter;
                         if (character == null || !character.FirstLogin)
                             return;
@@ -86,6 +90,8 @@ namespace PacketDumper.Processing.SQLData
                     }
                 case Opcode.SMSG_INITIAL_SPELLS:
                     {
+                        if (!Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.playercreateinfo_spell))
+                            break;
                         var spells = new List<uint>();
                         var buttons = packet.GetData().GetNode<IndexedTreeNode>("InitialSpells");
                         foreach (var s in spells)

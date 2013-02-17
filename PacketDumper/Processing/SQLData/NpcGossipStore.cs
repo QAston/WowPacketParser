@@ -25,11 +25,12 @@ namespace PacketDumper.Processing.SQLData
         public ProcessedDataNodeEventHandler ProcessedAnyDataNodeHandler { get { return null; } }
 
         // Gossips (MenuId, TextId)
-        public static readonly TimeSpanDictionary<Tuple<uint, uint>, Gossip> Gossips = new TimeSpanDictionary<Tuple<uint, uint>, Gossip>();
+        public readonly TimeSpanDictionary<Tuple<uint, uint>, Gossip> Gossips = new TimeSpanDictionary<Tuple<uint, uint>, Gossip>();
+        public readonly TimeSpanDictionary<Tuple<uint, uint>, object> GossipSelects = new TimeSpanDictionary<Tuple<uint, uint>, object>();
 
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.Gossip);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.gossip_menu_option) || Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.gossip_menu);
         }
 
         public void ProcessPacket(Packet packet)
@@ -39,10 +40,17 @@ namespace PacketDumper.Processing.SQLData
 
             if (Opcode.SMSG_GOSSIP_MESSAGE == Opcodes.GetOpcode(packet.Opcode))
             {
-                var menuId = packet.GetData().GetNode< UInt32 >("Menu Id");
-                var textId = packet.GetData().GetNode< UInt32 >("Text Id");
+                var menuId = packet.GetData().GetNode<UInt32>("Menu Id");
+                var textId = packet.GetData().GetNode<UInt32>("Text Id");
 
                 Gossips.Add(Tuple.Create(menuId, textId), packet.GetNode<Gossip>("GossipObject"), packet.TimeSpan);
+            }
+            else if (Opcode.CMSG_GOSSIP_SELECT_OPTION == Opcodes.GetOpcode(packet.Opcode))
+            {
+                var menuEntry = packet.GetData().GetNode<UInt32>("Menu Id");
+                var gossipId = packet.GetData().GetNode<UInt32>("Gossip Id");
+
+                GossipSelects.Add(Tuple.Create(menuEntry, gossipId), null, packet.TimeSpan);
             }
         }
 
@@ -62,114 +70,148 @@ namespace PacketDumper.Processing.SQLData
             var result = "";
 
             // `gossip`
-            if (SQLConnector.Enabled)
+            if (Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.gossip_menu))
             {
-                var query = new StringBuilder(string.Format("SELECT `entry`,`text_id` FROM {0}.`gossip_menu` WHERE ", ParserSettings.MySQL.TDBDB));
-                foreach (Tuple<uint, uint> gossip in Gossips.Keys())
+                if (SQLConnector.Enabled)
                 {
-                    query.Append("(`entry`=").Append(gossip.Item1).Append(" AND ");
-                    query.Append("`text_id`=").Append(gossip.Item2).Append(") OR ");
-                }
-                query.Remove(query.Length - 4, 4).Append(";");
+                    var query = new StringBuilder(string.Format("SELECT `entry`,`text_id` FROM {0}.`gossip_menu` WHERE ", ParserSettings.MySQL.TDBDB));
+                    foreach (Tuple<uint, uint> gossip in Gossips.Keys())
+                    {
+                        query.Append("(`entry`=").Append(gossip.Item1).Append(" AND ");
+                        query.Append("`text_id`=").Append(gossip.Item2).Append(") OR ");
+                    }
+                    query.Remove(query.Length - 4, 4).Append(";");
 
-                var rows = new List<QueryBuilder.SQLInsertRow>();
-                using (var reader = SQLConnector.ExecuteQuery(query.ToString()))
-                {
-                    if (reader != null)
-                        while (reader.Read())
-                        {
-                            var values = new object[2];
-                            var count = reader.GetValues(values);
-                            if (count != 2)
-                                break; // error in query
-
-                            var entry = Convert.ToUInt32(values[0]);
-                            var textId = Convert.ToUInt32(values[1]);
-
-                            // our table is small, 2 fields and both are PKs; no need for updates
-                            if (!Gossips.ContainsKey(Tuple.Create(entry, textId)))
+                    var rows = new List<QueryBuilder.SQLInsertRow>();
+                    using (var reader = SQLConnector.ExecuteQuery(query.ToString()))
+                    {
+                        if (reader != null)
+                            while (reader.Read())
                             {
-                                var row = new QueryBuilder.SQLInsertRow();
-                                row.AddValue("entry", entry);
-                                row.AddValue("text_id", textId);
-                                row.Comment = names.GetName(StoreNameType.Unit, // BUG: GOs can send gossips too
-                                                                   (int)entry, false);
-                                rows.Add(row);
+                                var values = new object[2];
+                                var count = reader.GetValues(values);
+                                if (count != 2)
+                                    break; // error in query
+
+                                var entry = Convert.ToUInt32(values[0]);
+                                var textId = Convert.ToUInt32(values[1]);
+
+                                // our table is small, 2 fields and both are PKs; no need for updates
+                                if (!Gossips.ContainsKey(Tuple.Create(entry, textId)))
+                                {
+                                    var row = new QueryBuilder.SQLInsertRow();
+                                    row.AddValue("entry", entry);
+                                    row.AddValue("text_id", textId);
+                                    row.Comment = names.GetName(StoreNameType.Unit, // BUG: GOs can send gossips too
+                                                                       (int)entry, false);
+                                    rows.Add(row);
+                                }
                             }
-                        }
+                    }
+                    result += new QueryBuilder.SQLInsert("gossip_menu", rows, 2).Build();
                 }
-                result += new QueryBuilder.SQLInsert("gossip_menu", rows, 2).Build();
-            }
-            else
-            {
-                var rows = new List<QueryBuilder.SQLInsertRow>();
-                foreach (var gossip in Gossips)
+                else
                 {
-                    var row = new QueryBuilder.SQLInsertRow();
+                    var rows = new List<QueryBuilder.SQLInsertRow>();
+                    foreach (var gossip in Gossips)
+                    {
+                        var row = new QueryBuilder.SQLInsertRow();
 
-                    row.AddValue("entry", gossip.Key.Item1);
-                    row.AddValue("text_id", gossip.Key.Item2);
-                    row.Comment = names.GetName(Utilities.ObjectTypeToStore(gossip.Value.Item1.ObjectType),
-                                                       (int)gossip.Value.Item1.ObjectEntry, false);
+                        row.AddValue("entry", gossip.Key.Item1);
+                        row.AddValue("text_id", gossip.Key.Item2);
+                        row.Comment = names.GetName(Utilities.ObjectTypeToStore(gossip.Value.Item1.ObjectType),
+                                                           (int)gossip.Value.Item1.ObjectEntry, false);
 
-                    rows.Add(row);
+                        rows.Add(row);
+                    }
+
+                    result += new QueryBuilder.SQLInsert("gossip_menu", rows, 2).Build();
                 }
-
-                result += new QueryBuilder.SQLInsert("gossip_menu", rows, 2).Build();
             }
 
             // `gossip_menu_option`
-            if (SQLConnector.Enabled)
+            if (Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.gossip_menu_option))
             {
-                var rowsIns = new List<QueryBuilder.SQLInsertRow>();
-                var rowsUpd = new List<QueryBuilder.SQLUpdateRow>();
-
-                foreach (var gossip in Gossips)
+                if (SQLConnector.Enabled)
                 {
-                    if (gossip.Value.Item1.GossipOptions == null) continue;
-                    foreach (var gossipOption in gossip.Value.Item1.GossipOptions)
+                    var rowsIns = new List<QueryBuilder.SQLInsertRow>();
+                    var rowsUpd = new List<QueryBuilder.SQLUpdateRow>();
+
+                    foreach (var gossip in Gossips)
                     {
-                        var query =       //         0     1       2         3         4        5         6
-                            string.Format("SELECT menu_id,id,option_icon,box_coded,box_money,box_text,option_text " +
-                                          "FROM {2}.gossip_menu_option WHERE menu_id={0} AND id={1};", gossip.Key.Item1,
-                                          gossipOption.Index, ParserSettings.MySQL.TDBDB);
-                        using (var reader = SQLConnector.ExecuteQuery(query))
+                        if (gossip.Value.Item1.GossipOptions == null) continue;
+                        foreach (var gossipOption in gossip.Value.Item1.GossipOptions)
                         {
-                            if (reader.HasRows) // possible update
+                            var query =       //         0     1       2         3         4        5         6
+                                string.Format("SELECT menu_id,id,option_icon,box_coded,box_money,box_text,option_text " +
+                                              "FROM {2}.gossip_menu_option WHERE menu_id={0} AND id={1};", gossip.Key.Item1,
+                                              gossipOption.Index, ParserSettings.MySQL.TDBDB);
+                            using (var reader = SQLConnector.ExecuteQuery(query))
                             {
-                                while (reader.Read())
+                                if (reader.HasRows) // possible update
                                 {
-                                    var row = new QueryBuilder.SQLUpdateRow();
+                                    while (reader.Read())
+                                    {
+                                        var row = new QueryBuilder.SQLUpdateRow();
 
-                                    if (!Utilities.EqualValues(reader.GetValue(2), gossipOption.OptionIcon))
-                                        row.AddValue("option_icon", gossipOption.OptionIcon);
+                                        if (!Utilities.EqualValues(reader.GetValue(2), gossipOption.OptionIcon))
+                                            row.AddValue("option_icon", gossipOption.OptionIcon);
 
-                                    if (!Utilities.EqualValues(reader.GetValue(3), gossipOption.Box))
-                                        row.AddValue("box_coded", gossipOption.Box);
+                                        if (!Utilities.EqualValues(reader.GetValue(3), gossipOption.Box))
+                                            row.AddValue("box_coded", gossipOption.Box);
 
-                                    if (!Utilities.EqualValues(reader.GetValue(4), gossipOption.RequiredMoney))
-                                        row.AddValue("box_money", gossipOption.RequiredMoney);
+                                        if (!Utilities.EqualValues(reader.GetValue(4), gossipOption.RequiredMoney))
+                                            row.AddValue("box_money", gossipOption.RequiredMoney);
 
-                                    if (!Utilities.EqualValues(reader.GetValue(5), gossipOption.BoxText))
-                                        row.AddValue("box_text", gossipOption.BoxText);
+                                        if (!Utilities.EqualValues(reader.GetValue(5), gossipOption.BoxText))
+                                            row.AddValue("box_text", gossipOption.BoxText);
 
-                                    if (!Utilities.EqualValues(reader.GetValue(6), gossipOption.OptionText))
-                                        row.AddValue("option_text", gossipOption.OptionText);
+                                        if (!Utilities.EqualValues(reader.GetValue(6), gossipOption.OptionText))
+                                            row.AddValue("option_text", gossipOption.OptionText);
 
-                                    row.AddWhere("menu_id", gossip.Key.Item1);
-                                    row.AddWhere("id", gossipOption.Index);
+                                        row.AddWhere("menu_id", gossip.Key.Item1);
+                                        row.AddWhere("id", gossipOption.Index);
 
-                                    row.Comment =
-                                        names.GetName(Utilities.ObjectTypeToStore(gossip.Value.Item1.ObjectType),
-                                                             (int)gossip.Value.Item1.ObjectEntry, false);
+                                        row.Comment =
+                                            names.GetName(Utilities.ObjectTypeToStore(gossip.Value.Item1.ObjectType),
+                                                                 (int)gossip.Value.Item1.ObjectEntry, false);
 
-                                    row.Table = "gossip_menu_option";
+                                        row.Table = "gossip_menu_option";
 
-                                    if (row.ValueCount != 0)
-                                        rowsUpd.Add(row);
+                                        if (row.ValueCount != 0)
+                                            rowsUpd.Add(row);
+                                    }
+                                }
+                                else // insert
+                                {
+                                    var row = new QueryBuilder.SQLInsertRow();
+
+                                    row.AddValue("menu_id", gossip.Key.Item1);
+                                    row.AddValue("id", gossipOption.Index);
+                                    row.AddValue("option_icon", gossipOption.OptionIcon);
+                                    row.AddValue("option_text", gossipOption.OptionText);
+                                    row.AddValue("box_coded", gossipOption.Box);
+                                    row.AddValue("box_money", gossipOption.RequiredMoney);
+                                    row.AddValue("box_text", gossipOption.BoxText);
+
+                                    row.Comment = names.GetName(Utilities.ObjectTypeToStore(gossip.Value.Item1.ObjectType),
+                                                               (int)gossip.Value.Item1.ObjectEntry, false);
+
+                                    rowsIns.Add(row);
                                 }
                             }
-                            else // insert
+                        }
+                    }
+                    result += new QueryBuilder.SQLInsert("gossip_menu_option", rowsIns, 2).Build() +
+                              new QueryBuilder.SQLUpdate(rowsUpd).Build();
+                }
+                else
+                {
+                    var rows = new List<QueryBuilder.SQLInsertRow>();
+                    foreach (var gossip in Gossips)
+                    {
+                        if (gossip.Value.Item1.GossipOptions != null)
+                            foreach (var gossipOption in gossip.Value.Item1.GossipOptions)
                             {
                                 var row = new QueryBuilder.SQLInsertRow();
 
@@ -184,40 +226,12 @@ namespace PacketDumper.Processing.SQLData
                                 row.Comment = names.GetName(Utilities.ObjectTypeToStore(gossip.Value.Item1.ObjectType),
                                                            (int)gossip.Value.Item1.ObjectEntry, false);
 
-                                rowsIns.Add(row);
+                                rows.Add(row);
                             }
-                        }
                     }
+
+                    result += new QueryBuilder.SQLInsert("gossip_menu_option", rows, 2).Build();
                 }
-                result += new QueryBuilder.SQLInsert("gossip_menu_option", rowsIns, 2).Build() +
-                          new QueryBuilder.SQLUpdate(rowsUpd).Build();
-            }
-            else
-            {
-                var rows = new List<QueryBuilder.SQLInsertRow>();
-                foreach (var gossip in Gossips)
-                {
-                    if (gossip.Value.Item1.GossipOptions != null)
-                        foreach (var gossipOption in gossip.Value.Item1.GossipOptions)
-                        {
-                            var row = new QueryBuilder.SQLInsertRow();
-
-                            row.AddValue("menu_id", gossip.Key.Item1);
-                            row.AddValue("id", gossipOption.Index);
-                            row.AddValue("option_icon", gossipOption.OptionIcon);
-                            row.AddValue("option_text", gossipOption.OptionText);
-                            row.AddValue("box_coded", gossipOption.Box);
-                            row.AddValue("box_money", gossipOption.RequiredMoney);
-                            row.AddValue("box_text", gossipOption.BoxText);
-
-                            row.Comment = names.GetName(Utilities.ObjectTypeToStore(gossip.Value.Item1.ObjectType),
-                                                       (int)gossip.Value.Item1.ObjectEntry, false);
-
-                            rows.Add(row);
-                        }
-                }
-
-                result += new QueryBuilder.SQLInsert("gossip_menu_option", rows, 2).Build();
             }
 
             return result;

@@ -33,12 +33,17 @@ namespace PacketParser.Misc
             }
         }
 
-        public void Add(T key, TK value, TimeSpan? time)
+        public void Add(T key, TK value, TimeSpan? time = null)
         {
             if (_dictionary.ContainsKey(key))
                 return;
 
             _dictionary.Add(key, new Tuple<TK, TimeSpan?>(value, time));
+        }
+
+        public bool Remove(T key)
+        {
+            return _dictionary.Remove(key);
         }
 
         public bool ContainsKey(T key)

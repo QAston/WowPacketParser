@@ -101,6 +101,15 @@
     <Compile Include="..\WowPacketParser\Program.cs">
       <Link>Program.cs</Link>
     </Compile>
+    <Compile Include="..\WowPacketParser\Store\Objects\CreatureEquipment.cs">
+      <Link>DataStructures\CreatureEquipment.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Store\Objects\GameObjectTemplateNonWDB.cs">
+      <Link>DataStructures\GameObjectTemplateNonWDB.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Store\Objects\ModelData.cs">
+      <Link>DataStructures\ModelData.cs</Link>
+    </Compile>
     <Compile Include="..\WowPacketParser\Store\Objects\QuestMisc.cs">
       <Link>DataStructures\QuestMisc.cs</Link>
     </Compile>
@@ -123,6 +132,7 @@
       <Link>DataStructures\UnitTemplateNonWDB.cs</Link>
     </Compile>
     <Compile Include="Processing\PacketFileDumper.cs" />
+    <Compile Include="Processing\SQLData\GossipPOIStore.cs" />
     <Compile Include="Processing\RawData\IBinaryPacketWriter.cs" />
     <Compile Include="Processing\RawData\KSZorBinaryPacketWriter.cs" />
     <Compile Include="Processing\RawFileOutput.cs" />

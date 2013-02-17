@@ -22,7 +22,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanDictionary<uint, ItemTemplate> ItemTemplates = new TimeSpanDictionary<uint, ItemTemplate>();
         public bool Init(PacketFileProcessor file)
         {
-            return false;
+            return SQLOutputFlag.HasAnyFlagBit(SQLOutput.item_template);
         }
 
         public void ProcessPacket(Packet packet)

@@ -11,13 +11,9 @@ namespace PacketParser.Parsing.Parsers
 {
     public static class NpcHandler
     {
-        public static uint LastGossipPOIEntry = 0;
-
         [Parser(Opcode.SMSG_GOSSIP_POI)]
         public static void HandleGossipPoi(Packet packet)
         {
-            LastGossipPOIEntry++;
-
             var gossipPOI = new GossipPOI();
 
             gossipPOI.Flags = (uint) packet.ReadEnum<UnknownFlags>("Flags", TypeCode.Int32);
@@ -29,7 +25,7 @@ namespace PacketParser.Parsing.Parsers
             gossipPOI.XPos = pos.X;
             gossipPOI.YPos = pos.Y;
 
-            Storage.GossipPOIs.Add(LastGossipPOIEntry, gossipPOI, packet.TimeSpan);
+            packet.Store("GosipPOI", gossipPOI);
         }
 
         [Parser(Opcode.CMSG_TRAINER_BUY_SPELL, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
@@ -327,8 +323,6 @@ namespace PacketParser.Parsing.Parsers
 
             if (packet.CanRead()) // if ( byte_F3777C[v3] & 1 )
                 packet.ReadCString("Box Text");
-
-            Storage.GossipSelects.Add(Tuple.Create(menuEntry, gossipId), null, packet.TimeSpan);
         }
 
         [Parser(Opcode.SMSG_GOSSIP_MESSAGE)]

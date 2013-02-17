@@ -5,6 +5,7 @@ using PacketParser.Enums.Version;
 using PacketParser.Misc;
 using Guid = PacketParser.DataStructures.Guid;
 using PacketParser.DataStructures;
+using PacketParser.Processing;
 
 namespace PacketParser.Parsing.Parsers
 {

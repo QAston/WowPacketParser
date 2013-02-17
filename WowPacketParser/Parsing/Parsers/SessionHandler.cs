@@ -6,6 +6,7 @@ using PacketParser.DataStructures;
 using Ionic.Zlib;
 using System.IO;
 using System.Collections.Generic;
+using PacketParser.Processing;
 
 namespace PacketParser.Parsing.Parsers
 {

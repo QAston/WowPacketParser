@@ -24,7 +24,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanDictionary<uint, QuestTemplate> QuestTemplates = new TimeSpanDictionary<uint, QuestTemplate>();
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.QuestTemplate);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.quest_template);
         }
 
         public void ProcessPacket(Packet packet)

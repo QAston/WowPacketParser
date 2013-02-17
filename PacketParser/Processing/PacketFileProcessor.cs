@@ -191,12 +191,12 @@ namespace PacketParser.Processing
 
         public void Stub4(string name, Object obj, Type t){}
 
-        public T GetProcessor<T>() where T : IPacketProcessor
+        public T GetProcessor<T>() where T : class, IPacketProcessor
         {
             var type = typeof(T);
             if (Processors.ContainsKey(type))
                 return (T)Processors[type];
-            return default(T);
+            return null;
         }
 
         protected void FinishProcessors()

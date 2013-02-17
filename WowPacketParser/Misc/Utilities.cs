@@ -68,6 +68,7 @@ namespace PacketParser.Misc
 
             switch (type)
             {
+                case ObjectType.Container:
                 case ObjectType.Item:
                     result = StoreNameType.Item;
                     break;
@@ -75,7 +76,6 @@ namespace PacketParser.Misc
                 case ObjectType.Unit:
                     result = StoreNameType.Unit;
                     break;
-                case ObjectType.Container: // ?
                 case ObjectType.GameObject:
                     result = StoreNameType.GameObject;
                     break;
@@ -84,6 +84,31 @@ namespace PacketParser.Misc
                     break;
             }
 
+            return result;
+        }
+
+        public static ObjectType StoreTypeToObject(StoreNameType type)
+        {
+            ObjectType result;
+
+            switch (type)
+            {
+                case StoreNameType.Item:
+                    result = ObjectType.Item;
+                    break;
+                case StoreNameType.Unit:
+                    result = ObjectType.Unit;
+                    break;
+                case StoreNameType.Player:
+                    result = ObjectType.Player;
+                    break;
+                case StoreNameType.GameObject:
+                    result = ObjectType.GameObject;
+                    break;
+                default:
+                    result = ObjectType.Object;
+                    break;
+            }
             return result;
         }
 

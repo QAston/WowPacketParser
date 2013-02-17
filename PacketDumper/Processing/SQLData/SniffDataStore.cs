@@ -23,12 +23,12 @@ namespace PacketDumper.Processing
         public ProcessDataEventHandler ProcessAnyDataHandler { get { return null; } }
         public ProcessedDataNodeEventHandler ProcessedAnyDataNodeHandler { get { return null; } }
 
-        private static readonly bool SniffData = Settings.SQLOutput.HasAnyFlag(SQLOutputFlags.SniffData);
-        private static readonly bool SniffDataOpcodes = Settings.SQLOutput.HasAnyFlag(SQLOutputFlags.SniffDataOpcodes);
+        private static readonly bool SniffData = Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.SniffData);
+        private static readonly bool SniffDataOpcodes = Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.SniffDataOpcodes);
         public static readonly TimeSpanBag<SniffData> SniffDatas = new TimeSpanBag<SniffData>();
         public bool Init(PacketFileProcessor file)
         {
-            return SniffData;
+            return SniffData || SniffDataOpcodes;
         }
 
         public void ProcessPacket(Packet packet)
@@ -36,119 +36,122 @@ namespace PacketDumper.Processing
             if (packet.Status != ParsedStatus.Success)
                 return;
 
-            switch (Opcodes.GetOpcode(packet.Opcode))
+            if (SniffData)
             {
-                case Opcode.SMSG_GAMEOBJECT_QUERY_RESPONSE:
-                    {
-                    var entry = packet.GetData().GetNode<KeyValuePair<int, bool>>("Entry");
-                    if (!entry.Value)
-                        AddSniffData(packet, StoreNameType.GameObject, entry.Key, "QUERY_RESPONSE");
-                    break;
-                    }
-                case Opcode.SMSG_CREATURE_QUERY_RESPONSE:
-                    {
-                    var entry = packet.GetData().GetNode<KeyValuePair<int, bool>>("Entry");
-                    if (!entry.Value)
-                        AddSniffData(packet, StoreNameType.Unit, entry.Key, "QUERY_RESPONSE");
-                    break;
-                    }
-                case Opcode.SMSG_UPDATE_OBJECT:
-                    {
-                        var updates = packet.GetData().GetNode<IndexedTreeNode>("Updates");
-                        foreach (var update in updates)
+                switch (Opcodes.GetOpcode(packet.Opcode))
+                {
+                    case Opcode.SMSG_GAMEOBJECT_QUERY_RESPONSE:
                         {
-                            Object typeObj;
-                            if (ClientVersion.AddedInVersion(ClientType.Cataclysm))
-                                typeObj = update.Value.GetNode<UpdateTypeCataclysm>("UpdateType");
-                            else
-                                typeObj = update.Value.GetNode<UpdateType>("UpdateType");
-                            if (typeObj.ToString().Contains("Create"))
+                            var entry = packet.GetData().GetNode<KeyValuePair<int, bool>>("Entry");
+                            if (!entry.Value)
+                                AddSniffData(packet, StoreNameType.GameObject, entry.Key, "QUERY_RESPONSE");
+                            break;
+                        }
+                    case Opcode.SMSG_CREATURE_QUERY_RESPONSE:
+                        {
+                            var entry = packet.GetData().GetNode<KeyValuePair<int, bool>>("Entry");
+                            if (!entry.Value)
+                                AddSniffData(packet, StoreNameType.Unit, entry.Key, "QUERY_RESPONSE");
+                            break;
+                        }
+                    case Opcode.SMSG_UPDATE_OBJECT:
+                        {
+                            var updates = packet.GetData().GetNode<IndexedTreeNode>("Updates");
+                            foreach (var update in updates)
                             {
-                                var guid = update.Value.GetNode<Guid>("GUID");
-                                var objType = update.Value.GetNode<ObjectType>("Object Type");
-                                if (guid.HasEntry() && (objType == ObjectType.Unit || objType == ObjectType.GameObject))
-                                    AddSniffData(packet, Utilities.ObjectTypeToStore(objType), (int)guid.GetEntry(), "SPAWN");
+                                Object typeObj;
+                                if (ClientVersion.AddedInVersion(ClientType.Cataclysm))
+                                    typeObj = update.Value.GetNode<UpdateTypeCataclysm>("UpdateType");
+                                else
+                                    typeObj = update.Value.GetNode<UpdateType>("UpdateType");
+                                if (typeObj.ToString().Contains("Create"))
+                                {
+                                    var guid = update.Value.GetNode<Guid>("GUID");
+                                    var objType = update.Value.GetNode<ObjectType>("Object Type");
+                                    if (guid.HasEntry() && (objType == ObjectType.Unit || objType == ObjectType.GameObject))
+                                        AddSniffData(packet, Utilities.ObjectTypeToStore(objType), (int)guid.GetEntry(), "SPAWN");
+                                }
                             }
                         }
-                    }
-                    break;
-                case Opcode.SMSG_PAGE_TEXT_QUERY_RESPONSE:
-                    {
-                    var entry = packet.GetData().GetNode<UInt32>("Entry");
-                    AddSniffData(packet, StoreNameType.PageText, (int)entry, "QUERY_RESPONSE");
-                    break;
-                    }
-                case Opcode.SMSG_GOSSIP_MESSAGE:
-                    {
-                    var menuId = packet.GetData().GetNode<UInt32>("Menu Id");
-                    var guid = packet.GetData().GetNode<Guid>("GUID");
-                    AddSniffData(packet, StoreNameType.Gossip, (int)menuId, guid.GetEntry().ToString());
-                    }
-                    break;
-                case Opcode.SMSG_ITEM_QUERY_SINGLE_RESPONSE:
-                    {
-                    var entry = packet.GetData().GetNode<KeyValuePair<int, bool>>("Entry");
-                    if (!entry.Value)
-                        AddSniffData(packet, StoreNameType.Item, entry.Key, "QUERY_RESPONSE");
-                    break;
-                    }
-                case Opcode.SMSG_DB_REPLY:
-                    {
-                    var itemId = packet.GetData().GetNode<UInt32>("Entry");
-                    AddSniffData(packet, StoreNameType.Item, (int)itemId, "DB_REPLY");
-                    break;
-                    }
-                case Opcode.CMSG_LOAD_SCREEN:
-                    {
-                    var mapId = packet.GetData().GetNode<UInt32>("Map");
-                    AddSniffData(packet, StoreNameType.Map, (int)mapId, "LOAD_SCREEN");
-                    break;
-                    }
-                case Opcode.SMSG_NEW_WORLD:
-                case Opcode.SMSG_LOGIN_VERIFY_WORLD:
-                    {
-                    var mapId = packet.GetData().GetNode<UInt32>("Map");
-                    AddSniffData(packet, StoreNameType.Map, (int)mapId, "NEW_WORLD");
-                    break;
-                    }
-                case Opcode.SMSG_SET_PHASE_SHIFT:
-                    {
-                    Int32 phaseMask;
-                    if (packet.TryGetNode<Int32>(out phaseMask, "Phase Mask"))
-                        AddSniffData(packet, StoreNameType.Phase, phaseMask, "PHASEMASK");
-                    break;
-                    }
-                case Opcode.SMSG_NPC_TEXT_UPDATE:
-                    {
-                    var entry = packet.GetData().GetNode<KeyValuePair<int, bool>>("Entry");
-                    if (!entry.Value)
-                        AddSniffData(packet, StoreNameType.NpcText, entry.Key, "QUERY_RESPONSE");
-                    break;
-                    }
-                case Opcode.SMSG_QUEST_QUERY_RESPONSE:
-                    {
-                    var id = packet.GetData().GetNode<KeyValuePair<int, bool>>("Quest ID");
-                    if (!id.Value)
-                        AddSniffData(packet, StoreNameType.Quest, id.Key, "QUERY_RESPONSE");
-                    break;
-                    }
-                case Opcode.SMSG_AURA_UPDATE_ALL:
-                case Opcode.SMSG_AURA_UPDATE:
-                    {
-                    var auras = packet.GetData().GetNode<IndexedTreeNode>("Auras");
-                    foreach (var aura in auras)
-                    {
-                        var spellId = aura.Value.GetNode<NamedTreeNode>("Aura").GetNode<Int32>("Spell ID");
-                        AddSniffData(packet, StoreNameType.Spell, spellId, "AURA_UPDATE");
-                    }
-                    break;
-                    }
-                case Opcode.SMSG_SPELL_GO:
-                    {
-                    var spellId = packet.GetData().GetNode<Int32>("Spell ID");
-                    AddSniffData(packet, StoreNameType.Spell, spellId, "SPELL_GO");
-                    break;
-                    }
+                        break;
+                    case Opcode.SMSG_PAGE_TEXT_QUERY_RESPONSE:
+                        {
+                            var entry = packet.GetData().GetNode<UInt32>("Entry");
+                            AddSniffData(packet, StoreNameType.PageText, (int)entry, "QUERY_RESPONSE");
+                            break;
+                        }
+                    case Opcode.SMSG_GOSSIP_MESSAGE:
+                        {
+                            var menuId = packet.GetData().GetNode<UInt32>("Menu Id");
+                            var guid = packet.GetData().GetNode<Guid>("GUID");
+                            AddSniffData(packet, StoreNameType.Gossip, (int)menuId, guid.GetEntry().ToString());
+                        }
+                        break;
+                    case Opcode.SMSG_ITEM_QUERY_SINGLE_RESPONSE:
+                        {
+                            var entry = packet.GetData().GetNode<KeyValuePair<int, bool>>("Entry");
+                            if (!entry.Value)
+                                AddSniffData(packet, StoreNameType.Item, entry.Key, "QUERY_RESPONSE");
+                            break;
+                        }
+                    case Opcode.SMSG_DB_REPLY:
+                        {
+                            var itemId = packet.GetData().GetNode<UInt32>("Entry");
+                            AddSniffData(packet, StoreNameType.Item, (int)itemId, "DB_REPLY");
+                            break;
+                        }
+                    case Opcode.CMSG_LOAD_SCREEN:
+                        {
+                            var mapId = packet.GetData().GetNode<UInt32>("Map");
+                            AddSniffData(packet, StoreNameType.Map, (int)mapId, "LOAD_SCREEN");
+                            break;
+                        }
+                    case Opcode.SMSG_NEW_WORLD:
+                    case Opcode.SMSG_LOGIN_VERIFY_WORLD:
+                        {
+                            var mapId = packet.GetData().GetNode<UInt32>("Map");
+                            AddSniffData(packet, StoreNameType.Map, (int)mapId, "NEW_WORLD");
+                            break;
+                        }
+                    case Opcode.SMSG_SET_PHASE_SHIFT:
+                        {
+                            Int32 phaseMask;
+                            if (packet.TryGetNode<Int32>(out phaseMask, "Phase Mask"))
+                                AddSniffData(packet, StoreNameType.Phase, phaseMask, "PHASEMASK");
+                            break;
+                        }
+                    case Opcode.SMSG_NPC_TEXT_UPDATE:
+                        {
+                            var entry = packet.GetData().GetNode<KeyValuePair<int, bool>>("Entry");
+                            if (!entry.Value)
+                                AddSniffData(packet, StoreNameType.NpcText, entry.Key, "QUERY_RESPONSE");
+                            break;
+                        }
+                    case Opcode.SMSG_QUEST_QUERY_RESPONSE:
+                        {
+                            var id = packet.GetData().GetNode<KeyValuePair<int, bool>>("Quest ID");
+                            if (!id.Value)
+                                AddSniffData(packet, StoreNameType.Quest, id.Key, "QUERY_RESPONSE");
+                            break;
+                        }
+                    case Opcode.SMSG_AURA_UPDATE_ALL:
+                    case Opcode.SMSG_AURA_UPDATE:
+                        {
+                            var auras = packet.GetData().GetNode<IndexedTreeNode>("Auras");
+                            foreach (var aura in auras)
+                            {
+                                var spellId = aura.Value.GetNode<NamedTreeNode>("Aura").GetNode<Int32>("Spell ID");
+                                AddSniffData(packet, StoreNameType.Spell, spellId, "AURA_UPDATE");
+                            }
+                            break;
+                        }
+                    case Opcode.SMSG_SPELL_GO:
+                        {
+                            var spellId = packet.GetData().GetNode<Int32>("Spell ID");
+                            AddSniffData(packet, StoreNameType.Spell, spellId, "SPELL_GO");
+                            break;
+                        }
+                }
             }
 
             if (SniffDataOpcodes)

@@ -26,7 +26,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanMultiDictionary<uint, CreatureText> CreatureTexts = new TimeSpanMultiDictionary<uint, CreatureText>();
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureTemplate);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_text);
         }
 
         public void ProcessPacket(Packet packet)
@@ -59,20 +59,23 @@ namespace PacketDumper.Processing.SQLData
             var Sounds = PacketFileProcessor.Current.GetProcessor<NpcSoundStore>().Sounds;
             var Emotes = PacketFileProcessor.Current.GetProcessor<NpcEmoteStore>().Emotes;
 
-            foreach (KeyValuePair<uint, ICollection<Tuple<CreatureText, TimeSpan?>>> text in CreatureTexts)
+            // For each sound and emote, if the time they were send is in the +1/-1 seconds range of
+            // our texts, add that sound and emote to our Storage.CreatureTexts
+
+            foreach (var text in CreatureTexts)
             {
                 // For each text
-                foreach (Tuple<CreatureText, TimeSpan?> textValue in text.Value)
+                foreach (var textValue in text.Value)
                 {
                     // For each emote
-                    foreach (KeyValuePair<Guid, ICollection<Tuple<EmoteType, TimeSpan?>>> emote in Emotes)
+                    foreach (var emote in Emotes)
                     {
                         // Emote packets always have a sender (guid);
                         // skip this one if it was sent by a different creature
                         if (emote.Key.GetEntry() != text.Key)
                             continue;
 
-                        foreach (Tuple<EmoteType, TimeSpan?> emoteValue in emote.Value)
+                        foreach (var emoteValue in emote.Value)
                         {
                             var timeSpan = textValue.Item2 - emoteValue.Item2;
                             if (timeSpan != null && timeSpan.Value.Duration() <= TimeSpan.FromSeconds(1))
@@ -81,7 +84,7 @@ namespace PacketDumper.Processing.SQLData
                     }
 
                     // For each sound
-                    foreach (Tuple<uint, TimeSpan?> sound in Sounds)
+                    foreach (var sound in Sounds)
                     {
                         var timeSpan = textValue.Item2 - sound.Item2;
                         if (timeSpan != null && timeSpan.Value.Duration() <= TimeSpan.FromSeconds(1))
@@ -90,7 +93,7 @@ namespace PacketDumper.Processing.SQLData
                 }
             }
 
-            /* DB comparer not implemented yet
+            /* can't use compare DB without knowing values of groupid or id
             var entries = Storage.CreatureTexts.Keys.ToList();
             var creatureTextDb = SQLDatabase.GetDict<uint, CreatureText>(entries);
             */
@@ -98,9 +101,9 @@ namespace PacketDumper.Processing.SQLData
             const string tableName = "creature_text";
 
             var rows = new List<QueryBuilder.SQLInsertRow>();
-            foreach (KeyValuePair<uint, ICollection<Tuple<CreatureText, TimeSpan?>>> text in CreatureTexts)
+            foreach (var text in Storage.CreatureTexts)
             {
-                foreach (Tuple<CreatureText, TimeSpan?> textValue in text.Value)
+                foreach (var textValue in text.Value)
                 {
                     var row = new QueryBuilder.SQLInsertRow();
 

@@ -38,7 +38,7 @@ namespace PacketDumper.Processing.SQLData
             FileName = file.FileName;
             LogPrefix = file.LogPrefix;
             Header = file.GetHeader();
-            return Settings.SQLOutput != SQLOutputFlags.None;
+            return Settings.SQLOutputFlag != 0;
         }
 
         public void Finish() 
@@ -76,7 +76,12 @@ namespace PacketDumper.Processing.SQLData
             }
 
             {
-                if (gameObjects != null && Settings.SQLOutput.HasFlag(SQLOutputFlags.GameObjectSpawns))
+                if (gameObjects != null && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.gameobject_template))
+                    writes.Add(new Tuple<string, Builder>("NonWDB:GameObjectTemplate", () => { return BuildGameobjectTemplateNonWDB(gameObjects); }));
+            }
+
+            {
+                if (gameObjects != null && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.gameobject))
                     writes.Add(new Tuple<string, Builder>("Spawns:GameObject", () => { return BuildGameObject(gameObjects); }));
             }
 
@@ -111,17 +116,17 @@ namespace PacketDumper.Processing.SQLData
             }
 
             {
-                if (units != null && Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureTemplate))
+                if (units != null && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_template))
                     writes.Add(new Tuple<string, Builder>("NonWDB:CreatureTemplate", () => { return BuildNpcTemplateNonWDB(units); }));
             }
 
             {
-                if (units != null && Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureTemplate))
+                if (units != null && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_template_addon))
                     writes.Add(new Tuple<string, Builder>("CreatureAddon", () => { return BuildAddon(units); }));
             }
 
             {
-                if (units != null && Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureTemplate))
+                if (units != null && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_model_info))
                     writes.Add(new Tuple<string, Builder>("CreatureModelData", () => { return BuildModelData(units); }));
             }
 
@@ -138,18 +143,18 @@ namespace PacketDumper.Processing.SQLData
             }
 
             {
-                if (units != null && Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureEquip))
+                if (units != null && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_equip_template))
                     writes.Add(new Tuple<string, Builder>("CreatureEquip", () => { return BuildCreatureEquip(units); }));
             }
 
     
             {
-                if (units != null && Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureMovement))
+                if (units != null && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature_movement))
                     writes.Add(new Tuple<string, Builder>("CreatureMovement", () => { return BuildCreatureMovement(units); }));
             }
 
             {
-                if (units != null && Settings.SQLOutput.HasFlag(SQLOutputFlags.CreatureSpawns))
+                if (units != null && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.creature))
                     writes.Add(new Tuple<string, Builder>("Spawns:Creature", () => { return BuildCreature(units); }));
             }
 
@@ -202,7 +207,7 @@ namespace PacketDumper.Processing.SQLData
             }
 
             {
-                if (units != null && Settings.SQLOutput.HasFlag(SQLOutputFlags.ObjectNames))
+                if (units != null && Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.ObjectNames))
                     writes.Add(new Tuple<string, Builder>("ObjectNames", () => { return BuildObjectNames(); }));
             }
 
@@ -231,6 +236,7 @@ namespace PacketDumper.Processing.SQLData
 
             const string tableName = "creature";
             var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
+
             uint count = 0;
             var rows = new List<QueryBuilder.SQLInsertRow>();
             foreach (var unit in units)
@@ -255,13 +261,24 @@ namespace PacketDumper.Processing.SQLData
 
                 row.AddValue("guid", "@CGUID+" + count, noQuotes: true);
                 row.AddValue("id", entry);
-                row.AddValue("map", creature.Map);
+                row.AddValue("map", !creature.IsOnTransport() ? creature.Map : 0);  // TODO: query transport template for map
                 row.AddValue("spawnMask", 1);
                 row.AddValue("phaseMask", creature.PhaseMask);
-                row.AddValue("position_x", creature.Movement.Position.X);
-                row.AddValue("position_y", creature.Movement.Position.Y);
-                row.AddValue("position_z", creature.Movement.Position.Z);
-                row.AddValue("orientation", creature.Movement.Orientation);
+                if (!creature.IsOnTransport())
+                {
+                    row.AddValue("position_x", creature.Movement.Position.X);
+                    row.AddValue("position_y", creature.Movement.Position.Y);
+                    row.AddValue("position_z", creature.Movement.Position.Z);
+                    row.AddValue("orientation", creature.Movement.Orientation);
+                }
+                else
+                {
+                    row.AddValue("position_x", creature.Movement.TransportOffset.X);
+                    row.AddValue("position_y", creature.Movement.TransportOffset.Y);
+                    row.AddValue("position_z", creature.Movement.TransportOffset.Z);
+                    row.AddValue("orientation", creature.Movement.TransportOffset.O);
+                }
+
                 row.AddValue("spawntimesecs", spawnTimeSecs);
                 row.AddValue("spawndist", spawnDist);
                 row.AddValue("MovementType", movementType);
@@ -272,6 +289,11 @@ namespace PacketDumper.Processing.SQLData
                 {
                     row.CommentOut = true;
                     row.Comment += " - !!! might be temporary spawn !!!";
+                }
+                else if (creature.IsOnTransport())
+                {
+                    row.CommentOut = true;
+                    row.Comment += " - !!! on transport (NYI) !!!";
                 }
                 else
                     ++count;
@@ -328,13 +350,23 @@ namespace PacketDumper.Processing.SQLData
 
                 row.AddValue("guid", "@OGUID+" + count, noQuotes: true);
                 row.AddValue("id", entry);
-                row.AddValue("map", go.Map);
+                row.AddValue("map", !go.IsOnTransport() ? go.Map : 0);  // TODO: query transport template for map
                 row.AddValue("spawnMask", 1);
                 row.AddValue("phaseMask", go.PhaseMask);
-                row.AddValue("position_x", go.Movement.Position.X);
-                row.AddValue("position_y", go.Movement.Position.Y);
-                row.AddValue("position_z", go.Movement.Position.Z);
-                row.AddValue("orientation", go.Movement.Orientation);
+                if (!go.IsOnTransport())
+                {
+                    row.AddValue("position_x", go.Movement.Position.X);
+                    row.AddValue("position_y", go.Movement.Position.Y);
+                    row.AddValue("position_z", go.Movement.Position.Z);
+                    row.AddValue("orientation", go.Movement.Orientation);
+                }
+                else
+                {
+                    row.AddValue("position_x", go.Movement.TransportOffset.X);
+                    row.AddValue("position_y", go.Movement.TransportOffset.Y);
+                    row.AddValue("position_z", go.Movement.TransportOffset.Z);
+                    row.AddValue("orientation", go.Movement.TransportOffset.O);
+                }
 
                 var rotation = go.GetRotation();
                 if (rotation != null && rotation.Length == 4)
@@ -367,6 +399,11 @@ namespace PacketDumper.Processing.SQLData
                 {
                     row.CommentOut = true;
                     row.Comment += " - !!! transport !!!";
+                }
+                else if (go.IsOnTransport())
+                {
+                    row.CommentOut = true;
+                    row.Comment += " - !!! on transport (NYI) !!!";
                 }
                 else
                     ++count;
@@ -434,93 +471,33 @@ namespace PacketDumper.Processing.SQLData
             if (units.Count == 0)
                 return string.Empty;
 
-            const string tableName = "creature_model_info";
-
             // Build a dictionary with model data; model is the key
-            var models = new SortedDictionary<uint, Tuple<float, float, Gender>>();
-            foreach (var unit in units)
+            var models = new TimeSpanDictionary<uint, ModelData>();
+            foreach (var npc in units.Select(unit => unit.Value))
             {
-                var npc = unit.Value;
-
-                if (npc.Model == null)
+                uint modelId;
+                if (npc.Model.HasValue)
+                    modelId = npc.Model.Value;
+                else
                     continue;
-                var model = (uint)npc.Model;
 
                 // Do not add duplicate models
-                if (models.ContainsKey(model))
+                if (models.ContainsKey(modelId))
                     continue;
 
-                var boundingRadius = 0.0f;
-                if (npc.BoundingRadius != null)
-                    boundingRadius = (float)npc.BoundingRadius;
-
-                var combatReach = 0.0f;
-                if (npc.CombatReach != null)
-                    combatReach = (float)npc.CombatReach;
-
-                var gender = Gender.None;
-                if (npc.Gender != null)
-                    gender = (Gender)npc.Gender;
-
-                models.Add(model, Tuple.Create(boundingRadius, combatReach, gender));
-            }
-
-            Dictionary<uint, dynamic> modelsDb = null;
-            if (SQLConnector.Enabled)
-            {
-                modelsDb = SQLDatabase.GetDict<uint>(string.Format(
-                    "SELECT `modelid`, `bounding_radius`, `combat_reach`," +
-                    "`gender` FROM `{0}`.{1} WHERE `modelid` IN ({2});", ParserSettings.MySQL.TDBDB, tableName, String.Join(",", models.Keys)));
-            }
-
-            var rowsUpd = new List<QueryBuilder.SQLUpdateRow>();
-            var rowsIns = new List<QueryBuilder.SQLInsertRow>();
-            foreach (var model in models)
-            {
-                if (modelsDb != null && modelsDb.Count != 0)
+                var model = new ModelData
                 {
-                    if (modelsDb.ContainsKey(model.Key)) // possible update
-                    {
-                        var row = new QueryBuilder.SQLUpdateRow();
+                    BoundingRadius = npc.BoundingRadius.GetValueOrDefault(0.306f),
+                    CombatReach = npc.CombatReach.GetValueOrDefault(1.5f),
+                    Gender = npc.Gender.GetValueOrDefault(Gender.Male)
+                };
 
-                        if (!Utilities.EqualValues(modelsDb[model.Key].Item1, model.Value.Item1))
-                            row.AddValue("bounding_radius", model.Value.Item1);
-
-                        if (!Utilities.EqualValues(modelsDb[model.Key].Item2, model.Value.Item2))
-                            row.AddValue("combat_reach", model.Value.Item2);
-
-                        if (!Utilities.EqualValues(modelsDb[model.Key].Item3, model.Value.Item3))
-                            row.AddValue("gender", model.Value.Item3);
-
-                        row.AddWhere("modelid", model.Key);
-                        row.Table = tableName;
-
-                        if (row.ValueCount != 0)
-                            rowsUpd.Add(row);
-                    }
-                    else // insert new
-                    {
-                        var row = new QueryBuilder.SQLInsertRow();
-                        row.AddValue("modelid", model.Key);
-                        row.AddValue("bounding_radius", model.Value.Item1);
-                        row.AddValue("combat_reach", model.Value.Item2);
-                        row.AddValue("gender", model.Value.Item3);
-                        rowsIns.Add(row);
-                    }
-                }
-                else // no db values, simply do inserts
-                {
-                    var row = new QueryBuilder.SQLInsertRow();
-                    row.AddValue("modelid", model.Key);
-                    row.AddValue("bounding_radius", model.Value.Item1);
-                    row.AddValue("combat_reach", model.Value.Item2);
-                    row.AddValue("gender", model.Value.Item3);
-                    rowsIns.Add(row);
-                }
+                models.Add(modelId, model, null);
             }
 
-            return new QueryBuilder.SQLInsert(tableName, rowsIns).Build() +
-                   new QueryBuilder.SQLUpdate(rowsUpd).Build();
+            var entries = models.Keys();
+            var modelsDb = SQLDatabase.GetDict<uint, ModelData>(entries, "modelid");
+            return SQLUtil.CompareDicts(models, modelsDb, StoreNameType.None, "modelid");
         }
 
         public static string BuildCreatureEquip(Dictionary<Guid, Unit> units)
@@ -528,28 +505,42 @@ namespace PacketDumper.Processing.SQLData
             if (units.Count == 0)
                 return string.Empty;
 
-            const string tableName = "creature_equip_template";
             var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
-            var rows = new List<QueryBuilder.SQLInsertRow>();
+            var equips = new TimeSpanDictionary<ushort, CreatureEquipment>();
             foreach (var unit in units)
             {
-                var row = new QueryBuilder.SQLInsertRow();
-                var creature = unit.Value;
-                var equipData = creature.Equipment;
+                var equip = new CreatureEquipment();
+                var npc = unit.Value;
+                var entry = (ushort)unit.Key.GetEntry();
 
-                // check if fields are empty
-                if (equipData == null || equipData.All(value => value == 0))
+                if (npc.Equipment == null || npc.Equipment.Length != 3)
                     continue;
 
-                row.AddValue("entry", unit.Key.GetEntry());
-                row.AddValue("itemEntry1", equipData[0]);
-                row.AddValue("itemEntry2", equipData[1]);
-                row.AddValue("itemEntry3", equipData[2]);
-                row.Comment = names.GetName(StoreNameType.Unit, (int)unit.Key.GetEntry(), false);
-                rows.Add(row);
+                if (npc.Equipment[0] == 0 && npc.Equipment[1] == 0 && npc.Equipment[2] == 0)
+                    continue;
+
+                if (equips.ContainsKey(entry))
+                {
+                    var existingEquip = equips[entry].Item1;
+
+                    if (existingEquip.ItemEntry1 != npc.Equipment[0] ||
+                          existingEquip.ItemEntry2 != npc.Equipment[1] ||
+                          existingEquip.ItemEntry3 != npc.Equipment[2])
+                        equips.Remove(entry); // no conflicts
+
+                    continue;
+                }
+
+                equip.ItemEntry1 = npc.Equipment[0];
+                equip.ItemEntry2 = npc.Equipment[1];
+                equip.ItemEntry3 = npc.Equipment[2];
+
+                equips.Add(entry, equip);
             }
 
-            return new QueryBuilder.SQLInsert(tableName, rows).Build();
+            var entries = equips.Keys();
+            var equipsDb = SQLDatabase.GetDict<ushort, CreatureEquipment>(entries);
+            return SQLUtil.CompareDicts(equips, equipsDb, StoreNameType.Unit);
         }
 
         public static string BuildCreatureMovement(Dictionary<Guid, Unit> units)
@@ -615,33 +606,31 @@ namespace PacketDumper.Processing.SQLData
                 return string.Empty;
             var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
 
-            const string tableName = "creature_template";
-
             var levels = GetLevels(units);
 
-            var templates = new Dictionary<uint, UnitTemplateNonWDB>();
+            var templates = new TimeSpanDictionary<uint, UnitTemplateNonWDB>();
             foreach (var unit in units)
             {
-                // don't save duplicates
                 if (templates.ContainsKey(unit.Key.GetEntry()))
                     continue;
 
                 var npc = unit.Value;
-
                 var template = new UnitTemplateNonWDB
                 {
                     GossipMenuId = npc.GossipId,
                     MinLevel = levels[unit.Key.GetEntry()].Item1,
                     MaxLevel = levels[unit.Key.GetEntry()].Item2,
                     Faction = npc.Faction.GetValueOrDefault(35),
-                    NpcFlag = (uint) npc.NpcFlags.GetValueOrDefault(NPCFlags.None),
-                    SpeedWalk = npc.Movement.RunSpeed,
-                    SpeedRun = npc.Movement.WalkSpeed,
+                    Faction2 = npc.Faction.GetValueOrDefault(35),
+                    NpcFlag = (uint)npc.NpcFlags.GetValueOrDefault(NPCFlags.None),
+                    SpeedRun = npc.Movement.RunSpeed,
+                    SpeedWalk = npc.Movement.WalkSpeed,
                     BaseAttackTime = npc.MeleeTime.GetValueOrDefault(2000),
                     RangedAttackTime = npc.RangedTime.GetValueOrDefault(2000),
-                    UnitClass = (uint) npc.Class.GetValueOrDefault(Class.Warrior),
-                    UnitFlag = (uint) npc.UnitFlags.GetValueOrDefault(UnitFlags.None),
-                    DynamicFlag = (uint) npc.DynamicFlags.GetValueOrDefault(UnitDynamicFlags.None),
+                    UnitClass = (uint)npc.Class.GetValueOrDefault(Class.Warrior),
+                    UnitFlag = (uint)npc.UnitFlags.GetValueOrDefault(UnitFlags.None),
+                    UnitFlag2 = (uint)npc.UnitFlags2.GetValueOrDefault(UnitFlags2.None),
+                    DynamicFlag = (uint)npc.DynamicFlags.GetValueOrDefault(UnitDynamicFlags.None),
                     VehicleId = npc.Movement.VehicleId,
                     HoverHeight = npc.HoverHeight.GetValueOrDefault(1.0f)
                 };
@@ -658,78 +647,48 @@ namespace PacketDumper.Processing.SQLData
                 template.UnitFlag &= ~(uint)UnitFlags.Silenced;
                 template.UnitFlag &= ~(uint)UnitFlags.PossessedByPlayer;
 
-                templates.Add(unit.Key.GetEntry(), template);
+                templates.Add(unit.Key.GetEntry(), template, null);
             }
 
-            var db = SQLDatabase.GetDict<uint, UnitTemplateNonWDB>(templates.Keys.ToList());
-            if (db == null)
-                return "";
+            var templatesDb = SQLDatabase.GetDict<uint, UnitTemplateNonWDB>(templates.Keys());
+            return SQLUtil.CompareDicts(templates, templatesDb, StoreNameType.Unit);
+        }
 
-            var rows = new List<QueryBuilder.SQLUpdateRow>();
-            foreach (var unit in templates)
+        // Non-WDB data but nevertheless data that should be saved to gameobject_template
+        public static string BuildGameobjectTemplateNonWDB(Dictionary<Guid, GameObject> gameobjects)
+        {
+            if (gameobjects.Count == 0)
+                return string.Empty;
+
+            var templates = new TimeSpanDictionary<uint, GameObjectTemplateNonWDB>();
+            foreach (var goT in gameobjects)
             {
-                var row = new QueryBuilder.SQLUpdateRow();
-                var npcLocal = unit.Value;
-                UnitTemplateNonWDB npcRemote;
-                if (!db.TryGetValue(unit.Key, out npcRemote))
+                if (templates.ContainsKey(goT.Key.GetEntry()))
                     continue;
 
-                if (!Utilities.EqualValues(npcLocal.GossipMenuId, npcRemote.GossipMenuId))
-                    row.AddValue("gossip_menu_id", npcLocal.GossipMenuId);
-
-                if (!Utilities.EqualValues(npcLocal.MinLevel, npcRemote.MinLevel))
-                    row.AddValue("minlevel", npcLocal.MinLevel);
-
-                if (!Utilities.EqualValues(npcLocal.MaxLevel, npcRemote.MaxLevel))
-                    row.AddValue("maxlevel", npcLocal.MaxLevel);
-
-                if (!Utilities.EqualValues(npcLocal.Faction, npcRemote.Faction))
+                var go = goT.Value;
+                var template = new GameObjectTemplateNonWDB
                 {
-                    row.AddValue("faction_A", npcLocal.Faction);
-                    row.AddValue("faction_H", npcLocal.Faction);
-                }
+                    Size = go.Size.GetValueOrDefault(1.0f),
+                    Faction = go.Faction.GetValueOrDefault(0),
+                    Flags = go.Flags.GetValueOrDefault(GameObjectFlag.None)
+                };
 
-                if (!Utilities.EqualValues(npcLocal.NpcFlag, npcRemote.NpcFlag))
-                    row.AddValue("npcflag", npcLocal.NpcFlag);
+                if (template.Faction == 1 || template.Faction == 2 || template.Faction == 3 ||
+                    template.Faction == 4 || template.Faction == 5 || template.Faction == 6 ||
+                    template.Faction == 115 || template.Faction == 116 || template.Faction == 1610 ||
+                    template.Faction == 1629 || template.Faction == 2203 || template.Faction == 2204) // player factions
+                    template.Faction = 0;
 
-                if (!Utilities.EqualValues(npcLocal.SpeedWalk, npcRemote.SpeedWalk))
-                    row.AddValue("speed_walk", npcLocal.SpeedWalk);
+                template.Flags &= ~GameObjectFlag.Triggered;
+                template.Flags &= ~GameObjectFlag.Damaged;
+                template.Flags &= ~GameObjectFlag.Destroyed;
 
-                if (!Utilities.EqualValues(npcLocal.SpeedRun, npcRemote.SpeedRun))
-                    row.AddValue("speed_run", npcLocal.SpeedRun);
-
-                if (!Utilities.EqualValues(npcLocal.BaseAttackTime, npcRemote.BaseAttackTime))
-                    row.AddValue("baseattacktime", npcLocal.BaseAttackTime);
-
-                if (!Utilities.EqualValues(npcLocal.RangedAttackTime, npcRemote.RangedAttackTime))
-                    row.AddValue("rangeattacktime", npcLocal.RangedAttackTime);
-
-                if (!Utilities.EqualValues(npcLocal.UnitClass, npcRemote.UnitClass))
-                    row.AddValue("unit_class", npcLocal.UnitClass);
-
-                if (!Utilities.EqualValues(npcLocal.UnitFlag, npcRemote.UnitFlag))
-                    row.AddValue("unit_flags", npcLocal.UnitFlag);
-
-                if (!Utilities.EqualValues(npcLocal.DynamicFlag, npcRemote.DynamicFlag))
-                    row.AddValue("dynamicflags", npcLocal.DynamicFlag);
-
-                if (!Utilities.EqualValues(npcLocal.VehicleId, npcRemote.VehicleId))
-                    row.AddValue("VehicleId", npcLocal.VehicleId);
-
-                if (!Utilities.EqualValues(npcLocal.HoverHeight, npcRemote.HoverHeight))
-                    row.AddValue("HoverHeight", npcLocal.HoverHeight);
-
-
-                if (row.ValueCount != 0)
-                {
-                    row.AddWhere("entry", unit.Key);
-                    row.Table = tableName;
-                    row.Comment = names.GetName(StoreNameType.Unit, (int) unit.Key, false);
-                    rows.Add(row);
-                }
+                templates.Add(goT.Key.GetEntry(), template, null);
             }
 
-            return new QueryBuilder.SQLUpdate(rows).Build();
+            var templatesDb = SQLDatabase.GetDict<uint, GameObjectTemplateNonWDB>(templates.Keys());
+            return SQLUtil.CompareDicts(templates, templatesDb, StoreNameType.GameObject);
         }
 
         public static string BuildObjectNames()
@@ -745,7 +704,7 @@ namespace PacketDumper.Processing.SQLData
             {
                 var row = new QueryBuilder.SQLInsertRow();
 
-                row.AddValue("ObjectType", data.Key.Item2.ToString());
+                row.AddValue("ObjectType", (Utilities.StoreTypeToObject(data.Key.Item2)).ToString());
                 row.AddValue("Id", data.Key.Item1);
                 row.AddValue("Name", data.Value.Item1);
 

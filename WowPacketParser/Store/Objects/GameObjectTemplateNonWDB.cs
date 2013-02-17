@@ -1,7 +1,7 @@
-﻿using WowPacketParser.Enums;
-using WowPacketParser.SQL;
+﻿using PacketParser.Enums;
+using PacketParser.SQL;
 
-namespace WowPacketParser.Store.Objects
+namespace PacketDumper.DataStructures
 {
     [DBTableName("gameobject_template")]
     public class GameObjectTemplateNonWDB

@@ -24,7 +24,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanDictionary<uint, NpcText> NpcTexts = new TimeSpanDictionary<uint, NpcText>();
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.NpcText);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.npc_text);
         }
 
         public void ProcessPacket(Packet packet)

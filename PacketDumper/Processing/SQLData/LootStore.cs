@@ -27,7 +27,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanDictionary<Tuple<uint, ObjectType>, Loot> Loots = new TimeSpanDictionary<Tuple<uint, ObjectType>, Loot>();
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.Loot);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.LootTemplate);
         }
 
         public void ProcessPacket(Packet packet)

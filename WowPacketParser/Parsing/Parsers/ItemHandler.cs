@@ -975,7 +975,7 @@ namespace PacketParser.Parsing.Parsers
                 item.CurrencySubstitutionId = packet.ReadUInt32("Currency Substitution Id");
                 item.CurrencySubstitutionCount = packet.ReadUInt32("Currency Substitution Count");
 
-                Storage.ObjectNames.Add((uint)itemId2, new ObjectName { ObjectType = ObjectType.Item, Name = item.Name }, packet.TimeSpan);
+                PacketFileProcessor.Current.GetProcessor<NameStore>().AddName(StoreNameType.Item, itemId2, item.Name, packet.TimeSpan);
             }
 
             var type = packet.ReadUInt32("Type");
@@ -1141,7 +1141,7 @@ namespace PacketParser.Parsing.Parsers
                     item.CurrencySubstitutionId = packet.ReadUInt32("Currency Substitution Id");
                     item.CurrencySubstitutionCount = packet.ReadUInt32("Currency Substitution Count");
 
-                    Storage.ObjectNames.Add(itemId, new ObjectName { ObjectType = ObjectType.Item, Name = item.Name }, packet.TimeSpan);
+                    PacketFileProcessor.Current.GetProcessor<NameStore>().AddName(StoreNameType.Item, itemId, item.Name, packet.TimeSpan);
                     break;
                 }
                 case 0x6D8A2694: // KeyChain

@@ -26,7 +26,7 @@ namespace PacketDumper.Processing.SQLData
 
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.QuestPOI);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.quest_poi);
         }
 
         public void ProcessPacket(Packet packet)

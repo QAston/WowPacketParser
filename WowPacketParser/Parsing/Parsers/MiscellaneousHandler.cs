@@ -76,7 +76,7 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleCompressedMultiplePackets(Packet packet)
         {
             packet.Inflate(packet.ReadInt32());
-                HandleMultiplePackets(packet2);
+            HandleMultiplePackets(packet);
         }
 
         [Parser(Opcode.SMSG_MULTIPLE_PACKETS)]

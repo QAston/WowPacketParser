@@ -23,7 +23,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanDictionary<uint, PageText> PageTexts = new TimeSpanDictionary<uint, PageText>();
         public bool Init(PacketFileProcessor file)
         {
-            return Settings.SQLOutput.HasFlag(SQLOutputFlags.PageText);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.page_text);
         }
 
         public void ProcessPacket(Packet packet)
