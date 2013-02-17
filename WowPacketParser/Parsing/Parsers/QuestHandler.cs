@@ -566,7 +566,7 @@ namespace PacketParser.Parsing.Parsers
             quest.RequiredFactionValue = new int[2];
             quest.ObjectiveText = new string[4];
 
-            Storage.QuestTemplates.Add((uint)id.Key, quest, packet.TimeSpan);
+            packet.Store("QuestTemplateObject", quest);
         }
 
         [Parser(Opcode.CMSG_QUEST_POI_QUERY)]

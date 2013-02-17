@@ -112,6 +112,18 @@ namespace PacketParser.Misc
             return result;
         }
 
+        public static object GetDefaultValue(Type t)
+        {
+            if (t.IsValueType)
+            {
+                return Activator.CreateInstance(t);
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         public static bool FileIsInUse(string fileName)
         {
             // If the file does not exists or does not return any exception

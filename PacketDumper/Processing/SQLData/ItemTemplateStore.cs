@@ -6,6 +6,7 @@ using PacketParser.Misc;
 using PacketParser.Processing;
 using PacketParser.SQL;
 using PacketParser.DataStructures;
+using System.Reflection;
 
 namespace PacketDumper.Processing.SQLData
 {
@@ -22,7 +23,7 @@ namespace PacketDumper.Processing.SQLData
         public readonly TimeSpanDictionary<uint, ItemTemplate> ItemTemplates = new TimeSpanDictionary<uint, ItemTemplate>();
         public bool Init(PacketFileProcessor file)
         {
-            return SQLOutputFlag.HasAnyFlagBit(SQLOutput.item_template);
+            return Settings.SQLOutputFlag.HasAnyFlagBit(SQLOutput.item_template);
         }
 
         public void ProcessPacket(Packet packet)
@@ -38,6 +39,37 @@ namespace PacketDumper.Processing.SQLData
                     return;
 
                 ItemTemplates.Add((uint)entry.Key, packet.GetNode<ItemTemplate>("ItemTemplateObject"), packet.TimeSpan);
+            }
+            else if (Opcode.SMSG_DB_REPLY == Opcodes.GetOpcode(packet.Opcode))
+            {
+                if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0_15005))
+                {
+                    var itemId2 = packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
+                    // not found - add
+                    if (!ItemTemplates.ContainsKey((uint)itemId2))
+                    {
+                        ItemTemplates.Add((uint)itemId2, packet.GetNode<ItemTemplate>("ItemTemplateObject"), packet.TimeSpan);
+                    }
+                    else
+                    {
+                        // item found - replace all properties of 
+                        var item = ItemTemplates[(uint)itemId2].Item1;
+
+                        var newItem = packet.GetNode<ItemTemplate>("ItemTemplateObject");
+
+                        var emptyItem = new ItemTemplate();
+
+                        Type t = typeof(ItemTemplate);
+
+                        FieldInfo[] properties = t.GetFields();
+
+                        foreach (FieldInfo pi in properties)
+                        {
+                            if (pi.GetValue(item) == pi.GetValue(emptyItem))
+                                pi.SetValue(item, pi.GetValue(newItem));
+                        }
+                    }
+                }
             }
         }
 

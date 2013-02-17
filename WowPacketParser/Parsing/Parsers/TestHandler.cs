@@ -19,8 +19,8 @@ namespace PacketParser.Parsing.Parsers
         [Parser(0x9431, ClientVersionBuild.V4_3_0_15005)] // 4.3.0
         public static void HandleGenericCompressed(Packet packet)
         {
-            using (var newpkt = packet.Inflate(packet.ReadInt32()))
-                newpkt.AsHex();
+            packet.Inflate(packet.ReadInt32());
+            packet.ToHex();
         }
 
         [Parser(18438)]

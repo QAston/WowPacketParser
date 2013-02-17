@@ -23,7 +23,7 @@ namespace PacketParser.Parsing.Parsers
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_2_0_10192))
             {
                 var SStateCount = ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_3_11685) ? 8 : 4;
-                for (var i = 0; i < SStateCount; i++)
+                packet.StoreBeginList("Server States");
                 for (var i = 0; i < SStateCount; i++)
                     packet.ReadInt32("Server State", i);
                 packet.StoreEndList();
@@ -349,16 +349,12 @@ namespace PacketParser.Parsing.Parsers
             sha[6] = packet.ReadByte();//28
             sha[1] = packet.ReadByte();//23
 
-            using (var addons = new Packet(packet.ReadBytes(packet.ReadInt32()), packet.Opcode, packet.Time, packet.Direction, packet.Number, packet.Writer, packet.FileName))
-            {
-                var pkt2 = addons;
-                AddonHandler.ReadClientAddonsList(ref pkt2);
-            }
+            AddonHandler.ReadClientAddonsList(packet, packet.ReadInt32());
 
             packet.ReadBit("Unk bit");
             var size = (int)packet.ReadBits(12);
-            packet.WriteLine("Account name: {0}", Encoding.UTF8.GetString(packet.ReadBytes(size)));
-            packet.WriteLine("Proof SHA-1 Hash: " + Utilities.ByteArrayToHexString(sha));
+            packet.Store("Account name", Encoding.UTF8.GetString(packet.ReadBytes(size)));
+            packet.Store("Proof SHA-1 Hash", Utilities.ByteArrayToHexString(sha));
         }
 
         [Parser(Opcode.SMSG_AUTH_RESPONSE, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
@@ -440,21 +436,25 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadByte("Unk 5");
                 packet.ReadEnum<ClientType>("Player Expansion", TypeCode.Byte);
 
+                packet.StoreBeginList("Classes");
                 for (var i = 0; i < count; ++i)
                 {
                     packet.ReadEnum<Class>("Class", TypeCode.Byte, i);
                     packet.ReadEnum<ClientType>("Class Expansion", TypeCode.Byte, i);
                 }
+                packet.StoreEndList();
 
                 packet.ReadUInt32("Unk 8");
                 packet.ReadUInt32("Unk 9");
                 packet.ReadUInt32("Unk 10");
 
+                packet.StoreBeginList("Races");
                 for (var i = 0; i < count1; ++i)
                 {
                     packet.ReadEnum<Race>("Race", TypeCode.Byte, i);
                     packet.ReadEnum<ClientType>("Race Expansion", TypeCode.Byte, i);
                 }
+                packet.StoreEndList();
 
                 packet.ReadEnum<ClientType>("Account Expansion", TypeCode.Byte);
             }
@@ -542,7 +542,7 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_LOGOUT_COMPLETE)]
         public static void HandleLogoutComplete(Packet packet)
         {
-            LoginGuid = new Guid(0);
+            PacketFileProcessor.Current.GetProcessor<SessionStore>().LoginGuid = null;
         }
 
         [Parser(Opcode.CMSG_CONNECT_TO_FAILED)]
@@ -672,15 +672,19 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleMessageOfTheDay(Packet packet)
         {
             var lineCount = packet.ReadInt32("Line Count");
+            packet.StoreBeginList("Lines");
             for (var i = 0; i < lineCount; i++)
+            {
                 packet.ReadCString("Line", i);
+            }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_RESET_COMPRESSION_CONTEXT)]
         public static void HandleResetCompressionContext(Packet packet)
         {
             packet.ReadInt32("Unk?");
-            z_streams[packet.ConnectionIndex] = new ZlibCodec(CompressionMode.Decompress);
+            PacketFileProcessor.Current.GetProcessor<SessionStore>().Zstreams[packet.ConnectionIndex] = new ZlibCodec(CompressionMode.Decompress);
         }
     }
 }

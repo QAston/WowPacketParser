@@ -789,7 +789,6 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadUInt32("Item Set");
                 packet.ReadUInt32("Max Durability");
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Area, "Area");
-                // In this single (?) case, map 0 means no map
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map");
                 packet.ReadEnum<BagFamilyMask>("Bag Family", TypeCode.Int32);
                 packet.ReadEnum<TotemCategory>("Totem Category", TypeCode.Int32);
@@ -826,8 +825,8 @@ namespace PacketParser.Parsing.Parsers
 
             if (size == 32)
             {
-                var itemId2 = packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
-                var item = Storage.ItemTemplates.ContainsKey((uint) itemId2) ? Storage.ItemTemplates[(uint) itemId2].Item1 : new ItemTemplate();
+                var itemId2 = packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry2");
+                var item = new ItemTemplate();
                 item.Class = packet.ReadEnum<ItemClass>("Class", TypeCode.Int32);
                 item.SubClass = packet.ReadUInt32("Sub Class");
                 item.SoundOverrideSubclass = packet.ReadInt32("Sound Override Subclass");
@@ -835,25 +834,24 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadUInt32("Unk");
                 item.InventoryType = packet.ReadEnum<InventoryType>("Inventory Type", TypeCode.UInt32);
                 item.SheathType = packet.ReadEnum<SheathType>("Sheath Type", TypeCode.Int32);
-
-                Storage.ItemTemplates.Add((uint)itemId2, item, packet.TimeSpan);
+                packet.Store("ItemTemplateObject", item);
             }
             else if (size == 36)
             {
-                packet.ReadUInt32("Unk");
-                packet.ReadUInt32("Unk");
-                packet.ReadUInt32("Unk");
-                packet.ReadUInt32("Unk");
-                packet.ReadUInt32("Unk");
-                packet.ReadUInt32("Unk");
-                packet.ReadUInt32("Unk");
-                packet.ReadUInt32("Unk");
-                packet.ReadUInt32("Unk");
+                packet.ReadUInt32("Unk 1");
+                packet.ReadUInt32("Unk 2");
+                packet.ReadUInt32("Unk 3");
+                packet.ReadUInt32("Unk 4");
+                packet.ReadUInt32("Unk 5");
+                packet.ReadUInt32("Unk 6");
+                packet.ReadUInt32("Unk 7");
+                packet.ReadUInt32("Unk 8");
+                packet.ReadUInt32("Unk 9");
             }
             else
             {
-                var itemId2 = packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
-                var item = Storage.ItemTemplates.ContainsKey((uint)itemId2) ? Storage.ItemTemplates[(uint)itemId2].Item1 : new ItemTemplate();
+                var itemId2 = packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry2");
+                var item = new ItemTemplate();
 
                 item.Quality = packet.ReadEnum<ItemQuality>("Quality", TypeCode.Int32);
                 item.Flags = packet.ReadEnum<ItemFlag>("Flags", TypeCode.Int32);
@@ -879,6 +877,7 @@ namespace PacketParser.Parsing.Parsers
                 item.MaxStackSize = packet.ReadInt32("Max Stack Size");
                 item.ContainerSlots = packet.ReadUInt32("Container Slots");
 
+                packet.StoreBeginList("Stats");
                 item.StatTypes = new ItemModType[10];
                 for (var i = 0; i < 10; i++)
                 {
@@ -897,12 +896,14 @@ namespace PacketParser.Parsing.Parsers
                 item.StatUnk2 = new int[10];
                 for (var i = 0; i < 10; i++)
                     item.StatUnk2[i] = packet.ReadInt32("Unk UInt32 2", i);
+                packet.StoreEndList();
 
                 item.ScalingStatDistribution = packet.ReadInt32("Scaling Stat Distribution");
                 item.DamageType = packet.ReadEnum<DamageType>("Damage Type", TypeCode.Int32);
                 item.Delay = packet.ReadUInt32("Delay");
                 item.RangedMod = packet.ReadSingle("Ranged Mod");
 
+                packet.StoreBeginList("Spells");
                 item.TriggeredSpellIds = new int[5];
                 for (var i = 0; i < 5; i++)
                     item.TriggeredSpellIds[i] = packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Triggered Spell ID", i);
@@ -926,15 +927,18 @@ namespace PacketParser.Parsing.Parsers
                 item.TriggeredSpellCategoryCooldowns = new int[5];
                 for (var i = 0; i < 5; i++)
                     item.TriggeredSpellCategoryCooldowns[i] = packet.ReadInt32("Triggered Spell Category Cooldown", i);
+                packet.StoreEndList();
 
                 item.Bonding = packet.ReadEnum<ItemBonding>("Bonding", TypeCode.Int32);
 
                 if (packet.ReadUInt16() > 0)
                     item.Name = packet.ReadCString("Name", 0);
 
+                packet.StoreBeginList("Names");
                 for (var i = 1; i < 4; ++i)
                     if (packet.ReadUInt16() > 0)
                         packet.ReadCString("Name", i);
+                packet.StoreEndList();
 
                 if (packet.ReadUInt16() > 0)
                     item.Description = packet.ReadCString("Description");
@@ -950,13 +954,11 @@ namespace PacketParser.Parsing.Parsers
                 item.RandomSuffix = packet.ReadUInt32("Random Suffix");
                 item.ItemSet = packet.ReadUInt32("Item Set");
                 item.AreaId = (uint)packet.ReadEntryWithName<UInt32>(StoreNameType.Area, "Area");
-                // In this single (?) case, map 0 means no map
-                var map = packet.ReadInt32();
-                item.MapId = map;
-                packet.WriteLine("Map ID: " + (map != 0 ? StoreGetters.GetName(StoreNameType.Map, map) : map + " (No map)"));
+                packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map");
                 item.BagFamily = packet.ReadEnum<BagFamilyMask>("Bag Family", TypeCode.Int32);
                 item.TotemCategory = packet.ReadEnum<TotemCategory>("Totem Category", TypeCode.Int32);
 
+                packet.StoreBeginList("Sockets");
                 item.ItemSocketColors = new ItemSocketColor[3];
                 for (var i = 0; i < 3; i++)
                     item.ItemSocketColors[i] = packet.ReadEnum<ItemSocketColor>("Socket Color", TypeCode.Int32, i);
@@ -964,6 +966,7 @@ namespace PacketParser.Parsing.Parsers
                 item.SocketContent = new uint[3];
                 for (var i = 0; i < 3; i++)
                     item.SocketContent[i] = packet.ReadUInt32("Socket Item", i);
+                packet.StoreEndList();
 
                 item.SocketBonus = packet.ReadInt32("Socket Bonus");
                 item.GemProperties = packet.ReadInt32("Gem Properties");
@@ -974,6 +977,8 @@ namespace PacketParser.Parsing.Parsers
                 item.StatScalingFactor = packet.ReadSingle("Stat Scaling Factor");
                 item.CurrencySubstitutionId = packet.ReadUInt32("Currency Substitution Id");
                 item.CurrencySubstitutionCount = packet.ReadUInt32("Currency Substitution Count");
+
+                packet.Store("ItemTemplateObject", item);
 
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddName(StoreNameType.Item, itemId2, item.Name, packet.TimeSpan);
             }
@@ -998,9 +1003,9 @@ namespace PacketParser.Parsing.Parsers
             {
                 case 0x50238EC2:    // Item
                 {
-                    var item = Storage.ItemTemplates.ContainsKey(itemId) ? Storage.ItemTemplates[itemId].Item1 : new ItemTemplate();
+                    var item = new ItemTemplate();
 
-                    packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
+                    packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry2");
                     item.Class = packet.ReadEnum<ItemClass>("Class", TypeCode.Int32);
                     item.SubClass = packet.ReadUInt32("Sub Class");
                     item.SoundOverrideSubclass = packet.ReadInt32("Sound Override Subclass");
@@ -1009,14 +1014,14 @@ namespace PacketParser.Parsing.Parsers
                     item.InventoryType = packet.ReadEnum<InventoryType>("Inventory Type", TypeCode.UInt32);
                     item.SheathType = packet.ReadEnum<SheathType>("Sheath Type", TypeCode.Int32);
 
-                    Storage.ItemTemplates.Add(itemId, item, packet.TimeSpan);
+                    packet.Store("ItemTemplateObject", item);
                     break;
                 }
                 case 0x919BE54E:    // Item-sparse
                 {
-                    var item = Storage.ItemTemplates.ContainsKey(itemId) ? Storage.ItemTemplates[itemId].Item1 : new ItemTemplate();
+                    var item = new ItemTemplate();
 
-                    packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
+                    packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry2");
                     item.Quality = packet.ReadEnum<ItemQuality>("Quality", TypeCode.Int32);
                     item.Flags = packet.ReadEnum<ItemFlag>("Flags", TypeCode.Int32);
                     item.ExtraFlags = packet.ReadEnum<ItemFlagExtra>("Extra Flags", TypeCode.Int32);
@@ -1041,6 +1046,7 @@ namespace PacketParser.Parsing.Parsers
                     item.MaxStackSize = packet.ReadInt32("Max Stack Size");
                     item.ContainerSlots = packet.ReadUInt32("Container Slots");
 
+                    packet.StoreBeginList("Stats");
                     item.StatTypes = new ItemModType[10];
                     for (var i = 0; i < 10; i++)
                     {
@@ -1066,6 +1072,7 @@ namespace PacketParser.Parsing.Parsers
                     item.Delay = packet.ReadUInt32("Delay");
                     item.RangedMod = packet.ReadSingle("Ranged Mod");
 
+                    packet.StoreBeginList("Spells");
                     item.TriggeredSpellIds = new int[5];
                     for (var i = 0; i < 5; i++)
                         item.TriggeredSpellIds[i] = packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Triggered Spell ID", i);
@@ -1096,6 +1103,7 @@ namespace PacketParser.Parsing.Parsers
                     if (packet.ReadUInt16() > 0)
                         item.Name = packet.ReadCString("Name", 0);
 
+                    packet.StoreBeginList("Names");
                     for (var i = 1; i < 4; ++i)
                         if (packet.ReadUInt16() > 0)
                             packet.ReadCString("Name", i);
@@ -1115,13 +1123,11 @@ namespace PacketParser.Parsing.Parsers
                     item.RandomSuffix = packet.ReadUInt32("Random Suffix");
                     item.ItemSet = packet.ReadUInt32("Item Set");
                     item.AreaId = (uint)packet.ReadEntryWithName<UInt32>(StoreNameType.Area, "Area");
-                    // In this single (?) case, map 0 means no map
-                    var map = packet.ReadInt32();
-                    item.MapId = map;
-                    packet.WriteLine("Map ID: " + (map != 0 ? StoreGetters.GetName(StoreNameType.Map, map) : map + " (No map)"));
+                    packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map");
                     item.BagFamily = packet.ReadEnum<BagFamilyMask>("Bag Family", TypeCode.Int32);
                     item.TotemCategory = packet.ReadEnum<TotemCategory>("Totem Category", TypeCode.Int32);
 
+                    packet.StoreBeginList("Sockets");
                     item.ItemSocketColors = new ItemSocketColor[3];
                     for (var i = 0; i < 3; i++)
                         item.ItemSocketColors[i] = packet.ReadEnum<ItemSocketColor>("Socket Color", TypeCode.Int32, i);
@@ -1141,7 +1147,7 @@ namespace PacketParser.Parsing.Parsers
                     item.CurrencySubstitutionId = packet.ReadUInt32("Currency Substitution Id");
                     item.CurrencySubstitutionCount = packet.ReadUInt32("Currency Substitution Count");
 
-                    PacketFileProcessor.Current.GetProcessor<NameStore>().AddName(StoreNameType.Item, itemId, item.Name, packet.TimeSpan);
+                    packet.Store("ItemTemplateObject", item);
                     break;
                 }
                 case 0x6D8A2694: // KeyChain

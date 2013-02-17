@@ -279,6 +279,12 @@
     <Compile Include="..\wowpacketparser\enums\Gender.cs">
       <Link>Enums\Gender.cs</Link>
     </Compile>
+    <Compile Include="..\WowPacketParser\Enums\GMTicketResponse.cs">
+      <Link>Enums\GMTicketResponse.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Enums\GMTicketStatus.cs">
+      <Link>Enums\GMTicketStatus.cs</Link>
+    </Compile>
     <Compile Include="..\wowpacketparser\enums\GossipOptionIcon.cs">
       <Link>Enums\GossipOptionIcon.cs</Link>
     </Compile>
@@ -506,6 +512,9 @@
     </Compile>
     <Compile Include="..\wowpacketparser\enums\QuestReasonType.cs">
       <Link>Enums\QuestReasonType.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Enums\QuestRequirementType.cs">
+      <Link>Enums\QuestRequirementType.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\QuestSort.cs">
       <Link>Enums\QuestSort.cs</Link>
