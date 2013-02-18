@@ -380,11 +380,11 @@ namespace PacketParser.Parsing.Parsers
                 for (var j = 0; j < 5; ++j)
                     bits[j] = packet.ReadBit();
                 // 0 and 1 could be swapped
-                packet.Store("In Dungeon", bits[0]);
-                packet.Store("Same Group?", bits[1]);
-                packet.Store("Accept", bits[2]);
-                packet.Store("Answer", bits[3]);
-                packet.Store("Self", bits[4]);
+                packet.Store("In Dungeon", bits[0], i);
+                packet.Store("Same Group?", bits[1], i);
+                packet.Store("Accept", bits[2], i);
+                packet.Store("Answer", bits[3], i);
+                packet.Store("Self", bits[4], i);
             }
 
             guid2[5] = packet.ReadBit();

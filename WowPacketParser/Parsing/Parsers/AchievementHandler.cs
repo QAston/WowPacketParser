@@ -373,7 +373,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(guid[i], 1);
 
                 packet.Store("Criteria Flags", flags[i], i);
-                packet.Store("Criteria counter", BitConverter.ToUInt64(counter[i], 0));
+                packet.Store("Criteria counter", BitConverter.ToUInt64(counter[i], 0), i);
                 packet.StoreBitstreamGuid("Criteria GUID", guid[i], i);
             }
             packet.StoreEndList();

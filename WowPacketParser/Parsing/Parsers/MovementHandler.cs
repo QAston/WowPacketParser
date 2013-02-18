@@ -300,7 +300,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Async-time in ms");
             }
 
-            var waypoints = packet.ReadInt32("Waypoints");
+            var waypoints = packet.ReadInt32("Waypoints Count");
 
             if (flags.HasAnyFlag(SplineFlag434.UncompressedPath))
             {

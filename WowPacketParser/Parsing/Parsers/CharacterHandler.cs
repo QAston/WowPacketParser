@@ -430,6 +430,7 @@ namespace PacketParser.Parsing.Parsers
                 PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(playerGuid, name);
             }
+            packet.StoreEndList();
 
             packet.StoreBeginList("Unk datas");
             for (var c = 0; c < unkCounter; c++)
@@ -721,7 +722,6 @@ namespace PacketParser.Parsing.Parsers
 
                 var playerGuid = packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
 
-                packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
                 packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
 
                 packet.Store("First Login", firstLogins[c], c);
@@ -860,8 +860,12 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(charGuids[c], 2);
                 packet.ReadXORByte(charGuids[c], 3);
 
-                packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
+                var playerGuid = packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
                 packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
+
+                var playerInfo = new Player { Race = race, Class = clss, Name = name, FirstLogin = firstLogins[c], Level = level };
+                PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
+                PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(playerGuid, name);
             }
             packet.StoreEndList();
         }

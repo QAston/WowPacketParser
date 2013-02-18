@@ -12,8 +12,8 @@ namespace PacketParser.Parsing.Parsers
     {
         private static void ReadExtraQuestInfo510(ref Packet packet, bool readFlags = true)
         {
-            packet.StoreBeginList("ChoiceItems");
             packet.ReadUInt32("Choice Item Count");
+            packet.StoreBeginList("ChoiceItems");
             for (var i = 0; i < 6; i++)
             {
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Choice Item Id", i);
@@ -429,7 +429,7 @@ namespace PacketParser.Parsing.Parsers
                 Level = packet.ReadInt32("Level")
             };
 
-            packet.ReadInt32("Unk Int32");
+            packet.ReadInt32("Unk Int32 1");
             quest.MinLevel = packet.ReadInt32("Min Level");
             quest.ZoneOrSort = packet.ReadEnum<QuestSort>("Sort", TypeCode.Int32);
             quest.Type = packet.ReadEnum<QuestType>("Type", TypeCode.Int32);
@@ -532,7 +532,7 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBeginList("Requirements");
             for (var i = 0; i < requirementCount; i++)
             {
-                packet.ReadUInt32("Unk UInt32", i);
+                packet.ReadUInt32("Unk UInt32 3", i);
 
                 var reqType = packet.ReadEnum<QuestRequirementType>("Requirement Type", TypeCode.Byte, i);
                 switch (reqType)
@@ -562,13 +562,13 @@ namespace PacketParser.Parsing.Parsers
                 }
 
                 packet.ReadInt32("Required Count", i);
-                packet.ReadUInt32("Unk UInt32", i);
+                packet.ReadUInt32("Unk UInt32 2", i);
                 packet.ReadCString("Objective Text", i);
-                packet.ReadByte("Unk Byte", i);
+                packet.ReadByte("Unk Byte 2", i);
                 var count = packet.ReadByte("Unk Byte", i);
                 packet.StoreBeginList("Unks", i);
                 for (var j = 0; j < count; j++)
-                    packet.ReadUInt32("Unk UInt32", i, j);
+                    packet.ReadUInt32("Unk UInt32 4", i, j);
                 packet.StoreEndList();
             }
             packet.StoreEndList();
@@ -649,7 +649,7 @@ namespace PacketParser.Parsing.Parsers
             for (int i = 0; i < count; ++i)
             {
                 packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Quest ID", i);
-                packet.StoreBeginList("Npcs");
+                packet.StoreBeginList("Npcs", i);
                 for (int j = 0; j < counts[i]; ++j)
                 {
                     var entry = packet.ReadEntry();
@@ -763,7 +763,7 @@ namespace PacketParser.Parsing.Parsers
         {
             packet.ReadGuid("Guid");
             packet.ReadEntryWithName<UInt32>(StoreNameType.Quest, "Quest ID");
-            packet.ReadInt32("Unk Int32");
+            packet.ReadInt32("Unk Int32 1");
             packet.ReadCString("Title");
             packet.ReadCString("Complete Text");
             packet.ReadCString("QuestGiver Text Window");
@@ -774,8 +774,8 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadInt32("QuestTurn Portrait");
             packet.ReadByte("Unk Byte");
             packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32);
-            packet.ReadInt32("Unk Int32");
-            packet.ReadInt32("Unk Int32");
+            packet.ReadInt32("Unk Int32 2");
+            packet.ReadInt32("Unk Int32 3");
 
             var emoteCount = packet.ReadUInt32("Quest Emote Count");
             packet.StoreBeginList("Emotes");

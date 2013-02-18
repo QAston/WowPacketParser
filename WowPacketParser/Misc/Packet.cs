@@ -8,6 +8,7 @@ using PacketParser.Enums.Version;
 using PacketParser.Misc;
 using Ionic.Zlib;
 using PacketParser.Processing;
+using ICSharpCode.SharpZipLib.Zip.Compression;
 
 namespace PacketParser.DataStructures
 {
@@ -132,35 +133,54 @@ namespace PacketParser.DataStructures
             var decompress = ReadBytes(bytesToInflate);
             var tailData = ReadToEnd();
             this.BaseStream.SetLength(oldPos + inflatedSize + tailData.Length);
-            
             var newarr = new byte[inflatedSize];
-            if (!ClientVersion.RemovedInVersion(ClientVersionBuild.V4_3_0_15005) && keepStream)
+
+            if (!ClientVersion.RemovedInVersion(ClientVersionBuild.V4_3_0_15005))
             {
-                var streams = PacketFileProcessor.Current.GetProcessor<SessionStore>().Zstreams;
-                if (!streams.ContainsKey(ConnectionIndex))
-                    streams[ConnectionIndex] = new ZlibCodec(CompressionMode.Decompress);
-                var stream = streams[ConnectionIndex];
-                stream.InputBuffer = decompress;
-                stream.NextIn = 0;
-                stream.AvailableBytesIn = decompress.Length;
-                stream.OutputBuffer = newarr;
-                stream.NextOut = 0;
-                stream.AvailableBytesOut = inflatedSize;
-                stream.Inflate(FlushType.Sync);
+                if (keepStream)
+                {
+                    var streams = PacketFileProcessor.Current.GetProcessor<SessionStore>().Zstreams;
+                    if (!streams.ContainsKey(ConnectionIndex))
+                        streams[ConnectionIndex] = new ZlibCodec(CompressionMode.Decompress);
+                    var stream = streams[ConnectionIndex];
+                    stream.InputBuffer = decompress;
+                    stream.NextIn = 0;
+                    stream.AvailableBytesIn = decompress.Length;
+                    stream.OutputBuffer = newarr;
+                    stream.NextOut = 0;
+                    stream.AvailableBytesOut = inflatedSize;
+                    stream.Inflate(FlushType.Sync);
+                }
+                else
+                {
+                    ZlibCodec stream = new ZlibCodec(CompressionMode.Decompress);
+                    stream.InputBuffer = decompress;
+                    stream.NextIn = 0;
+                    stream.AvailableBytesIn = decompress.Length;
+                    stream.OutputBuffer = newarr;
+                    stream.NextOut = 0;
+                    stream.AvailableBytesOut = inflatedSize;
+                    stream.Inflate(FlushType.None);
+                    stream.Inflate(FlushType.Finish);
+                    stream.EndInflate();
+                }
             }
             else
             {
-                ZlibCodec stream = new ZlibCodec(CompressionMode.Decompress);
-                stream.InputBuffer = decompress;
-                stream.NextIn = 0;
-                stream.AvailableBytesIn = decompress.Length;
-                stream.OutputBuffer = newarr;
-                stream.NextOut = 0;
-                stream.AvailableBytesOut = inflatedSize;
-                stream.Inflate(FlushType.None);
-                stream.Inflate(FlushType.Finish);
-                stream.EndInflate();
+                try
+                {
+                    var inflater = new Inflater();
+                    inflater.SetInput(decompress, 0, bytesToInflate);
+                    inflater.Inflate(newarr, 0, inflatedSize);
+                }
+                catch (ICSharpCode.SharpZipLib.SharpZipBaseException)
+                {
+                    var inflater = new Inflater(true);
+                    inflater.SetInput(decompress, 0, bytesToInflate);
+                    inflater.Inflate(newarr, 0, inflatedSize);
+                }
             }
+
             SetPosition(oldPos);
             this.BaseStream.Write(newarr, 0, inflatedSize);
             this.BaseStream.Write(tailData, 0, tailData.Length);

@@ -279,7 +279,7 @@ namespace PacketParser.Parsing.Parsers
             var sha = new byte[20];
             packet.ReadUInt32("UInt32 1");
             packet.ReadUInt32("UInt32 2");
-            packet.ReadByte("Unk Byte");
+            packet.ReadByte("Unk Byte 1");
             sha[10] = packet.ReadByte();
             sha[18] = packet.ReadByte();
             sha[12] = packet.ReadByte();
@@ -295,7 +295,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadEnum<ClientVersionBuild>("Client Build", TypeCode.Int16);
             sha[8] = packet.ReadByte();
             packet.ReadUInt32("UInt32 3");
-            packet.ReadByte("Unk Byte");
+            packet.ReadByte("Unk Byte 2");
             sha[17] = packet.ReadByte();
             sha[6] = packet.ReadByte();
             sha[0] = packet.ReadByte();
@@ -326,7 +326,7 @@ namespace PacketParser.Parsing.Parsers
             sha[11] = packet.ReadByte();//33
             sha[10] = packet.ReadByte();//32
             sha[9] = packet.ReadByte();//31
-            packet.ReadByte("Unk Byte");//20
+            packet.ReadByte("Unk Byte 1");//20
             packet.ReadUInt32("Client seed");//14
             sha[16] = packet.ReadByte();//38
             sha[5] = packet.ReadByte();//27
@@ -337,7 +337,7 @@ namespace PacketParser.Parsing.Parsers
             sha[13] = packet.ReadByte();//35
             sha[3] = packet.ReadByte();//25
             sha[14] = packet.ReadByte();//36
-            packet.ReadByte("Unk Byte");//21
+            packet.ReadByte("Unk Byte 2");//21
             sha[8] = packet.ReadByte();//30
             sha[7] = packet.ReadByte();//29
             packet.ReadUInt32("UInt32 3");//15

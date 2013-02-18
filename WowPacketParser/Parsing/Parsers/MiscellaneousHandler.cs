@@ -969,7 +969,7 @@ namespace PacketParser.Parsing.Parsers
             var count = packet.ReadBits("Count", 25);
             packet.StoreBeginList("Files list");
             for (int i = 0; i < count; ++i)
-                packet.ReadInt16("File Data ID");
+                packet.ReadInt16("File Data ID", i);
             packet.StoreEndList();
         }
 

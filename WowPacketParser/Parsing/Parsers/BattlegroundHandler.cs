@@ -141,9 +141,9 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadInt32("Random Win Conquest Reward"); // Winner Conquest Reward or Random Winner Conquest Reward
             packet.ReadInt32("Random Loss Conquest Reward"); // Loser Honor Reward or Random Loser Honor Reward
             packet.ReadEntryWithName<Int32>(StoreNameType.Battleground, "BG type");
-            packet.ReadInt32("Loss Conquest Reward"); // Loser Honor Reward or Random Loser Honor Reward
-            packet.ReadInt32("Win Conquest Reward"); // Winner Honor Reward or Random Winner Honor Reward
-            packet.ReadInt32("Random Win Conquest Reward"); // Winner Honor Reward or Random Winner Honor Reward
+            packet.ReadInt32("Loss Honor Reward"); // Loser Honor Reward or Random Loser Honor Reward
+            packet.ReadInt32("Win Honor Reward"); // Winner Honor Reward or Random Winner Honor Reward
+            packet.ReadInt32("Random Win Honor Reward"); // Winner Honor Reward or Random Winner Honor Reward
             packet.ReadByte("Max level");
             packet.ReadByte("Min level");
 
@@ -1632,7 +1632,7 @@ namespace PacketParser.Parsing.Parsers
         {
             packet.ReadBit("Unk 1"); // probably debug unused
             packet.ReadBit("WargamesEnabled");
-            packet.ReadBit("Unk 1"); // probably debug unused
+            packet.ReadBit("Unk 2"); // probably debug unused
             packet.ReadBit("RatedBGsEnabled");
             packet.ReadBit("RatedArenasEnabled");
         }
@@ -1818,13 +1818,13 @@ namespace PacketParser.Parsing.Parsers
         {
             packet.ReadUInt32("Client Instance ID");
             packet.ReadUInt32("Time until closed");
-            packet.ReadByte("Unk Byte");
+            packet.ReadByte("Unk Byte 1");
             packet.ReadUInt32("Queue slot");
             packet.ReadTime("Time");
             packet.ReadByte("Min Level");
             packet.ReadEnum<BattlegroundStatus>("Status", TypeCode.UInt32);
             packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map Id");
-            packet.ReadByte("Unk Byte");
+            packet.ReadByte("Unk Byte 2");
 
             var guid1 = new byte[8];
             var guid2 = new byte[8];

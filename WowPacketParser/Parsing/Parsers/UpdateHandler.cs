@@ -577,7 +577,7 @@ namespace PacketParser.Parsing.Parsers
 
                 packet.ReadXORByte(guid2, 0);
                 packet.ReadXORByte(guid2, 6);
-                packet.StoreBeginList("UnknownList3");
+                packet.StoreBeginList("UnknownList3", index);
                 for (var i = 0u; i < unkLoopCounter2; ++i)
                     packet.ReadUInt32("Unk2 UInt32", index, (int)i);
                 packet.StoreEndList();

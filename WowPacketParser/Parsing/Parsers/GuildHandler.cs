@@ -2544,7 +2544,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(guid[i], 0);
 
                 packet.StoreBitstreamGuid("Criteria GUID", guid[i], i);
-                packet.Store("Criteria counter", BitConverter.ToUInt64(counter[i], 0));
+                packet.Store("Criteria counter", BitConverter.ToUInt64(counter[i], 0), i);
             }
             packet.StoreEndList();
         }
