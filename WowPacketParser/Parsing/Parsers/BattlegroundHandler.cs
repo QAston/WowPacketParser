@@ -1624,7 +1624,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadBit("RatedArenasEnabled");
             packet.ReadBit("RatedBGsEnabled");
             packet.ReadBit("Unk 1"); // probably debug unused
-            packet.ReadBit("Unk 1"); // probably debug unused
+            packet.ReadBit("Unk 2"); // probably debug unused
         }
 
         [Parser(Opcode.SMSG_PVP_OPTIONS_ENABLED, ClientVersionBuild.V4_3_4_15595)]

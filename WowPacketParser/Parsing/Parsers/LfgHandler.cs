@@ -169,10 +169,10 @@ namespace PacketParser.Parsing.Parsers
                         packet.StoreBeginList("Unks2", i);
                         for (var j = 0; j < unk4; ++j)
                         {
-                            packet.ReadInt32("Unk 5", j);
-                            packet.ReadInt32("Unk 6", j);
-                            packet.ReadInt32("Unk 7", j);
-                            packet.ReadByte("Unk 8", j);
+                            packet.ReadInt32("Unk 5",i , j);
+                            packet.ReadInt32("Unk 6", i, j);
+                            packet.ReadInt32("Unk 7", i, j);
+                            packet.ReadByte("Unk 8", i, j);
                         }
                         packet.StoreEndList();
                     }

@@ -931,10 +931,10 @@ namespace PacketParser.Parsing.Parsers
 
                 item.Bonding = packet.ReadEnum<ItemBonding>("Bonding", TypeCode.Int32);
 
+                packet.StoreBeginList("Names");
                 if (packet.ReadUInt16() > 0)
                     item.Name = packet.ReadCString("Name", 0);
 
-                packet.StoreBeginList("Names");
                 for (var i = 1; i < 4; ++i)
                     if (packet.ReadUInt16() > 0)
                         packet.ReadCString("Name", i);
@@ -1100,10 +1100,11 @@ namespace PacketParser.Parsing.Parsers
 
                     item.Bonding = packet.ReadEnum<ItemBonding>("Bonding", TypeCode.Int32);
 
+                    packet.StoreBeginList("Names");
                     if (packet.ReadUInt16() > 0)
                         item.Name = packet.ReadCString("Name", 0);
 
-                    packet.StoreBeginList("Names");
+                    
                     for (var i = 1; i < 4; ++i)
                         if (packet.ReadUInt16() > 0)
                             packet.ReadCString("Name", i);

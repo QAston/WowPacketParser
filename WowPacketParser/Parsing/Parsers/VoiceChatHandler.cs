@@ -36,8 +36,8 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBeginList("Players");
             for (var i = 0; i < count - 1; i++)
             {
-                packet.ReadGuid("Player GUID");
-                packet.ReadByte("Index");
+                packet.ReadGuid("Player GUID", i);
+                packet.ReadByte("Index", i);
                 packet.ReadEnum<UnknownFlags>("Flags 1", TypeCode.Byte, i);
                 packet.ReadEnum<UnknownFlags>("Flags 2", TypeCode.Byte, i);
             }

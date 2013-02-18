@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Mono.Reflection;
-using WowPacketParser.Misc;
-using WowPacketParser.Parsing;
+using PacketParser.Misc;
+using PacketParser.Parsing;
 
 namespace HandlerQuery
 {

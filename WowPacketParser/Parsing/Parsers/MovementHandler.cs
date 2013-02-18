@@ -50,7 +50,7 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadByte("Transport Seat", index);
 
                 if (info.FlagsExtra.HasAnyFlag(MovementFlagExtra.InterpolateMove))
-                    packet.ReadInt32("Transport Time", index);
+                    packet.ReadInt32("Transport Time 2", index);
             }
 
             if (info.Flags.HasAnyFlag(MovementFlag.Swimming | MovementFlag.Flying) ||

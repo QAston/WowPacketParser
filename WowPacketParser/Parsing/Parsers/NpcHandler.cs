@@ -107,8 +107,8 @@ namespace PacketParser.Parsing.Parsers
                     trainerSpell.RequiredSkillLevel = packet.ReadUInt32("Required Skill Level", i);
                     if (ClientVersion.RemovedInVersion(ClientVersionBuild.V5_1_0_16309))
                     {
-                        packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID", i, 0);
-                        packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID", i, 1);
+                        packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 1", i);
+                        packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 2", i);
                     }
                     else
                         packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Required Spell ID", i);
@@ -122,8 +122,8 @@ namespace PacketParser.Parsing.Parsers
                     trainerSpell.RequiredLevel = packet.ReadByte("Required Level", i);
                     trainerSpell.RequiredSkill = packet.ReadUInt32("Required Skill", i);
                     trainerSpell.RequiredSkillLevel = packet.ReadUInt32("Required Skill Level", i);
-                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 1", i, 0);
-                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 2", i, 1);
+                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 1", i);
+                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Chain Spell ID 2", i);
                 }
 
                 if (ClientVersion.RemovedInVersion(ClientVersionBuild.V4_0_6a_13623))

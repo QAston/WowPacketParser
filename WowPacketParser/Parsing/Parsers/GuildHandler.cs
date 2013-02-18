@@ -2053,8 +2053,8 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadGuid("Owner GUID");
             packet.ReadCString("Name");
             packet.ReadCString("Text");
-            packet.ReadUInt32("Signs Needed");
-            packet.ReadUInt32("Signs Needed");
+            packet.ReadUInt32("Signs Needed 1");
+            packet.ReadUInt32("Signs Needed 2");
             packet.ReadUInt32("Unk UInt32 4");
             packet.ReadUInt32("Unk UInt32 5");
             packet.ReadUInt32("Unk UInt32 6");
@@ -2456,7 +2456,7 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_GUILD_CRITERIA_DATA, ClientVersionBuild.V4_0_6a_13623, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleGuildCriteriaData(Packet packet)
         {
-            var criterias = packet.ReadUInt32("Criterias");
+            var criterias = packet.ReadUInt32("CriteriasCount");
             packet.StoreBeginList("Criterias");
             for (var i = 0; i < criterias; ++i)
                 packet.ReadGuid("Player GUID", i);

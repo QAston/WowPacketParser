@@ -102,6 +102,11 @@ namespace PacketParser.Parsing.Parsers
                     len = packet.ReadUInt16() - 2;
                     opcode = packet.ReadUInt16();
                 }
+                else
+                {
+                    // unknown?
+                    packet.ReadToEnd();
+                }
 
                 packet.ReadSubPacket(opcode, len, "Packet", i);
                 ++i;
@@ -606,8 +611,8 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleWorldServerInfo(Packet packet)
         {
             packet.ReadByte("Unk Byte");
-            packet.ReadInt32("Unk Int32");
-            packet.ReadInt32("Unk Int32");
+            packet.ReadInt32("Unk Int32 1");
+            packet.ReadInt32("Unk Int32 2");
 
             var b0 = packet.ReadBit("Unk Bit 1");
             var b1 = packet.ReadBit("Unk Bit 2");
@@ -617,10 +622,10 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Unk Int32 (EVENT_INELIGIBLE_FOR_LOOT)");
 
             if (b0)
-                packet.ReadInt32("Unk Int32");
+                packet.ReadInt32("Unk Int32 3");
 
             if (b1)
-                packet.ReadInt32("Unk Int32");
+                packet.ReadInt32("Unk Int32 4");
         }
 
         [Parser(Opcode.SMSG_WORLD_SERVER_INFO, ClientVersionBuild.V4_3_4_15595)]

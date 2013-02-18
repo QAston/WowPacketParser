@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
 using System.Collections.Generic;
-using ICSharpCode.SharpZipLib.Zip.Compression;
 using PacketParser.Enums;
 using PacketParser.Enums.Version;
 using PacketParser.Misc;
