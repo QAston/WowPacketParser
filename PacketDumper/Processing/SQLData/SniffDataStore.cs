@@ -59,12 +59,8 @@ namespace PacketDumper.Processing
                             var updates = packet.GetData().GetNode<IndexedTreeNode>("Updates");
                             foreach (var update in updates)
                             {
-                                Object typeObj;
-                                if (ClientVersion.AddedInVersion(ClientType.Cataclysm))
-                                    typeObj = update.Value.GetNode<UpdateTypeCataclysm>("UpdateType");
-                                else
-                                    typeObj = update.Value.GetNode<UpdateType>("UpdateType");
-                                if (typeObj.ToString().Contains("Create"))
+                                string typeObj = update.Value.GetNode<string>("UpdateType");
+                                if (typeObj.Contains("Create"))
                                 {
                                     var guid = update.Value.GetNode<Guid>("GUID");
                                     var objType = update.Value.GetNode<ObjectType>("Object Type");

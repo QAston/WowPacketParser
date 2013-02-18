@@ -64,9 +64,11 @@ namespace PacketParser.Parsing.Parsers
 
         private static void ReadExtraQuestInfo(ref Packet packet, bool readFlags = true)
         {
+            packet.StoreBeginObj("ExtraQuestInfo");
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
             {
                 ReadExtraQuestInfo510(ref packet, readFlags);
+                packet.StoreEndObj();
                 return;
             }
 
@@ -185,6 +187,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadUInt32("Reward SkillId");
                 packet.ReadUInt32("Reward Skill Points");
             }
+            packet.StoreEndObj();
         }
 
         [Parser(Opcode.CMSG_QUEST_QUERY)]
@@ -688,7 +691,7 @@ namespace PacketParser.Parsing.Parsers
                     if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
                         packet.ReadUInt32("Unk Int32 4", i, j);
 
-                    questPoi.Map = (uint) packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map Id", i);
+                    questPoi.Map = (uint) packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map Id", i, j);
                     questPoi.WorldMapAreaId = packet.ReadUInt32("World Map Area", i, j);
                     questPoi.FloorId = packet.ReadUInt32("Floor Id", i, j);
                     questPoi.UnkInt1 = packet.ReadUInt32("Unk Int32 2", i, j);

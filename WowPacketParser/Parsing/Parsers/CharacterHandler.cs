@@ -1310,8 +1310,8 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBeginList("Powers");
             for (var i = 0; i < count; i++)
             {
-                packet.ReadEnum<PowerType>("Power type", TypeCode.Byte); // Actually powertype for class
-                packet.ReadInt32("Value");
+                packet.ReadEnum<PowerType>("Power type", TypeCode.Byte, i); // Actually powertype for class
+                packet.ReadInt32("Value", i);
             }
             packet.StoreEndList();
         }

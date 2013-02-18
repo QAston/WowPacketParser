@@ -223,9 +223,9 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBeginObj("Aura", values);
             var aura = new Aura();
 
-            aura.Slot = packet.ReadByte("Slot", values);
+            aura.Slot = packet.ReadByte("Slot");
 
-            var id = packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID", values);
+            var id = packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID");
             if (id <= 0)
             {
                 packet.StoreEndObj();
@@ -234,18 +234,18 @@ namespace PacketParser.Parsing.Parsers
             aura.SpellId = (uint)id;
 
             var type = ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_0_14333) ? TypeCode.Int16 : TypeCode.Byte;
-            aura.AuraFlags = packet.ReadEnum<AuraFlag>("Flags", type, values);
+            aura.AuraFlags = packet.ReadEnum<AuraFlag>("Flags", type);
 
-            aura.Level = packet.ReadByte("Level", values);
+            aura.Level = packet.ReadByte("Level");
 
-            aura.Charges = packet.ReadByte("Charges", values);
+            aura.Charges = packet.ReadByte("Charges");
 
-            aura.CasterGuid = !aura.AuraFlags.HasAnyFlag(AuraFlag.NotCaster) ? packet.ReadPackedGuid("Caster GUID", values) : new Guid();
+            aura.CasterGuid = !aura.AuraFlags.HasAnyFlag(AuraFlag.NotCaster) ? packet.ReadPackedGuid("Caster GUID") : new Guid();
 
             if (aura.AuraFlags.HasAnyFlag(AuraFlag.Duration))
             {
-                aura.MaxDuration = packet.ReadInt32("Max Duration", values);
-                aura.Duration = packet.ReadInt32("Duration", values);
+                aura.MaxDuration = packet.ReadInt32("Max Duration");
+                aura.Duration = packet.ReadInt32("Duration");
             }
             else
             {
@@ -258,11 +258,11 @@ namespace PacketParser.Parsing.Parsers
                 // This aura is scalable with level/talents
                 // Here we show each effect value after scaling
                 if (aura.AuraFlags.HasAnyFlag(AuraFlag.EffectIndex0))
-                    packet.ReadInt32("Effect 0 Value", values);
+                    packet.ReadInt32("Effect 0 Value");
                 if (aura.AuraFlags.HasAnyFlag(AuraFlag.EffectIndex1))
-                    packet.ReadInt32("Effect 1 Value", values);
+                    packet.ReadInt32("Effect 1 Value");
                 if (aura.AuraFlags.HasAnyFlag(AuraFlag.EffectIndex2))
-                    packet.ReadInt32("Effect 2 Value", values);
+                    packet.ReadInt32("Effect 2 Value");
             }
 
             packet.StoreEndObj();
@@ -275,9 +275,9 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBeginObj("Aura", values);
             var aura = new Aura();
 
-            aura.Slot = packet.ReadByte("Slot", values);
+            aura.Slot = packet.ReadByte("Slot");
 
-            var id = packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID", values);
+            var id = packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID");
             if (id <= 0)
             {
                 packet.StoreEndObj();
@@ -286,20 +286,20 @@ namespace PacketParser.Parsing.Parsers
 
             aura.SpellId = (uint)id;
 
-            aura.AuraFlags = (AuraFlag)packet.ReadEnum<AuraFlagMoP>("Flags", TypeCode.Byte, values);
+            aura.AuraFlags = (AuraFlag)packet.ReadEnum<AuraFlagMoP>("Flags", TypeCode.Byte);
 
-            var mask = packet.ReadUInt32("Effect Mask", values);
+            var mask = packet.ReadUInt32("Effect Mask");
 
-            aura.Level = (uint)packet.ReadInt16("Level", values);
+            aura.Level = (uint)packet.ReadInt16("Level");
 
-            aura.Charges = packet.ReadByte("Charges", values);
+            aura.Charges = packet.ReadByte("Charges");
 
-            aura.CasterGuid = !aura.AuraFlags.HasAnyFlag(AuraFlagMoP.NoCaster) ? packet.ReadPackedGuid("Caster GUID", values) : new Guid();
+            aura.CasterGuid = !aura.AuraFlags.HasAnyFlag(AuraFlagMoP.NoCaster) ? packet.ReadPackedGuid("Caster GUID") : new Guid();
 
             if (aura.AuraFlags.HasAnyFlag(AuraFlagMoP.Duration))
             {
-                aura.MaxDuration = packet.ReadInt32("Max Duration", values);
-                aura.Duration = packet.ReadInt32("Duration", values);
+                aura.MaxDuration = packet.ReadInt32("Max Duration");
+                aura.Duration = packet.ReadInt32("Duration");
             }
             else
             {
@@ -309,14 +309,12 @@ namespace PacketParser.Parsing.Parsers
 
             if (aura.AuraFlags.HasAnyFlag(AuraFlagMoP.Scalable))
             {
-                var b1 = packet.ReadByte("Effect Count", values);
+                var b1 = packet.ReadByte("Effect Count");
                 packet.StoreBeginList("Effects");
                 for (var j = 0; j < b1; ++j)
                     if (((1 << j) & mask) != 0)
                     {
-                        var z = new int[values.Length + 1];
-                        z[values.Length] = j;
-                        packet.ReadSingle("Effect Value", z);
+                        packet.ReadSingle("Effect Value", j);
                     }
                 packet.StoreEndList();
             }

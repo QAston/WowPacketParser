@@ -128,6 +128,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Count", i); // unconfirmed
             }
             packet.StoreEndList();
+
+            packet.Store("LootObject", loot);
         }
 
         [Parser(Opcode.CMSG_LOOT_ROLL)]
