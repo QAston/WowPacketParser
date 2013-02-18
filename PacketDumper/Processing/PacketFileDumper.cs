@@ -109,6 +109,8 @@ namespace PacketDumper.Processing
                 if (oldPct != 100)
                     ShowPercentProgressMessage("Processing...", 100);
 
+                FinishProcessors();
+
                 _stats.SetEndTime(DateTime.Now);
             }
             catch (Exception ex)

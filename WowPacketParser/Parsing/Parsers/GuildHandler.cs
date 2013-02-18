@@ -730,19 +730,23 @@ namespace PacketParser.Parsing.Parsers
             for (var i = 0; i < count; ++i)
                 length[i] = (int)packet.ReadBits(7);
 
+            packet.StoreBeginList("Ranks");
             for (var i = 0; i < count; ++i)
             {
                 packet.ReadWoWString("Name", length[i], i);
                 packet.ReadInt32("Creation Order", i);
+                packet.StoreBeginList("TabRights", i);
                 for (var j = 0; j < guildBankMaxTabs; ++j)
                 {
                     packet.ReadInt32("Tab Slots", i, j);
                     packet.ReadEnum<GuildBankRightsFlag>("Tab Rights", TypeCode.Int32, i, j);
                 }
+                packet.StoreEndList();
                 packet.ReadInt32("Rights order", i);
                 packet.ReadEnum<GuildRankRightsFlag>("Rights", TypeCode.Int32, i);
                 packet.ReadInt32("Gold Per Day", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_GUILD_RANK, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
@@ -1270,11 +1274,13 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBeginList("Items");
             for (var i = 0; i < count; ++i)
             {
+                packet.StoreBeginList("Enchants", i);
                 for (var j = 0; j < enchants[i]; ++j)
                 {
                     packet.ReadUInt32("Enchantment Slot Id?", i, j);
                     packet.ReadUInt32("Enchantment Id?", i, j);
                 }
+                packet.StoreEndList();
                 packet.ReadUInt32("Unk UInt32 1", i); // Only seen 0
                 packet.ReadUInt32("Unk UInt32 2", i); // Only seen 0
                 packet.ReadUInt32("Unk UInt32 3", i); // Only seen 0

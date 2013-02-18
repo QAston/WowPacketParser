@@ -38,8 +38,8 @@ namespace PacketParser.Parsing.Parsers
             {
                 packet.ReadGuid("Player GUID");
                 packet.ReadByte("Index");
-                packet.ReadEnum<UnknownFlags>("Flags 1", TypeCode.Byte);
-                packet.ReadEnum<UnknownFlags>("Flags 2", TypeCode.Byte);
+                packet.ReadEnum<UnknownFlags>("Flags 1", TypeCode.Byte, i);
+                packet.ReadEnum<UnknownFlags>("Flags 2", TypeCode.Byte, i);
             }
             packet.StoreEndList();
         }

@@ -72,16 +72,19 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadUInt32("Cooldown", i);
                 packet.ReadUInt32("Category Cooldown", i);
             }
+            packet.StoreEndList();
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
             {
                 var unkLoopCounter = packet.ReadByte("Unk count");
+                packet.StoreBeginList("UnkList");
                 for (var i = 0; i < unkLoopCounter; i++)
                 {
                     packet.ReadUInt32("Unk UInt32 1", i);
                     packet.ReadByte("Unk Byte", i);
                     packet.ReadUInt32("Unk UInt32 2", i);
                 }
+                packet.StoreEndList();
             }
         }
 

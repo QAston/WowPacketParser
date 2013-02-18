@@ -228,8 +228,10 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Unk Int32");
 
                 var count = packet.ReadInt32("Phase Count");
+                packet.StoreBeginList("Phases");
                 for (var i = 0; i < count; ++i)
-                    packet.ReadInt16("Phase Id");
+                    packet.ReadInt16("Phase Id", i);
+                packet.StoreEndList();
             }
         }
 

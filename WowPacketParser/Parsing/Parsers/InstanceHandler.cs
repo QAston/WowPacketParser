@@ -153,11 +153,13 @@ namespace PacketParser.Parsing.Parsers
             if (!test)
                 packet.ReadGuid("Owner GUID");
 
+            packet.StoreBeginList("Targets");
             for (int i = 0; packet.CanRead(); ++i)
             {
                 packet.ReadEnum<TargetIcon>("Icon Id", TypeCode.Byte, i);
                 packet.ReadGuid("Target Guid", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_RAID_INSTANCE_MESSAGE)]

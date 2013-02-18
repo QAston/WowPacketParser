@@ -9,7 +9,10 @@ namespace PacketParser.Parsing.Parsers
     public static class AuctionHouseHandler
     {
         // TODO: Use this in more places
-        private static readonly TypeCode _auctionSize = ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623) ? TypeCode.UInt64 : TypeCode.UInt32;
+        private static TypeCode _auctionSize
+        {
+            get { return ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623) ? TypeCode.UInt64 : TypeCode.UInt32; }
+        }
 
         [Parser(Opcode.MSG_AUCTION_HELLO)]
         public static void HandleAuctionHello(Packet packet)

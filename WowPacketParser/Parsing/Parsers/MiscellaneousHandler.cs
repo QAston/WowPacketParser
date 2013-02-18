@@ -391,6 +391,7 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBeginList("Flags");
             for (var i = 0; i < 8; i++)
                 packet.ReadInt32("Flag", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_AREATRIGGER)]

@@ -166,16 +166,18 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID");
 
             packet.StoreBeginList("Items");
+            int slot = 0;
             while (packet.CanRead())
             {
-                var slot = packet.ReadByte("Slot Index");
+                slot++;
+                packet.ReadByte("Slot Index", slot);
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Item Entry", slot);
                 packet.ReadUInt32("Item Display ID", slot);
                 packet.ReadUInt32("Item Count", slot);
                 packet.ReadUInt32("Item Wrapped", slot);
                 packet.ReadGuid("Item Gift Creator GUID", slot);
                 packet.ReadUInt32("Item Perm Enchantment Id", slot);
-                packet.StoreBeginList("Enchantments");
+                packet.StoreBeginList("Enchantments", slot);
                 for (var i = 0; i < 3; ++i)
                     packet.ReadUInt32("Item Enchantment Id", slot, i);
                 packet.StoreEndList();
@@ -398,7 +400,7 @@ namespace PacketParser.Parsing.Parsers
 
                     packet.ReadInt32("Item Perm Enchantment Id", i);
 
-                    packet.StoreBeginList("Enchantments");
+                    packet.StoreBeginList("Enchantments", i);
                     for (int j = 0; j < 3; ++j)
                         packet.ReadInt32("Item Enchantment Id", i, j);
                     packet.StoreEndList();

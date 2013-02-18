@@ -396,14 +396,6 @@ namespace PacketParser.Parsing.Parsers
             quest.RequiredCurrencyCount = new uint[4];
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_1_13164))
             {
-                packet.StoreBeginList("Reward Currencies");
-                for (var i = 0; i < 4; ++i)
-                {
-                    quest.RewardCurrencyId[i] = packet.ReadUInt32("Reward Currency ID", i);
-                    quest.RewardCurrencyCount[i] = packet.ReadUInt32("Reward Currency Count", i);
-                }
-                packet.StoreEndList();
-
                 packet.StoreBeginList("Required Currencies");
                 for (var i = 0; i < 4; ++i)
                 {
@@ -574,7 +566,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadCString("Objective Text", i);
                 packet.ReadByte("Unk Byte", i);
                 var count = packet.ReadByte("Unk Byte", i);
-                packet.StoreBeginList("Unks");
+                packet.StoreBeginList("Unks", i);
                 for (var j = 0; j < count; j++)
                     packet.ReadUInt32("Unk UInt32", i, j);
                 packet.StoreEndList();
@@ -657,6 +649,7 @@ namespace PacketParser.Parsing.Parsers
             for (int i = 0; i < count; ++i)
             {
                 packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Quest ID", i);
+                packet.StoreBeginList("Npcs");
                 for (int j = 0; j < counts[i]; ++j)
                 {
                     var entry = packet.ReadEntry();
@@ -665,6 +658,7 @@ namespace PacketParser.Parsing.Parsers
                     else
                         packet.Store("Creature", names.GetName(StoreNameType.Unit, entry.Key), i, j);
                 }
+                packet.StoreEndList();
             }
             packet.StoreEndList();
         }

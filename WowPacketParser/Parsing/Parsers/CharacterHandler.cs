@@ -791,14 +791,17 @@ namespace PacketParser.Parsing.Parsers
 
             packet.ResetBitReader();
 
+            packet.StoreBeginList("Characters");
             for (int c = 0; c < count; ++c)
             {
+                packet.StoreBeginList("Items", c);
                 for (var itm = 0; itm < 23; ++itm)
                 {
                     packet.ReadInt32("Item EnchantID", c, itm);
                     packet.ReadInt32("Item DisplayID", c, itm);
                     packet.ReadEnum<InventoryType>("Item InventoryType", TypeCode.Byte, c, itm);
                 }
+                packet.StoreEndList();
 
                 packet.ReadByte("Hair Style", c);
 
@@ -860,6 +863,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
                 packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_CHAR_ENUM, ClientVersionBuild.V5_1_0_16309)]
@@ -901,6 +905,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadBit("Unk bit");
             packet.ResetBitReader();
 
+            packet.StoreBeginList("Characters");
             for (int c = 0; c < count; ++c)
             {
                 packet.ReadEnum<CharacterFlag>("CharacterFlag", TypeCode.Int32, c);
@@ -909,12 +914,14 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(charGuids[c], 7);
                 packet.ReadXORByte(guildGuids[c], 6);
 
+                packet.StoreBeginList("Items", c);
                 for (var itm = 0; itm < 23; ++itm)
                 {
                     packet.ReadInt32("Item EnchantID", c, itm);
                     packet.ReadEnum<InventoryType>("Item InventoryType", TypeCode.Byte, c, itm);
                     packet.ReadInt32("Item DisplayID", c, itm);
                 }
+                packet.StoreEndList();
 
                 var x = packet.ReadSingle("Position X", c);
                 var clss = packet.ReadEnum<Class>("Class", TypeCode.Byte, c);
@@ -958,12 +965,15 @@ namespace PacketParser.Parsing.Parsers
                 PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(playerGuid, name);
             }
+            packet.StoreEndList();
 
+            packet.StoreBeginList("UnkList");
             for (var i = 0; i < unkCounter; ++i)
             {
                 packet.ReadByte("Unk byte", i);
                 packet.ReadUInt32("Unk int", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_COMPRESSED_CHAR_ENUM)]

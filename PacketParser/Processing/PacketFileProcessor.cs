@@ -183,6 +183,15 @@ namespace PacketParser.Processing
                 ProcessedAnyDataNodeHandler += Stub4;
         }
 
+        protected void FinishProcessors()
+        {
+            // finalize processors
+            foreach (var procs in Processors)
+            {
+                procs.Value.Finish();
+            }
+        }
+
         public void Stub1(Packet packet){}
 
         public void Stub2(Packet packet){}
@@ -197,15 +206,6 @@ namespace PacketParser.Processing
             if (Processors.ContainsKey(type))
                 return (T)Processors[type];
             return null;
-        }
-
-        protected void FinishProcessors()
-        {
-            // finalize processors
-            foreach (var procs in Processors)
-            {
-                procs.Value.Finish();
-            }
         }
 
         public void ProcessData(Packet data)

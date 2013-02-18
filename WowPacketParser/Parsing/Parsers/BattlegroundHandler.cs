@@ -384,7 +384,7 @@ namespace PacketParser.Parsing.Parsers
                 return;
             }
 
-            packet.ReadGuid("GUID");
+            packet.ReadGuid("GUID1");
 
             if (!packet.CanRead())
                 return;
@@ -411,7 +411,7 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map ID");
 
                     if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_5_12213))
-                        packet.ReadGuid("GUID");
+                        packet.ReadGuid("GUID2");
 
                     packet.ReadUInt32("Time left");
                     break;
