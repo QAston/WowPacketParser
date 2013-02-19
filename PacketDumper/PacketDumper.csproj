@@ -96,6 +96,7 @@
     <Compile Include="..\WowPacketParser\Store\Objects\UnitTemplateNonWDB.cs">
       <Link>DataStructures\UnitTemplateNonWDB.cs</Link>
     </Compile>
+    <Compile Include="Processing\ParseErrorFileOutput.cs" />
     <Compile Include="Processing\PacketFileDumper.cs" />
     <Compile Include="Processing\SQLData\GossipPOIStore.cs" />
     <Compile Include="Processing\RawData\IBinaryPacketWriter.cs" />

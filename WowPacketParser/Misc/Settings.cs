@@ -46,14 +46,17 @@ namespace PacketDumper.Misc
 
         public static readonly bool TextOutput = GetBoolean("TextOutput", false);
         public static readonly string[] TextOutputFilterIgnoreEntry = GetStringList("TextOutputFilterIgnoreEntry", new string[0]);
+        public static readonly string TextFileName = GetString("TextFileName", string.Empty);
 
         public static readonly int SQLOutputFlag = GetSQLOutputFlag();
         public static readonly string[] SpawnDumpFilterArea = GetStringList("SpawnDumpFilterArea", new string[0]);
         public static readonly string SQLFileName = GetString("SQLFileName", string.Empty);
+
+        public static readonly bool PacketErrorsOutput = GetBoolean("PacketErrorsOutput", false);
+        public static readonly string PacketErrorsFileName = GetString("PacketErrorsFileName", string.Empty);
         
         public static readonly bool ShowEndPrompt = GetBoolean("ShowEndPrompt", false);
         public static readonly bool LogEnumErrors = GetBoolean("LogEnumErrors", false);
-        public static readonly bool LogPacketErrors = GetBoolean("LogPacketErrors", false);
         public static readonly bool ParsingLog = GetBoolean("ParsingLog", false);
 
         private static KeyValueConfigurationCollection GetConfiguration()
@@ -184,7 +187,7 @@ namespace PacketDumper.Misc
 
             for (var i = 0; i < names.Length; ++i)
             {
-                if (GetBoolean("SQLOutput_" + names[i], true))
+                if (GetBoolean("SQLOutput_" + names[i], false))
                     result += (1 << (int)values.GetValue(i));
             }
 
