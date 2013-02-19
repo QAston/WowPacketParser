@@ -32,8 +32,12 @@ namespace PacketDumper.Processing
             if (!Settings.PacketErrorsOutput)
                 return false;
             _logPrefix = file.LogPrefix;
+            bool append = true;
             if (Settings.PacketErrorsFileName == string.Empty)
+            {
                 _outFileName = Path.ChangeExtension(file.FileName, null) + "_errors.txt";
+                append = false;
+            }
             else
                 _outFileName = Settings.PacketErrorsFileName;
             if (Utilities.FileIsInUse(_outFileName))
@@ -43,9 +47,9 @@ namespace PacketDumper.Processing
                 Trace.WriteLine(string.Format("Packet error output file {0} is in use, output will not be saved.", _outFileName));
                 return false;
             }
-            if (Settings.PacketErrorsFileName == string.Empty)
+            if (!append)
                 File.Delete(_outFileName);
-            writer = new StreamWriter(_outFileName, false);
+            writer = new StreamWriter(_outFileName, append);
             writer.WriteLine(file.GetHeader());
             return true;
         }

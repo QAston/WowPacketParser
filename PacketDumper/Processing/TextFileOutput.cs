@@ -32,8 +32,12 @@ namespace PacketDumper.Processing
             if (!Settings.TextOutput)
                 return false;
             _logPrefix = file.LogPrefix;
+            bool append = true;
             if (Settings.TextFileName == string.Empty)
+            {
                 _outFileName = Path.ChangeExtension(file.FileName, null) + "_parsed.txt";
+                append = false;
+            }
             else
                 _outFileName = Settings.TextFileName;
 
@@ -44,9 +48,9 @@ namespace PacketDumper.Processing
                 Trace.WriteLine(string.Format("Txt output file {0} is in use, output will not be saved.", _outFileName));
                 return false;
             }
-            if (Settings.TextFileName == string.Empty)
+            if (!append)
                 File.Delete(_outFileName);
-            writer = new StreamWriter(_outFileName, false);
+            writer = new StreamWriter(_outFileName, append);
             writer.WriteLine(file.GetHeader());
 
             return true;

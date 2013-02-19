@@ -44,7 +44,7 @@ namespace PacketDumper.Misc
         public static readonly string RawOutputType = GetString("RawOutputType", string.Empty);
         public static readonly bool SplitRawOutput = GetBoolean("SplitRawOutput", false);
 
-        public static readonly bool TextOutput = GetBoolean("TextOutput", false);
+        public static readonly bool TextOutput = GetBoolean("TextOutput", true);
         public static readonly string[] TextOutputFilterIgnoreEntry = GetStringList("TextOutputFilterIgnoreEntry", new string[0]);
         public static readonly string TextFileName = GetString("TextFileName", string.Empty);
 
