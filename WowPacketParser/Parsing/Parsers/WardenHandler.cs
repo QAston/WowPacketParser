@@ -61,17 +61,21 @@ namespace PacketParser.Parsing.Parsers
                 }
                 case WardenServerOpcode.Data:
                 {
+                    packet.StoreBeginList("DataList");
+                    int i = 0;
                     while (packet.CanRead())
                     {
+                        ++i;
                         packet.ReadByte();
 
-                        var length = packet.ReadUInt16("Data Length");
+                        var length = packet.ReadUInt16("Data Length", i);
 
-                        packet.ReadInt32("Data Checksum");
+                        packet.ReadInt32("Data Checksum", i);
 
                         var data = packet.ReadBytes(length);
-                        packet.Store("Data", Utilities.ByteArrayToHexString(data));
+                        packet.Store("Data", Utilities.ByteArrayToHexString(data), i);
                     }
+                    packet.StoreEndList();
                     break;
                 }
                 case WardenServerOpcode.Seed:

@@ -135,9 +135,9 @@ namespace PacketParser.DataStructures
             this.BaseStream.SetLength(oldPos + inflatedSize + tailData.Length);
             var newarr = new byte[inflatedSize];
 
-            if (!ClientVersion.RemovedInVersion(ClientVersionBuild.V4_3_0_15005))
+            if (ClientVersion.Build >= ClientVersionBuild.V4_3_0_15005 && keepStream)
             {
-                if (keepStream)
+                //if (keepStream)
                 {
                     var streams = PacketFileProcessor.Current.GetProcessor<SessionStore>().Zstreams;
                     if (!streams.ContainsKey(ConnectionIndex))
@@ -151,20 +151,21 @@ namespace PacketParser.DataStructures
                     stream.AvailableBytesOut = inflatedSize;
                     stream.Inflate(FlushType.Sync);
                 }
-                else
-                {
-                    ZlibCodec stream = new ZlibCodec(CompressionMode.Decompress);
-                    stream.InputBuffer = decompress;
-                    stream.NextIn = 0;
-                    stream.AvailableBytesIn = decompress.Length;
-                    stream.OutputBuffer = newarr;
-                    stream.NextOut = 0;
-                    stream.AvailableBytesOut = inflatedSize;
-                    stream.Inflate(FlushType.None);
-                    stream.Inflate(FlushType.Finish);
-                    stream.EndInflate();
-                }
             }
+            else
+            {
+                ZlibCodec stream = new ZlibCodec(CompressionMode.Decompress);
+                stream.InputBuffer = decompress;
+                stream.NextIn = 0;
+                stream.AvailableBytesIn = decompress.Length;
+                stream.OutputBuffer = newarr;
+                stream.NextOut = 0;
+                stream.AvailableBytesOut = inflatedSize;
+                stream.Inflate(FlushType.None);
+                stream.Inflate(FlushType.Finish);
+                stream.EndInflate();
+            }
+            /*}
             else
             {
                 try
@@ -179,7 +180,7 @@ namespace PacketParser.DataStructures
                     inflater.SetInput(decompress, 0, bytesToInflate);
                     inflater.Inflate(newarr, 0, inflatedSize);
                 }
-            }
+            }*/
 
             SetPosition(oldPos);
             this.BaseStream.Write(newarr, 0, inflatedSize);

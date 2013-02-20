@@ -54,6 +54,9 @@ namespace PacketDumper.Misc
 
         public static readonly bool PacketErrorsOutput = GetBoolean("PacketErrorsOutput", false);
         public static readonly string PacketErrorsFileName = GetString("PacketErrorsFileName", string.Empty);
+
+        public static readonly bool HexOutput = GetBoolean("HexOutput", false);
+        public static readonly string HexFileName = GetString("HexFileName", string.Empty);
         
         public static readonly bool ShowEndPrompt = GetBoolean("ShowEndPrompt", false);
         public static readonly bool LogEnumErrors = GetBoolean("LogEnumErrors", false);

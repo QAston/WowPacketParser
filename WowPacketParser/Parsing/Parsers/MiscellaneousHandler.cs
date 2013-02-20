@@ -106,9 +106,12 @@ namespace PacketParser.Parsing.Parsers
                 {
                     // unknown?
                     packet.ReadToEnd();
+                    break;
                 }
 
-                packet.ReadSubPacket(opcode, len, "Packet", i);
+                if (opcode != 0)
+                    packet.ReadSubPacket(opcode, len, "Packet", i);
+
                 ++i;
             }
             packet.StoreEndList();
@@ -118,12 +121,22 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleMultiplePackets2(Packet packet)
         {
             // This opcode heavily relies on ALL of its contained packets
-            var i = 0;
+            int i = 0;
+            
             packet.StoreBeginList("Packets");
+            
             while (packet.CanRead())
             {
                 var opcode = packet.ReadUInt16();
-                packet.ReadSubPacket(opcode, "Packet", i);
+                if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0_15005))
+                {
+                    var len = packet.ReadUInt16();
+                    packet.ReadSubPacket(opcode, len, "Packet", i);
+                }
+                else
+                {
+                    packet.ReadSubPacket(opcode, "Packet", i);
+                }
                 ++i;
             }
             packet.StoreEndList();

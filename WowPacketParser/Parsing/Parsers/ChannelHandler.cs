@@ -40,8 +40,8 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBeginList("ChannelMembers");
             for (var i = 0; i < count; i++)
             {
-                packet.ReadGuid("Player GUID " + i);
-                packet.ReadEnum<ChannelMemberFlag>("Player Flags " + i, TypeCode.Byte);
+                packet.ReadGuid("Player GUID", i);
+                packet.ReadEnum<ChannelMemberFlag>("Player Flags", TypeCode.Byte, i);
             }
             packet.StoreEndList();
         }

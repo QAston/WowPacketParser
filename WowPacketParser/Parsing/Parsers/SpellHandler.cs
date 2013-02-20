@@ -733,9 +733,6 @@ namespace PacketParser.Parsing.Parsers
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0_15005))
                 packet.ReadUInt32("Time2");
 
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0_15005))
-                packet.ReadInt32("unk430");
-
             if (isSpellGo)
             {
                 var hitCount = packet.ReadByte("Hit Count");
@@ -786,7 +783,7 @@ namespace PacketParser.Parsing.Parsers
                     packet.StoreBeginList("Rune Cooldowns");
                     for (var i = 0; i < 6; i++)
                     {
-                        if (ClientVersion.RemovedInVersion(ClientVersionBuild.V4_2_2_14545))
+                        if (ClientVersion.RemovedInVersion(ClientVersionBuild.V4_0_6_13596))
                         {
                             var mask = 1 << i;
                             if ((mask & spellRuneState) == 0)

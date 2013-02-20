@@ -837,7 +837,7 @@ namespace PacketParser.Parsing.Parsers
                 }
 
                 packet.ReadGuid("Player GUID", i);
-                packet.ReadInt32("Killing Blows");
+                packet.ReadInt32("Killing Blows", i);
 
                 packet.StoreBeginList("Extra Values", i);
                 for (var j = 0; j < count; ++j)
