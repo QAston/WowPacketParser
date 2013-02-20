@@ -56,11 +56,11 @@ namespace PacketDumper.Processing
             return true;
         }
 
-        public void Stub(string name, int? index, Object obj, Type t)
+        public void Stub(string name, int? index, Object obj, Type t, Packet packet)
         {
         }
 
-        public void ProcessData(string name, int? index, Object obj, Type t)
+        public void ProcessData(string name, int? index, Object obj, Type t, Packet packet)
         {
             if (!WriteToFile)
                 return;

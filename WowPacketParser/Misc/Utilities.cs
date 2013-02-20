@@ -79,6 +79,9 @@ namespace PacketParser.Misc
                 case ObjectType.GameObject:
                     result = StoreNameType.GameObject;
                     break;
+                case ObjectType.Player:
+                    result = StoreNameType.Player;
+                    break;
                 default:
                     result = StoreNameType.None;
                     break;

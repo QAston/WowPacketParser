@@ -89,7 +89,7 @@ namespace PacketParser.Processing
             }
         }
 
-        public void ProcessData(string name, int? index, Object data, Type t) 
+        public void ProcessData(string name, int? index, Object data, Type t, Packet packet) 
         {
             if (!(data is ITextOutputDisabled))
             {

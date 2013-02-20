@@ -121,6 +121,11 @@ switch (build)
             return Dict.GetBySecond(opcodeId);
         }
 
+        public static BiDictionary<Opcode, int> GetOpcodes()
+        {
+            return Dict;
+        }
+
         public static int GetOpcode(Opcode opcode)
         {
             return Dict.GetByFirst(opcode);

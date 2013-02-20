@@ -32,7 +32,7 @@ namespace PacketDumper.Processing
             WriteErrors();
         }
 
-        public void ProcessData(string name, int? index, Object obj, Type t)
+        public void ProcessData(string name, int? index, Object obj, Type t, Packet packet)
         {
             if (obj is StoreEnum)
             {

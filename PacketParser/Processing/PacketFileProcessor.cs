@@ -196,7 +196,7 @@ namespace PacketParser.Processing
 
         public void Stub2(Packet packet){}
 
-        public void Stub3(string name, int? index, Object obj, Type t){}
+        public void Stub3(string name, int? index, Object obj, Type t, Packet packet){}
 
         public void Stub4(string name, Object obj, Type t){}
 
@@ -213,13 +213,18 @@ namespace PacketParser.Processing
             var itr = data.GetTreeEnumerator();
             bool moveNext = itr.MoveNext();
             bool cont = moveNext;
+            Stack<Packet> packets = new Stack<Packet>();
+            packets.Push(data);
             while (cont)
             {
                 foreach (var i in itr.CurrentClosedNodes)
                 {
                     ProcessedAnyDataNodeHandler(i.name, i.obj, i.type);
                     if (i.type == typeof(Packet))
+                    {
                         ProcessedAnyPacketHandler((Packet)i.obj);
+                        packets.Pop();
+                    }
                 }
                 if (!moveNext)
                     break;
@@ -227,12 +232,18 @@ namespace PacketParser.Processing
                 if (itr.Type == typeof(Packet))
                 {
                     Packet packet = (Packet)itr.Current;
+                    packets.Push(packet);
                     ProcessAnyPacketHandler(packet);
                 }
 
-                ProcessAnyDataHandler(itr.Name, itr.Index, itr.Current, itr.Type);
+                ProcessAnyDataHandler(itr.Name, itr.Index, itr.Current, itr.Type, packets.Peek());
                 moveNext = itr.MoveNext();
             }
+        }
+
+        public static string GetBuild()
+        {
+            return typeof(AssemblyGitBuild).Assembly.GetCustomAttributes(typeof(AssemblyGitBuild), false).Cast<AssemblyGitBuild>().First().gitBuild;
         }
     }
 }

@@ -1050,6 +1050,7 @@
     <Compile Include="..\wowpacketparser\store\objects\WoWObject.cs">
       <Link>DataStructures\WoWObject.cs</Link>
     </Compile>
+    <Compile Include="AssemblyGitBuild.cs" />
     <Compile Include="DataStructures\Bit.cs" />
     <Compile Include="DataStructures\IndexedTreeNode.cs" />
     <Compile Include="DataStructures\ITreeNode.cs" />
@@ -1057,6 +1058,7 @@
     <Compile Include="DataStructures\StoreEntry.cs" />
     <Compile Include="DataStructures\StoreEnum.cs" />
     <Compile Include="DataStructures\TreeNodeEnumerator.cs" />
+    <Compile Include="git_version.cs" />
     <Compile Include="Misc\CacheFileManager.cs" />
     <Compile Include="Misc\Enum.cs" />
     <Compile Include="Processing\ITextOutputDisabled.cs" />
@@ -1072,6 +1074,12 @@
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>DEL $(ProjectDir)git_version.cs
+git rev-parse HEAD&gt;&gt; $(ProjectDir)git_version.cs &gt; tmpFile 
+set /p myvar= &lt; tmpFile
+@echo [assembly: AssemblyGitBuild(^"%25myvar%25^")]&gt;&gt; $(ProjectDir)git_version.cs</PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -27,7 +27,7 @@ namespace PacketParser.Processing
 
     public delegate void ProcessedPacketEventHandler(Packet packet);
 
-    public delegate void ProcessDataEventHandler(string name, int? index, Object obj, Type t);
+    public delegate void ProcessDataEventHandler(string name, int? index, Object obj, Type t, Packet packet);
 
     public delegate void ProcessedDataNodeEventHandler(string name, Object obj, Type t);
 
