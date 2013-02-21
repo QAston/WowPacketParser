@@ -42,7 +42,7 @@ namespace PacketViewer.Processing
             return "File Info: " + FileName + "  Version: " + GetBuild().ToString() + " Expansion: " + ClientVersion.GetExpansion(_build).ToString() + " ReaderType: " + _readerType;
         }
 
-        public ClientVersionBuild GetBuild()
+        public new ClientVersionBuild GetBuild()
         {
             return _build;
         }

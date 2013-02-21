@@ -5,16 +5,22 @@ namespace PacketParser.DataStructures
 {
     public sealed class GameObject : WoWObject
     {
+        public GameObject(WoWObject rhs)
+            : base(rhs)
+        {
+        }
         // Fields from UPDATE_FIELDS
         public float? Size;
         public uint? Faction;
         public GameObjectFlag? Flags;
+        public uint? Bytes;
 
         public override void LoadValuesFromUpdateFields()
         {
-            Size = UpdateFields.GetValue<ObjectField, float?>(ObjectField.OBJECT_FIELD_SCALE_X);
-            Faction = UpdateFields.GetValue<GameObjectField, uint?>(GameObjectField.GAMEOBJECT_FACTION);
-            Flags = UpdateFields.GetEnum<GameObjectField, GameObjectFlag?>(GameObjectField.GAMEOBJECT_FLAGS);
+            Size = GetValue<ObjectField, float?>(ObjectField.OBJECT_FIELD_SCALE_X);
+            Faction = GetValue<GameObjectField, uint?>(GameObjectField.GAMEOBJECT_FACTION);
+            Flags = GetEnum<GameObjectField, GameObjectFlag?>(GameObjectField.GAMEOBJECT_FLAGS);
+            Bytes = GetValue<GameObjectField, uint?>(GameObjectField.GAMEOBJECT_BYTES_1);
         }
 
         public override bool IsTemporarySpawn()
@@ -32,7 +38,7 @@ namespace PacketParser.DataStructures
 
         public float[] GetRotation()
         {
-            return UpdateFields.GetArray<GameObjectField, float>(GameObjectField.GAMEOBJECT_PARENTROTATION, 4);
+            return GetArray<GameObjectField, float>(GameObjectField.GAMEOBJECT_PARENTROTATION, 4);
         }
 
         public bool IsTransport()

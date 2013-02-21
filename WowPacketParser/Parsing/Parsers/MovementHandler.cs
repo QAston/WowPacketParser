@@ -166,13 +166,13 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.ReadPackedGuid("GUID");
 
-            WoWObject obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound(guid);
+            WoWObject obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectOrCreate(guid);
             if (obj != null)
             {
                 UpdateField uf;
                 if (obj.UpdateFields != null && obj.UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_FIELD_FLAGS), out uf))
                     if ((uf.UInt32Value & (uint)UnitFlags.IsInCombat) == 0) // movement could be because of aggro so ignore that
-                        obj.Movement.HasWpsOrRandMov = true;
+                        obj.SpawnMovement.HasWpsOrRandMov = true;
             }
 
             if (packet.Opcode == Opcodes.GetOpcode(Opcode.SMSG_MONSTER_MOVE_TRANSPORT))

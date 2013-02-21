@@ -165,7 +165,7 @@ namespace PacketParser.Parsing.Parsers
                         {
                             var guid = packet.ReadPackedGuid("Summoned GUID", i, j);
 
-                            WoWObject obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound(guid);
+                            WoWObject obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectOrCreate(guid);
                             if (obj != null)
                                 obj.ForceTemporarySpawn = true;
 

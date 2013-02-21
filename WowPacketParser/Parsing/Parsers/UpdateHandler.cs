@@ -42,22 +42,18 @@ namespace PacketParser.Parsing.Parsers
                     {
                         var guid = packet.ReadPackedGuid("GUID", i);
 
-                        WoWObject obj = ObjectStore.GetObjectIfFound(guid);
-                        var updates = ReadValuesUpdateBlock(ref packet, guid.GetObjectType(), i, false);
-
-                        if (obj != null)
-                        {
-                            if (obj.ChangedUpdateFieldsList == null)
-                                obj.ChangedUpdateFieldsList = new List<Dictionary<int, UpdateField>>();
-                            obj.ChangedUpdateFieldsList.Add(updates);
-                        }
+                        ReadValuesUpdateBlock(ref packet, guid, map, i, false);
 
                         break;
                     }
                     case "Movement":
                     {
                         var guid = ClientVersion.AddedInVersion(ClientVersionBuild.V3_1_2_9901) ? packet.ReadPackedGuid("GUID", i) : packet.ReadGuid("GUID", i);
-                        ReadMovementUpdateBlock(ref packet, guid, i);
+                        var obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectOrCreate(guid);
+                        obj.Map = map;
+                        obj.Area = PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentAreaId;
+                        obj.PhaseMask |= (uint)PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentPhaseMask; // additional phase mask if we see obj again
+                        obj.Movement = ReadMovementUpdateBlock(ref packet, guid, i);
                         // Should we update Storage.Object?
                         break;
                     }
@@ -69,10 +65,18 @@ namespace PacketParser.Parsing.Parsers
                         break;
                     }
                     case "FarObjects":
+                    {
+                        ReadObjectsBlock(ref packet, i, ObjectState.Far);
+                        break;
+                    }
                     case "NearObjects":
+                    {
+                        ReadObjectsBlock(ref packet, i, ObjectState.Near);
+                        break;
+                    }
                     case "DestroyObjects":
                     {
-                        ReadObjectsBlock(ref packet, i);
+                        ReadObjectsBlock(ref packet, i, ObjectState.Destroyed);
                         break;
                     }
                 }
@@ -82,63 +86,48 @@ namespace PacketParser.Parsing.Parsers
 
         private static void ReadCreateObjectBlock(ref Packet packet, Guid guid, uint map, int index)
         {
-            var objType = packet.ReadEnum<ObjectType>("Object Type", TypeCode.Byte, index);
-            var moves = ReadMovementUpdateBlock(ref packet, guid, index);
-            var updates = ReadValuesUpdateBlock(ref packet, objType, index, true);
-
-            WoWObject obj;
-            switch (objType)
-            {
-                case ObjectType.Unit:       obj = new Unit(); break;
-                case ObjectType.GameObject: obj = new GameObject(); break;
-                case ObjectType.Item:       obj = new Item(); break;
-                case ObjectType.Player:     obj = new Player(); break;
-                default:                    obj = new WoWObject(); break;
-            }
-
-            obj.Type = objType;
-            obj.Movement = moves;
-            obj.UpdateFields = updates;
+            ObjectType objType = packet.ReadEnum<ObjectType>("Object Type", TypeCode.Byte, index);
+            var obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectWithTypeOrCreate(guid, objType);
+            obj.Created = true;
             obj.Map = map;
             obj.Area = PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentAreaId;
-            obj.PhaseMask = (uint)PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentPhaseMask;
+            obj.PhaseMask |= (uint)PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentPhaseMask; // additional phase mask if we see obj again
 
-            // If this is the second time we see the same object (same guid,
-            // same position) update its phasemask
-            var existObj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound(guid);
-            if (existObj != null)
-                ProcessExistingObject(ref existObj, obj, guid); // can't do "ref Storage.Objects[guid].Item1 directly
-            else
-                PacketFileProcessor.Current.GetProcessor<ObjectStore>().AddObject(guid, obj, packet.TimeSpan);
+            obj.Movement = ReadMovementUpdateBlock(ref packet, guid, index);
+            obj.SpawnMovement = new MovementInfo(obj.Movement);
+            ReadValuesUpdateBlock(ref packet, guid, map, index, true);
+            obj.SpawnUpdateFields = new UpdateFieldDictionary(obj.UpdateFields);
+
+            obj.LoadValuesFromUpdateFields();
         }
 
-        private static void ProcessExistingObject(ref WoWObject obj, WoWObject newObj, Guid guid)
+        private static void ReadObjectsBlock(ref Packet packet, int index, ObjectState state)
         {
-            obj.PhaseMask |= newObj.PhaseMask;
-            if (guid.GetHighType() == HighGuidType.Unit) // skip if not a unit
-            {
-                if (!obj.Movement.HasWpsOrRandMov)
-                    if (obj.Movement.Position != newObj.Movement.Position)
-                    {
-                        UpdateField uf;
-                        if (obj.UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_FIELD_FLAGS), out uf))
-                            if ((uf.UInt32Value & (uint) UnitFlags.IsInCombat) == 0) // movement could be because of aggro so ignore that
-                                obj.Movement.HasWpsOrRandMov = true;
-                    }
-            }
-        }
-
-        private static void ReadObjectsBlock(ref Packet packet, int index)
-        {
+            var ObjectStore = PacketFileProcessor.Current.GetProcessor<ObjectStore>();
             var objCount = packet.ReadInt32("Object Count", index);
             packet.StoreBeginList("Objects", index);
             for (var j = 0; j < objCount; j++)
-                packet.ReadPackedGuid("Object GUID", index, j);
+            {
+                var guid = packet.ReadPackedGuid("Object GUID", index, j);
+                var obj = ObjectStore.GetObjectOrCreate(guid); // must be found - was read
+                obj.State = state;
+            }
             packet.StoreEndList();
         }
 
-        private static Dictionary<int, UpdateField> ReadValuesUpdateBlock(ref Packet packet, ObjectType type, int index, bool isCreating)
+        private static void ReadValuesUpdateBlock(ref Packet packet, Guid guid, uint map, int index, bool isCreating)
         {
+            var objects = PacketFileProcessor.Current.GetProcessor<ObjectStore>();
+            var obj = objects.GetObjectOrCreate(guid);
+
+            // update obj info
+            if (!isCreating)
+            {
+                obj.Map = map;
+                obj.Area = PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentAreaId;
+                obj.PhaseMask |= (uint)PacketFileProcessor.Current.GetProcessor<SessionStore>().CurrentPhaseMask; // additional phase mask if we see obj again
+            }
+
             var maskSize = packet.ReadByte();
 
             var updateMask = new int[maskSize];
@@ -148,20 +137,43 @@ namespace PacketParser.Parsing.Parsers
             var mask = new BitArray(updateMask);
             bool[] m = new bool[mask.Count];
             mask.CopyTo(m, 0);
-            var dict = new Dictionary<int, UpdateField>();
 
-            int objectEnd = (int)UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_END);
-            packet.StoreBeginList("UpdateFields", index);
-            for (var i = 0; i < m.Length; i++)
+            int size = 0;
+
+            for (var i = 0; i < m.Length-1; i++)
             {
                 if (!m[i])
                     continue;
 
+                size = i;
                 var blockVal = packet.ReadUpdateField();
+
+                obj.UpdateFields[i] = blockVal;
+            }
+
+            packet.StoreBeginList("UpdateFields", index);
+            for (var i = 0; i < size; )
+            {
+                var name = UpdateFields.GetUpdateFieldNameByOffset(i, obj.Type);
+
+                Type fieldType = UpdateFields.GetUpdateFieldType(name);
+                int fieldSize = UpdateFieldDictionary.GetFieldsCount(fieldType);
+                // check if any part of field was modified and needs display
+                int j;
+                for (j = i; j < i + fieldSize; ++j)
+                {
+                    if (m[i])
+                        break;
+                }
+                // nothing found
+                if (j == i + fieldSize)
+                {
+                    i = j;
+                    continue;
+                }
+
                 StringBuilder keyBuilder = new StringBuilder(30);
 
-                var enumType = UpdateFields.GetUpdateFieldEnumByOffset(i, type);
-                var name = UpdateFields.GetUpdateFieldName(i, enumType);
                 if (name == null)
                 {
                     keyBuilder.Append("Update field ");
@@ -174,8 +186,9 @@ namespace PacketParser.Parsing.Parsers
                     keyBuilder.Append(i);
                     keyBuilder.Append(")");
                 }
-                packet.Store(keyBuilder.ToString(), blockVal, index, i);
-                dict.Add(i, blockVal);
+                Object val = obj.UpdateFields.GetValue(i, fieldType);
+                packet.Store(keyBuilder.ToString(), val, index, i);
+                i = i + fieldSize;
             }
             packet.StoreEndList();
 
@@ -210,8 +223,6 @@ namespace PacketParser.Parsing.Parsers
                                     packet.ReadUInt32();
                 }
             }
-
-            return dict;
         }
 
         private static MovementInfo ReadMovementUpdateBlock510(ref Packet packet, Guid guid, int index)

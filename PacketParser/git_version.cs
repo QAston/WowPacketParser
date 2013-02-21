@@ -1,1 +1,1 @@
-[assembly: AssemblyGitBuild("0e6ecc8482c63ec8fccdbf2f2002173552a81c88")]
+[assembly: AssemblyGitBuild("601320a08c9b6b981bfbda7f6fbf93640051328e")]

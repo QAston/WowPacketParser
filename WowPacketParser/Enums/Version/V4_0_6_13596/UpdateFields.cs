@@ -207,7 +207,7 @@ namespace PacketParser.Enums.Version.V4_0_6_13596
         PLAYER_QUEST_LOG_1_1 = UnitField.UNIT_END + 0x000B, // Size: 1, Type: INT, Flags: PARTY_LEADER
         PLAYER_QUEST_LOG_1_2 = UnitField.UNIT_END + 0x000C, // Size: 1, Type: INT, Flags: PARTY_LEADER
         PLAYER_QUEST_LOG_1_3 = UnitField.UNIT_END + 0x000D, // Size: 2, Type: TWO_SHORT, Flags: PARTY_LEADER
-        PLAYER_QUEST_LOG_1_4 = UnitField.UNIT_END + 0x000F, // Size: 1, Type: INT, Flags: PARTY_LEADER
+        PLAYER_QUEST_LOG_1_5 = UnitField.UNIT_END + 0x000F, // Size: 1, Type: INT, Flags: PARTY_LEADER
         PLAYER_QUEST_LOG_2_1 = UnitField.UNIT_END + 0x0010, // Size: 1, Type: INT, Flags: PARTY_LEADER
         PLAYER_QUEST_LOG_2_2 = UnitField.UNIT_END + 0x0011, // Size: 1, Type: INT, Flags: PARTY_LEADER
         PLAYER_QUEST_LOG_2_3 = UnitField.UNIT_END + 0x0012, // Size: 2, Type: TWO_SHORT, Flags: PARTY_LEADER

@@ -400,7 +400,6 @@ namespace PacketParser.Enums
         PLAYER_QUEST_LOG_1_1,
         PLAYER_QUEST_LOG_1_2,
         PLAYER_QUEST_LOG_1_3,
-        PLAYER_QUEST_LOG_1_4,
         PLAYER_QUEST_LOG_1_5,
         PLAYER_QUEST_LOG_20_1,
         PLAYER_QUEST_LOG_20_2,

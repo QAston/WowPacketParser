@@ -57,15 +57,11 @@ namespace PacketDumper.Processing.SQLData
         public void DumpSQL(string prefix, string fileName, string header)
         {
             var Objects = PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects;
-            var units = Objects.IsEmpty() ? null : Objects.Where(obj => obj.Value.Item1.Type == ObjectType.Unit && obj.Key.GetHighType() != HighGuidType.Pet && !obj.Value.Item1.IsTemporarySpawn()).ToDictionary(obj => obj.Key, obj => obj.Value.Item1 as Unit);
-            var gameObjects = Objects.IsEmpty() ? null : Objects.Where(obj => obj.Value.Item1.Type == ObjectType.GameObject).ToDictionary(obj => obj.Key, obj => obj.Value.Item1 as GameObject);
+            var units = (Objects.Count == 0) ? null : Objects.Where(obj => obj.Value.Created && obj.Value.Type == ObjectType.Unit && obj.Key.GetHighType() != HighGuidType.Pet && !obj.Value.IsTemporarySpawn()).ToDictionary(obj => obj.Key, obj => obj.Value as Unit);
+            var gameObjects = (Objects.Count == 0) ? null : Objects.Where(obj => obj.Value.Created && obj.Value.Type == ObjectType.GameObject).ToDictionary(obj => obj.Key, obj => obj.Value as GameObject);
             //var pets = Storage.Objects.Where(obj => obj.Value.Type == ObjectType.Unit && obj.Key.GetHighType() == HighGuidType.Pet).ToDictionary(obj => obj.Key, obj => obj.Value as Unit);
             //var players = Storage.Objects.Where(obj => obj.Value.Type == ObjectType.Player).ToDictionary(obj => obj.Key, obj => obj.Value as Player);
             //var items = Storage.Objects.Where(obj => obj.Value.Type == ObjectType.Item).ToDictionary(obj => obj.Key, obj => obj.Value as Item);
-
-            if (units != null)
-                foreach (var unit in units)
-                    unit.Value.LoadValuesFromUpdateFields();
 
             List<Tuple<string, Builder>> writes = new List<Tuple<string, Builder>>();
 
@@ -266,17 +262,17 @@ namespace PacketDumper.Processing.SQLData
                 row.AddValue("phaseMask", creature.PhaseMask);
                 if (!creature.IsOnTransport())
                 {
-                    row.AddValue("position_x", creature.Movement.Position.X);
-                    row.AddValue("position_y", creature.Movement.Position.Y);
-                    row.AddValue("position_z", creature.Movement.Position.Z);
-                    row.AddValue("orientation", creature.Movement.Orientation);
+                    row.AddValue("position_x", creature.SpawnMovement.Position.X);
+                    row.AddValue("position_y", creature.SpawnMovement.Position.Y);
+                    row.AddValue("position_z", creature.SpawnMovement.Position.Z);
+                    row.AddValue("orientation", creature.SpawnMovement.Orientation);
                 }
                 else
                 {
-                    row.AddValue("position_x", creature.Movement.TransportOffset.X);
-                    row.AddValue("position_y", creature.Movement.TransportOffset.Y);
-                    row.AddValue("position_z", creature.Movement.TransportOffset.Z);
-                    row.AddValue("orientation", creature.Movement.TransportOffset.O);
+                    row.AddValue("position_x", creature.SpawnMovement.TransportOffset.X);
+                    row.AddValue("position_y", creature.SpawnMovement.TransportOffset.Y);
+                    row.AddValue("position_z", creature.SpawnMovement.TransportOffset.Z);
+                    row.AddValue("orientation", creature.SpawnMovement.TransportOffset.O);
                 }
 
                 row.AddValue("spawntimesecs", spawnTimeSecs);
@@ -298,7 +294,7 @@ namespace PacketDumper.Processing.SQLData
                 else
                     ++count;
 
-                if (creature.Movement.HasWpsOrRandMov)
+                if (creature.SpawnMovement.HasWpsOrRandMov)
                     row.Comment += " (possible waypoints or random movement)";
 
                 rows.Add(row);
@@ -341,7 +337,7 @@ namespace PacketDumper.Processing.SQLData
 
                 var entry = uf.UInt32Value;
 
-                if (go.UpdateFields.TryGetValue((int)UpdateFields.GetUpdateFieldOffset(GameObjectField.GAMEOBJECT_BYTES_1), out uf))
+                if (go.SpawnUpdateFields.TryGetValue((int)UpdateFields.GetUpdateFieldOffset(GameObjectField.GAMEOBJECT_BYTES_1), out uf))
                 {
                     var bytes = uf.UInt32Value;
                     state = (bytes & 0x000000FF);
@@ -355,17 +351,17 @@ namespace PacketDumper.Processing.SQLData
                 row.AddValue("phaseMask", go.PhaseMask);
                 if (!go.IsOnTransport())
                 {
-                    row.AddValue("position_x", go.Movement.Position.X);
-                    row.AddValue("position_y", go.Movement.Position.Y);
-                    row.AddValue("position_z", go.Movement.Position.Z);
-                    row.AddValue("orientation", go.Movement.Orientation);
+                    row.AddValue("position_x", go.SpawnMovement.Position.X);
+                    row.AddValue("position_y", go.SpawnMovement.Position.Y);
+                    row.AddValue("position_z", go.SpawnMovement.Position.Z);
+                    row.AddValue("orientation", go.SpawnMovement.Orientation);
                 }
                 else
                 {
-                    row.AddValue("position_x", go.Movement.TransportOffset.X);
-                    row.AddValue("position_y", go.Movement.TransportOffset.Y);
-                    row.AddValue("position_z", go.Movement.TransportOffset.Z);
-                    row.AddValue("orientation", go.Movement.TransportOffset.O);
+                    row.AddValue("position_x", go.SpawnMovement.TransportOffset.X);
+                    row.AddValue("position_y", go.SpawnMovement.TransportOffset.Y);
+                    row.AddValue("position_z", go.SpawnMovement.TransportOffset.Z);
+                    row.AddValue("orientation", go.SpawnMovement.TransportOffset.O);
                 }
 
                 var rotation = go.GetRotation();
@@ -399,11 +395,6 @@ namespace PacketDumper.Processing.SQLData
                 {
                     row.CommentOut = true;
                     row.Comment += " - !!! transport !!!";
-                }
-                else if (go.IsOnTransport())
-                {
-                    row.CommentOut = true;
-                    row.Comment += " - !!! on transport (NYI) !!!";
                 }
                 else
                     ++count;
@@ -442,9 +433,9 @@ namespace PacketDumper.Processing.SQLData
 
                 var auras = string.Empty;
                 var commentAuras = string.Empty;
-                if (npc.Auras != null && npc.Auras.Count() != 0)
+                if (npc.SpawnAuras != null && npc.SpawnAuras.Count() != 0)
                 {
-                    foreach (var aura in npc.Auras)
+                    foreach (var aura in npc.SpawnAuras)
                     {
                         if (aura == null) continue;
                         if (!aura.AuraFlags.HasAnyFlag(AuraFlag.NotCaster)) continue; // usually "template auras" do not have caster
@@ -531,9 +522,9 @@ namespace PacketDumper.Processing.SQLData
                     continue;
                 }
 
-                equip.ItemEntry1 = npc.Equipment[0];
-                equip.ItemEntry2 = npc.Equipment[1];
-                equip.ItemEntry3 = npc.Equipment[2];
+                equip.ItemEntry1 = npc.Equipment[0] != null ? (uint)npc.Equipment[0] : 0;
+                equip.ItemEntry2 = npc.Equipment[1] != null ? (uint)npc.Equipment[1] : 0;
+                equip.ItemEntry3 = npc.Equipment[2] != null ? (uint)npc.Equipment[2] : 0;
 
                 equips.Add(entry, equip);
             }
@@ -558,8 +549,8 @@ namespace PacketDumper.Processing.SQLData
                 var npc = unit.Value;
 
                 row.AddValue("Id", unit.Key.GetEntry());
-                row.AddValue("MovementFlags", npc.Movement.Flags, true);
-                row.AddValue("MovementFlagsExtra", npc.Movement.FlagsExtra, true);
+                row.AddValue("MovementFlags", npc.SpawnMovement.Flags, true);
+                row.AddValue("MovementFlagsExtra", npc.SpawnMovement.FlagsExtra, true);
                 row.AddValue("ufBytes1", npc.Bytes1, true);
                 row.AddValue("ufBytes2", npc.Bytes2, true);
                 row.AddValue("ufFlags", npc.UnitFlags, true);
@@ -623,15 +614,15 @@ namespace PacketDumper.Processing.SQLData
                     Faction = npc.Faction.GetValueOrDefault(35),
                     Faction2 = npc.Faction.GetValueOrDefault(35),
                     NpcFlag = (uint)npc.NpcFlags.GetValueOrDefault(NPCFlags.None),
-                    SpeedRun = npc.Movement.RunSpeed,
-                    SpeedWalk = npc.Movement.WalkSpeed,
+                    SpeedRun = npc.SpawnMovement.RunSpeed,
+                    SpeedWalk = npc.SpawnMovement.WalkSpeed,
                     BaseAttackTime = npc.MeleeTime.GetValueOrDefault(2000),
                     RangedAttackTime = npc.RangedTime.GetValueOrDefault(2000),
                     UnitClass = (uint)npc.Class.GetValueOrDefault(Class.Warrior),
                     UnitFlag = (uint)npc.UnitFlags.GetValueOrDefault(UnitFlags.None),
                     UnitFlag2 = (uint)npc.UnitFlags2.GetValueOrDefault(UnitFlags2.None),
                     DynamicFlag = (uint)npc.DynamicFlags.GetValueOrDefault(UnitDynamicFlags.None),
-                    VehicleId = npc.Movement.VehicleId,
+                    VehicleId = npc.SpawnMovement.VehicleId,
                     HoverHeight = npc.HoverHeight.GetValueOrDefault(1.0f)
                 };
 

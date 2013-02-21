@@ -4,6 +4,13 @@ namespace PacketParser.DataStructures
 {
     public sealed class Player : WoWObject
     {
+        public Player()
+        {
+        }
+        public Player(WoWObject rhs)
+            : base(rhs)
+        {
+        }
         public Race Race;
 
         public Class Class;
@@ -15,15 +22,13 @@ namespace PacketParser.DataStructures
         public int Level;
 
         // Used when inserting data from SMSG_CHAR_ENUM into the Objects container
-        public static WoWObject UpdatePlayerInfo(Player oldPlayer, Player newPlayer)
+        public void UpdatePlayerInfo(Player newInfo)
         {
-            oldPlayer.Race = newPlayer.Race;
-            oldPlayer.Class = newPlayer.Class;
-            oldPlayer.Name = newPlayer.Name;
-            oldPlayer.FirstLogin = newPlayer.FirstLogin;
-            oldPlayer.Level = newPlayer.Level;
-
-            return oldPlayer;
+            Race = newInfo.Race;
+            Class = newInfo.Class;
+            Name = newInfo.Name;
+            FirstLogin = newInfo.FirstLogin;
+            Level = newInfo.Level;
         }
     }
 }

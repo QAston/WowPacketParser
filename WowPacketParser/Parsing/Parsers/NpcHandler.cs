@@ -344,7 +344,7 @@ namespace PacketParser.Parsing.Parsers
 
             if (guid.GetObjectType() == ObjectType.Unit)
             {
-                Object obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound(guid);
+                Object obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectWithTypeOrCreate(guid, ObjectType.Unit);
                 if (obj != null)
                     ((Unit)obj).GossipId = menuId;
             }

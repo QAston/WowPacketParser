@@ -197,7 +197,7 @@ namespace PacketParser.Enums.Version.V3_3_5a_12340
         PLAYER_QUEST_LOG_1_1 = UnitField.UNIT_END + 0x000A,
         PLAYER_QUEST_LOG_1_2 = UnitField.UNIT_END + 0x000B,
         PLAYER_QUEST_LOG_1_3 = UnitField.UNIT_END + 0x000C,
-        PLAYER_QUEST_LOG_1_4 = UnitField.UNIT_END + 0x000E,
+        PLAYER_QUEST_LOG_1_5 = UnitField.UNIT_END + 0x000E,
         PLAYER_QUEST_LOG_2_1 = UnitField.UNIT_END + 0x000F,
         PLAYER_QUEST_LOG_2_2 = UnitField.UNIT_END + 0x0010,
         PLAYER_QUEST_LOG_2_3 = UnitField.UNIT_END + 0x0011,

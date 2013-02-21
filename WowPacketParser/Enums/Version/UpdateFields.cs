@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Reflection;
 using PacketParser.Misc;
+using System.Collections.Specialized;
+using Guid = PacketParser.DataStructures.Guid;
 
 namespace PacketParser.Enums.Version
 {
@@ -30,12 +32,55 @@ namespace PacketParser.Enums.Version
                 var vValues = Enum.GetValues(vEnumType);
                 var vNames = Enum.GetNames(vEnumType);
 
+                var fieldNumbers = new SortedSet<int>();
+
                 var result = new BiDictionary<string, int>();
 
                 for (var i = 0; i < vValues.Length; ++i)
+                {
                     result.Add(vNames[i], (int)vValues.GetValue(i));
+                    fieldNumbers.Add((int)vValues.GetValue(i));
+                }
 
                 dicts.Add(enumType, result);
+
+                // add fields not defined in enums - generate names for arrays
+                var numbersEnum = fieldNumbers.GetEnumerator();
+                if (numbersEnum.MoveNext())
+                {
+                    int currentField = numbersEnum.Current;
+                    while (numbersEnum.MoveNext())
+                    {
+
+                        int nextField = numbersEnum.Current;
+
+                        string name;
+
+                        name = result.GetBySecond(currentField);
+
+                        var t = GetUpdateFieldType(name);
+                        int size = UpdateFieldDictionary.GetFieldsCount(t);
+                        int newField = currentField + size;
+                        if (newField < nextField)
+                        {
+                            string nameBase = name.Substring(0, name.LastIndexOf('_') + 1);
+                            int number;
+                            if (!Int32.TryParse(name.Substring(name.LastIndexOf('_') + 1), out number))
+                            {
+                                number = 1;
+                                nameBase = name + "_";
+                            }
+
+                            while (newField < nextField)
+                            {
+                                result.Add(nameBase + (++number), newField);
+                                newField += size;
+                            }
+                        }
+
+                        currentField = nextField;
+                    }
+                }
             }
             
             return dicts;
@@ -60,7 +105,7 @@ namespace PacketParser.Enums.Version
         }
 
         // returns update field name by offset
-        public static string GetUpdateFieldName(int fieldOffset, Type t)
+        private static string GetUpdateFieldName(int fieldOffset, Type t)
         {
             if (UpdateFieldDictionaries.ContainsKey(t))
             {
@@ -72,9 +117,111 @@ namespace PacketParser.Enums.Version
             return null;
         }
 
-        public static string GetUpdateFieldName<T>(int fieldOffset)
+        public static string GetUpdateFieldNameByOffset(Int32 offset, ObjectType type)
+        {
+            return GetUpdateFieldName(offset, GetUpdateFieldEnumByOffset(offset, type));
+        }
+
+        public static string GetUpdateFieldNameByOffset<T>(int fieldOffset)
         {
             return GetUpdateFieldName(fieldOffset, typeof(T));
+        }
+
+        public static Type GetUpdateFieldType(string name)
+        {
+            var ret = typeof(int);
+            int i = name.Length - 1;
+            // trim indexes from field name
+            for (; i > 0; --i)
+            {
+                if ((name[i] >= '0' && name[i] <= '9') || name[i]=='_')
+                    continue;
+                break;
+            }
+            switch (name.Substring(0, i+1))
+            {
+                case "PLAYER_FIELD_PACK_SLOT":
+                case "PLAYER_FIELD_BANK_SLOT":
+                case "PLAYER_FIELD_BANKBAG_SLOT":
+                case "PLAYER_FIELD_VENDORBUYBACK_SLOT":
+                case "PLAYER_FIELD_KEYRING_SLOT":
+                case "PLAYER_FIELD_CURRENCYTOKEN_SLOT":
+                case "CONTAINER_FIELD_SLOT":
+                case "OBJECT_FIELD_GUID":
+                case "ITEM_FIELD_OWNER":
+                case "ITEM_FIELD_CONTAINED":
+                case "ITEM_FIELD_GIFTCREATOR":
+                case "ITEM_FIELD_CREATOR":
+                case "UNIT_FIELD_CHARM":
+                case "UNIT_FIELD_SUMMON":
+                case "UNIT_FIELD_CRITTER":
+                case "UNIT_FIELD_CHARMEDBY":
+                case "UNIT_FIELD_SUMMONEDBY":
+                case "UNIT_FIELD_CREATEDBY":
+                case "UNIT_FIELD_TARGET":
+                case "UNIT_FIELD_CHANNEL_OBJECT":
+                case "PLAYER_DUEL_ARBITER":
+                case "PLAYER_FIELD_INV_SLOT_HEAD":
+                case "PLAYER_FARSIGHT":
+                case "GAMEOBJECT_FIELD_CREATED_BY":
+                case "DYNAMICOBJECT_CASTER":
+                case "CORPSE_FIELD_OWNER":
+                case "CORPSE_FIELD_PARTY":
+                    return typeof(Guid);
+                case "PLAYER__FIELD_KNOWN_TITLES":
+                case "PLAYER_FIELD_KNOWN_CURRENCIES":
+                case "OBJECT_FIELD_DATA":
+                    return typeof(UInt64);
+                case "OBJECT_FIELD_SCALE_X":
+                case "GAMEOBJECT_PARENTROTATION":
+                case "DYNAMICOBJECT_RADIUS":
+                case "UNIT_FIELD_POWER_REGEN_FLAT_MODIFIER":
+                case "UNIT_FIELD_POWER_REGEN_INTERRUPTED_FLAT_MODIFIER":
+                case "UNIT_FIELD_BOUNDINGRADIUS":
+                case "UNIT_FIELD_COMBATREACH":
+                case "UNIT_FIELD_MINDAMAGE":
+                case "UNIT_FIELD_MAXDAMAGE":
+                case "UNIT_FIELD_MINOFFHANDDAMAGE":
+                case "UNIT_FIELD_MAXOFFHANDDAMAGE":
+                case "UNIT_MOD_CAST_SPEED":
+                case "UNIT_FIELD_ATTACK_POWER_MULTIPLIER":
+                case "UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER":
+                case "UNIT_FIELD_MINRANGEDDAMAGE":
+                case "UNIT_FIELD_MAXRANGEDDAMAGE":
+                case "UNIT_FIELD_POWER_COST_MULTIPLIER":
+                case "UNIT_FIELD_MAXHEALTHMODIFIER":
+                case "UNIT_FIELD_HOVERHEIGHT":
+                case "PLAYER_BLOCK_PERCENTAGE":
+                case "PLAYER_DODGE_PERCENTAGE":
+                case "PLAYER_PARRY_PERCENTAGE":
+                case "PLAYER_CRIT_PERCENTAGE":
+                case "PLAYER_RANGED_CRIT_PERCENTAGE":
+                case "PLAYER_OFFHAND_CRIT_PERCENTAGE":
+                case "PLAYER_SPELL_CRIT_PERCENTAGE":
+                case "PLAYER_SHIELD_BLOCK_CRIT_PERCENTAGE":
+                case "PLAYER_FIELD_MOD_HEALING_PCT":
+                case "PLAYER_FIELD_MOD_HEALING_DONE_PCT":
+                case "PLAYER_RUNE_REGEN":
+                    return typeof(float);
+                case "ITEM_FIELD_FLAGS":
+                    return typeof(ItemFlag);
+                case "UNIT_FIELD_FLAGS":
+                    if (name.EndsWith("2"))
+                        return typeof(UnitFlags2);
+                    return typeof(UnitFlags);
+                case "UNIT_DYNAMIC_FLAGS":
+                    return typeof(UnitDynamicFlags);
+                case "UNIT_NPC_FLAGS":
+                    return typeof(NPCFlags);
+                case "PLAYER_FLAGS":
+                    return typeof(PlayerFlags);
+                case "GAMEOBJECT_FLAGS":
+                    return typeof(GameObjectFlag);
+                case "CORPSE_FIELD_FLAGS":
+                    return typeof(UnknownFlags);
+                default:
+                    return typeof(int);
+            }
         }
 
         public static Type GetUpdateFieldEnumByOffset(Int32 offset, ObjectType type)
@@ -142,11 +289,6 @@ namespace PacketParser.Enums.Version
                 default:
                     return typeof(Object);
             }
-        }
-
-        public static string GetUpdateFieldNameByOffset(Int32 offset, ObjectType type)
-        {
-            return GetUpdateFieldName(offset, GetUpdateFieldEnumByOffset(offset, type));
         }
 
         private static string GetUpdateFieldDictionaryBuildName(ClientVersionBuild build)

@@ -2,26 +2,51 @@ using System.Collections.Generic;
 using PacketParser.Enums;
 using PacketParser.Misc;
 using PacketParser.Enums.Version;
+using System;
+using System.Globalization;
+using System.Reflection;
 
 namespace PacketParser.DataStructures
 {
     public class WoWObject
     {
+        public WoWObject()
+        {
+        }
+        public WoWObject(WoWObject rhs)
+        {
+            if (rhs == null)
+                return;
+            // get all the fields in the class
+            FieldInfo[] fields_of_class = this.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+
+            // copy each value over to 'this'
+            foreach (FieldInfo fi in fields_of_class)
+            {
+                fi.SetValue(this, fi.GetValue(rhs));
+            }
+        }
         public ObjectType Type;
+
+        public bool Created = false; // if SMSG_UPDATE_OBJECT - CreateObject was received
+
+        public ObjectState State = ObjectState.Default;
+
+        public MovementInfo SpawnMovement;
 
         public MovementInfo Movement;
 
-        public uint Map;
+        public uint Map = 0;
 
-        public int Area;
+        public int Area = 0;
 
-        public Dictionary<int, UpdateField> UpdateFields; // SMSG_UPDATE_OBJECT - CreateObject
+        public UpdateFieldDictionary UpdateFields = new UpdateFieldDictionary();
 
-        public ICollection<Dictionary<int, UpdateField>> ChangedUpdateFieldsList; // SMSG_UPDATE_OBJECT - Values
+        public UpdateFieldDictionary SpawnUpdateFields; 
 
-        public uint PhaseMask;
+        public uint PhaseMask = 0;
 
-        public bool ForceTemporarySpawn;
+        public bool ForceTemporarySpawn = false;
 
         public virtual bool IsTemporarySpawn()
         {
@@ -30,7 +55,7 @@ namespace PacketParser.DataStructures
 
         public bool IsOnTransport()
         {
-            return Movement.TransportGuid != Guid.Empty;
+            return SpawnMovement.TransportGuid != Guid.Empty;
         }
 
         public int GetDefaultSpawnTime()
@@ -60,18 +85,49 @@ namespace PacketParser.DataStructures
         }
         public Guid? GetGuid()
         {
-            UpdateField low;
-            UpdateField high;
-            if (UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_GUID), out low))
-                if (UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_GUID + 1), out high))
-                {
-                    ulong lowg = low.UInt32Value;
-                    ulong highg = high.UInt32Value;
-                    return new Guid(lowg | (highg<<32));
-                }
-            return null;
+            return GetValue<ObjectField, Guid?>(ObjectField.OBJECT_FIELD_GUID);
         }
 
         public virtual void LoadValuesFromUpdateFields() { }
+
+        /// <summary>
+        /// Grabs a value from a dictionary of UpdateFields
+        /// </summary>
+        /// <typeparam name="T">The type of UpdateField (ObjectField, UnitField, ...)</typeparam>
+        /// <typeparam name="TK">The type of the value (int, uint or float and their nullable counterparts)</typeparam>
+        /// <param name="dict">The dictionary</param>
+        /// <param name="updateField">The update field we want</param>
+        /// <returns></returns>
+        public TK GetValue<T, TK>(T updateField) where T : struct,IConvertible
+        {
+            return UpdateFields.GetValue<TK>((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(updateField));
+        }
+
+        /// <summary>
+        /// Grabs N (consecutive) values from a dictionary of UpdateFields
+        /// </summary>
+        /// <typeparam name="T">The type of UpdateField (ObjectField, UnitField, ...)</typeparam>
+        /// <typeparam name="TK">The type of the value (int, uint or float and their nullable counterparts)</typeparam>
+        /// <param name="dict">The dictionary</param>
+        /// <param name="firstUpdateField">The first update field of the sequence</param>
+        /// <param name="count">Number of values to retrieve</param>
+        /// <returns></returns>
+        public TK[] GetArray<T, TK>(T firstUpdateField, int count) where T : struct,IConvertible
+        {
+            return UpdateFields.GetArray<TK>((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(firstUpdateField), count);
+        }
+
+        /// <summary>
+        /// Grabs a value from a dictionary of UpdateFields and converts it to an enum val
+        /// </summary>
+        /// <typeparam name="T">The type of UpdateField (ObjectField, UnitField, ...)</typeparam>
+        /// <typeparam name="TK">The type of the value (a NULLABLE enum)</typeparam>
+        /// <param name="dict">The dictionary</param>
+        /// <param name="updateField">The update field we want</param>
+        /// <returns></returns>
+        public TK GetEnum<T, TK>(T updateField) where T : struct,IConvertible
+        {
+            return UpdateFields.GetEnum<TK>((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(updateField));
+        }
     }
 }

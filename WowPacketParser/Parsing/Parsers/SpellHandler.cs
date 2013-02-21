@@ -345,7 +345,7 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreEndList();
 
             // This only works if the parser saw UPDATE_OBJECT before this packet
-            var obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound(guid);
+            var obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectOrCreate(guid);
             if (obj != null)
             {
                 var unit = obj as Unit;
@@ -356,8 +356,8 @@ namespace PacketParser.Parsing.Parsers
                     // if not create another row of auras in AddedAuras
                     // (similar to ChangedUpdateFields)
 
-                    if (unit.Auras == null)
-                        unit.Auras = auras;
+                    if (unit.SpawnAuras == null)
+                        unit.SpawnAuras = auras;
                     else if (unit.AddedAuras == null)
                         unit.AddedAuras = new List<List<Aura>> { auras };
                     else

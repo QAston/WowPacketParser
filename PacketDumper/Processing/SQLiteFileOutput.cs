@@ -84,7 +84,6 @@ namespace PacketDumper.Processing
         public static string insertPacketObject = @"INSERT INTO [packetObject] ([packetId], [packetSubId], [objectGuid]) 
                                                              VALUES(@packetId, @packetSubId, @objectGuid)";
         public Dictionary<Packet, HashSet<Guid>> packetObjects = new Dictionary<Packet, HashSet<Guid>>();
-        public HashSet<Guid> guids = new HashSet<Guid>();
 
         public void ProcessData(string name, int? index, Object obj, Type t, Packet packet)
         {
@@ -95,7 +94,6 @@ namespace PacketDumper.Processing
                 if (guid.Full != 0 && !set.Contains(guid))
                 {
                     set.Add(guid);
-                    guids.Add(guid);
                     using (SQLiteCommand cmd = new SQLiteCommand(insertPacketObject, _connection))
                     {
                         cmd.Transaction = tr;
@@ -155,25 +153,7 @@ namespace PacketDumper.Processing
         public void Finish()
         {
             var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
-            
-            foreach (var guid in guids)
-            {
-                using (SQLiteCommand cmd = new SQLiteCommand(insertObject, _connection))
-                {
-                    cmd.Transaction = tr;
-                    cmd.Parameters.Add(new SQLiteParameter("@guid", guid.Full));
-                    cmd.Parameters.Add(new SQLiteParameter("@type", guid.GetHighTypeString()));
-                    cmd.Parameters.Add(new SQLiteParameter("@entry", guid.GetEntry()));
-                    if (guid.GetHighType() == HighGuidType.Player)
-                        cmd.Parameters.Add(new SQLiteParameter("@name", names.GetPlayerName(guid)));
-                    else
-                        cmd.Parameters.Add(new SQLiteParameter("@name", names.GetName(Utilities.ObjectTypeToStore(guid.GetObjectType()), (int)guid.GetEntry(), false)));
-                    cmd.ExecuteNonQuery();
-                }
-            }
 
-            /*
-            // this does not contain players - useless
             var objects = PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects;
             foreach (var pair in objects)
             {
@@ -191,7 +171,6 @@ namespace PacketDumper.Processing
                     cmd.ExecuteNonQuery();
                 }
             }
-            */
 
             tr.Commit();
             _connection.Close();

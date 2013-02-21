@@ -176,7 +176,8 @@ namespace PacketParser.Parsing.Parsers
 
                 var playerInfo = new Player {Race = race, Class = clss, Name = name, FirstLogin = firstLogin, Level = level};
 
-                PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[guid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
+                var player = (Player)PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectWithTypeOrCreate(guid, ObjectType.Player);
+                player.UpdatePlayerInfo(playerInfo);
 
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(guid, name);
             }
@@ -305,7 +306,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.Store("First Login", firstLogin, c);
 
                 var playerInfo = new Player { Race = race, Class = clss, Name = name, FirstLogin = firstLogin[c], Level = level };
-                PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[guidPlayer] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
+                var player = (Player)PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectWithTypeOrCreate(guidPlayer, ObjectType.Player);
+                player.UpdatePlayerInfo(playerInfo);
 
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(guidPlayer, name);
             }
@@ -427,7 +429,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.Store("Position", new Vector3(x, y, z), c);
 
                 var playerInfo = new Player{Race = race, Class = clss, Name = name, FirstLogin = firstLogins[c], Level = level};
-                PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
+                var player = (Player)PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectWithTypeOrCreate(playerGuid, ObjectType.Player);
+                player.UpdatePlayerInfo(playerInfo);
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(playerGuid, name);
             }
             packet.StoreEndList();
@@ -588,7 +591,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.Store("Position", new Vector3(x, y, z), c);
 
                 var playerInfo = new Player { Race = race, Class = clss, Name = name, FirstLogin = firstLogins[c], Level = level };
-                PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
+                var player = (Player)PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectWithTypeOrCreate(playerGuid, ObjectType.Player);
+                player.UpdatePlayerInfo(playerInfo);
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(playerGuid, name);
             }
             packet.StoreEndList();
@@ -728,7 +732,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.Store("Position", new Vector3(x, y, z), c);
 
                 var playerInfo = new Player { Race = race, Class = clss, Name = name, FirstLogin = firstLogins[c], Level = level };
-                PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
+                var player = (Player)PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectWithTypeOrCreate(playerGuid, ObjectType.Player);
+                player.UpdatePlayerInfo(playerInfo);
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(playerGuid, name);
             }
             packet.StoreEndList();
@@ -864,7 +869,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
 
                 var playerInfo = new Player { Race = race, Class = clss, Name = name, FirstLogin = firstLogins[c], Level = level };
-                PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
+                var player = (Player)PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectWithTypeOrCreate(playerGuid, ObjectType.Player);
+                player.UpdatePlayerInfo(playerInfo);
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(playerGuid, name);
             }
             packet.StoreEndList();
@@ -966,7 +972,8 @@ namespace PacketParser.Parsing.Parsers
                 packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
 
                 var playerInfo = new Player { Race = race, Class = clss, Name = name, FirstLogin = firstLogins[c], Level = level };
-                PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects[playerGuid] = new Tuple<WoWObject, TimeSpan?>(playerInfo, packet.TimeSpan);
+                var player = (Player)PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectWithTypeOrCreate(playerGuid, ObjectType.Player);
+                player.UpdatePlayerInfo(playerInfo);
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddPlayerName(playerGuid, name);
             }
             packet.StoreEndList();

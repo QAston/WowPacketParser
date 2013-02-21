@@ -1058,9 +1058,11 @@
     <Compile Include="DataStructures\StoreEntry.cs" />
     <Compile Include="DataStructures\StoreEnum.cs" />
     <Compile Include="DataStructures\TreeNodeEnumerator.cs" />
+    <Compile Include="Enums\ObjectState.cs" />
     <Compile Include="git_version.cs" />
     <Compile Include="Misc\CacheFileManager.cs" />
     <Compile Include="Misc\Enum.cs" />
+    <Compile Include="Misc\UpdateFieldDictionary.cs" />
     <Compile Include="Processing\ITextOutputDisabled.cs" />
     <Compile Include="Misc\TimeSpanContainers.cs" />
     <Compile Include="Processing\IPacketProcessor.cs" />

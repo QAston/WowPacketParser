@@ -38,7 +38,7 @@ namespace PacketParser.Processing
                         if (LastPlayer.GetGuid() == LoginGuid)
                             return LastPlayer;
                     }
-                    return (Player)(PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound((Guid)LoginGuid));
+                    return (Player)(PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectOrCreate((Guid)LoginGuid));
                 }
                 return null;
             }
