@@ -218,12 +218,14 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreEndList();
         }
 
-        private static Aura ReadAuraUpdateBlock(ref Packet packet, params int[] values)
+        private static Aura ReadAuraUpdateBlock(ref Packet packet, out uint slot, params int[] values)
         {
             packet.StoreBeginObj("Aura", values);
             var aura = new Aura();
 
             aura.Slot = packet.ReadByte("Slot");
+
+            slot = aura.Slot;
 
             var id = packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID");
             if (id <= 0)
@@ -270,12 +272,13 @@ namespace PacketParser.Parsing.Parsers
             return aura;
         }
 
-        private static Aura ReadAuraUpdateBlock505(ref Packet packet, params int[] values)
+        private static Aura ReadAuraUpdateBlock505(ref Packet packet, out uint slot, params int[] values)
         {
             packet.StoreBeginObj("Aura", values);
             var aura = new Aura();
 
             aura.Slot = packet.ReadByte("Slot");
+            slot = aura.Slot;
 
             var id = packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID");
             if (id <= 0)
@@ -329,41 +332,47 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.ReadPackedGuid("GUID");
             var i = 0;
-            var auras = new List<Aura>();
+            var obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectOrCreate(guid);
             packet.StoreBeginList("Auras");
+            var unit = obj as Unit;
+            // update all - clears all auras
+            if (unit != null && Opcode.SMSG_AURA_UPDATE_ALL == Opcodes.GetOpcode(packet.Opcode))
+            {
+                unit.Auras.Clear();
+            }
             while (packet.CanRead())
             {
+                uint slot;
                 Aura aura = null;
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_0_5_16048))
-                    aura = ReadAuraUpdateBlock505(ref packet, i++);
+                    aura = ReadAuraUpdateBlock505(ref packet, out slot, i++);
                 else
-                    aura = ReadAuraUpdateBlock(ref packet, i++);
+                    aura = ReadAuraUpdateBlock(ref packet, out slot, i++);
 
-                if (aura != null)
-                    auras.Add(aura);
+                if (unit != null)
+                {
+                    if (aura != null)
+                    {
+                        unit.Auras[slot] = aura;
+                    }
+                    else
+                    {
+                        unit.Auras.Remove(slot);
+                    }
+                }
             }
             packet.StoreEndList();
 
-            // This only works if the parser saw UPDATE_OBJECT before this packet
-            var obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectOrCreate(guid);
-            if (obj != null)
-            {
-                var unit = obj as Unit;
-                if (unit != null)
+            // create spawn auras list
+            if (unit != null)
+                if (unit.SpawnAuras == null)
                 {
-                    // If this is the first packet that sends auras
-                    // (hopefully at spawn time) add it to the "Auras" field,
-                    // if not create another row of auras in AddedAuras
-                    // (similar to ChangedUpdateFields)
-
-                    if (unit.SpawnAuras == null)
-                        unit.SpawnAuras = auras;
-                    else if (unit.AddedAuras == null)
-                        unit.AddedAuras = new List<List<Aura>> { auras };
-                    else
-                        unit.AddedAuras.Add(auras);
+                    unit.SpawnAuras = new List<Aura>();
+                    foreach(var pair in unit.Auras)
+                    {
+                        unit.SpawnAuras.Add(pair.Value);
+                    }
                 }
-            }
         }
 
         [Parser(Opcode.CMSG_CAST_SPELL)]

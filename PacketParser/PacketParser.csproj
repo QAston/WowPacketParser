@@ -1058,7 +1058,14 @@
     <Compile Include="DataStructures\StoreEntry.cs" />
     <Compile Include="DataStructures\StoreEnum.cs" />
     <Compile Include="DataStructures\TreeNodeEnumerator.cs" />
+    <Compile Include="Enums\ShapeshiftForm.cs" />
+    <Compile Include="Enums\UnitBytes2Flags1.cs" />
+    <Compile Include="Enums\UnitBytes2Flags2.cs" />
+    <Compile Include="Enums\UnitBytes1Flags.cs" />
+    <Compile Include="Enums\UnitStandFlags.cs" />
     <Compile Include="Enums\ObjectState.cs" />
+    <Compile Include="DataStructures\Bytes.cs" />
+    <Compile Include="Enums\UnitStandStateType.cs" />
     <Compile Include="git_version.cs" />
     <Compile Include="Misc\CacheFileManager.cs" />
     <Compile Include="Misc\Enum.cs" />

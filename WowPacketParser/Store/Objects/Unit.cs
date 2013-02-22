@@ -13,7 +13,7 @@ namespace PacketParser.DataStructures
         }
         public List<Aura> SpawnAuras;
 
-        public List<List<Aura>> AddedAuras;
+        public Dictionary<uint, Aura> Auras;
 
         public override bool IsTemporarySpawn()
         {

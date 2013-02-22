@@ -13,6 +13,10 @@ namespace PacketParser.DataStructures
         public static Type type = typeof(T);
         public T val;
 
+        public static Type StaticGetEnumType()
+        {
+            return type;
+        }
         public StoreEnum(long _rawVal)
         {
             rawVal = _rawVal;

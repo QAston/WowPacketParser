@@ -4,6 +4,7 @@ using System.Reflection;
 using PacketParser.Misc;
 using System.Collections.Specialized;
 using Guid = PacketParser.DataStructures.Guid;
+using PacketParser.DataStructures;
 
 namespace PacketParser.Enums.Version
 {
@@ -204,21 +205,37 @@ namespace PacketParser.Enums.Version
                 case "PLAYER_RUNE_REGEN":
                     return typeof(float);
                 case "ITEM_FIELD_FLAGS":
-                    return typeof(ItemFlag);
+                    return typeof(StoreEnum<ItemFlag>);
                 case "UNIT_FIELD_FLAGS":
                     if (name.EndsWith("2"))
-                        return typeof(UnitFlags2);
-                    return typeof(UnitFlags);
+                        return typeof(StoreEnum<UnitFlags2>);
+                    return typeof(StoreEnum<UnitFlags>);
                 case "UNIT_DYNAMIC_FLAGS":
-                    return typeof(UnitDynamicFlags);
+                    return typeof(StoreEnum<UnitDynamicFlags>);
                 case "UNIT_NPC_FLAGS":
-                    return typeof(NPCFlags);
+                    return typeof(StoreEnum<NPCFlags>);
                 case "PLAYER_FLAGS":
-                    return typeof(PlayerFlags);
+                    return typeof(StoreEnum<PlayerFlags>);
                 case "GAMEOBJECT_FLAGS":
-                    return typeof(GameObjectFlag);
+                    return typeof(StoreEnum<GameObjectFlag>);
                 case "CORPSE_FIELD_FLAGS":
-                    return typeof(UnknownFlags);
+                    return typeof(StoreEnum<UnknownFlags>);
+                case "UNIT_FIELD_BYTES":
+                    if (name.EndsWith("1"))
+                        // byte 1: free talent points
+                        return typeof(Bytes<UnitStandStateType, byte, UnitStandFlags, UnitBytes1Flags>);
+                    if (name.EndsWith("2"))
+                        return typeof(Bytes<SheathState, UnitBytes2Flags1, UnitBytes2Flags2, ShapeshiftForm>);
+                    // bytes 0
+                    return typeof(Bytes<Race, Class, Gender, PowerType>);
+                case "PLAYER_FIELD_BYTES":
+                    if (name.EndsWith("2"))
+                        // byte 1: free talent points
+                        return typeof(Bytes<UnitStandStateType, byte, UnitStandFlags, UnitBytes1Flags>);
+                    if (name.EndsWith("3"))
+                        return typeof(Bytes<SheathState, UnitBytes2Flags1, UnitBytes2Flags2, ShapeshiftForm>);
+                    // bytes 0
+                    return typeof(Bytes<Race, Class, Gender, PowerType>);
                 default:
                     return typeof(int);
             }

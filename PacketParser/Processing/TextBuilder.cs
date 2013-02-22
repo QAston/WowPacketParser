@@ -274,17 +274,23 @@ namespace PacketParser.Processing
                         }
                         break;
                     default:
-                        if (data.GetType().IsEnum)
+                        if (t.IsSubclassOf(typeof(StoreEnum)))
                         {
                             output.Append(align);
                             output.Append(name);
                             output.Append(": ");
                             output.Append(data.ToString());
                             output.Append(" (");
-                            output.Append((ulong)data);
-                            output.AppendLine(" )");
+                            output.Append(((StoreEnum)data).rawVal);
+                            if (WithDebugValues)
+                            {
+                                output.Append(" (0x");
+                                output.Append(((StoreEnum)data).rawVal.ToString("X4"));
+                                output.Append(")");
+                            }
+                            output.AppendLine(")");
                         }
-                        if (t == typeof(Packet))
+                        else if (t == typeof(Packet))
                         {
                         }
                         else if (t == typeof(NamedTreeNode))

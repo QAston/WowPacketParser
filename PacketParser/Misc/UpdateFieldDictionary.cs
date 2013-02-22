@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using PacketParser.DataStructures;
 using Guid = PacketParser.DataStructures.Guid;
+using System.Reflection;
 
 namespace PacketParser.Misc
 {
@@ -19,6 +20,7 @@ namespace PacketParser.Misc
         }
         public static int GetFieldsCount(Type type)
         {
+            var nullableType = Nullable.GetUnderlyingType(type);
             switch (Type.GetTypeCode(type))
             {
                 case TypeCode.Int64:
@@ -26,7 +28,7 @@ namespace PacketParser.Misc
                     return 2;
                 default:
                     {
-                        switch (Type.GetTypeCode(Nullable.GetUnderlyingType(type)))
+                        switch (Type.GetTypeCode(nullableType))
                         {
                             case TypeCode.Int64:
                             case TypeCode.UInt64:
@@ -39,8 +41,12 @@ namespace PacketParser.Misc
             }
             if (type == typeof(Guid))
                 return 2;
-            else if (type.IsEnum)
+            else if (type.IsEnum || nullableType != null && nullableType.IsEnum)
                 return GetFieldsCount(Enum.GetUnderlyingType(type));
+            else if (type.IsSubclassOf(typeof(StoreEnum)))
+            {
+                return GetFieldsCount(Enum.GetUnderlyingType((Type)(type.GetField("type", BindingFlags.Public | BindingFlags.Static).GetValue(null))));
+            }
             return 1;
         }
         public uint? GetUInt(int fieldOffset)
@@ -105,14 +111,14 @@ namespace PacketParser.Misc
                 return null;
             return new Guid((ulong)num);
         }
-        public Object GetEnum(int fieldOffset, Type type)
+        public Object GetEnum(int fieldOffset, Type type, out Object val)
         {
             // typeof (TK) is a nullable type (ObjectField?)
             // typeof (TK).GetGenericArguments()[0] is the non nullable equivalent (ObjectField)
             // we need to convert our int from UpdateFields to the enum type
             if (Nullable.GetUnderlyingType(type) != null)
-                type = type.GetGenericArguments()[0];
-            Object val = GetValue(fieldOffset, Enum.GetUnderlyingType(type));
+                type = Nullable.GetUnderlyingType(type);
+            val = GetValue(fieldOffset, Enum.GetUnderlyingType(type));
             if (val == null)
                 return null;
             try
@@ -125,16 +131,37 @@ namespace PacketParser.Misc
             }
             return null;
         }
+        public Object GetEnum(int fieldOffset, Type type)
+        {
+            Object val;
+            return GetEnum(fieldOffset, type, out val);
+        }
+
         public TK GetEnum<TK>(int fieldOffset)
         {
             return (TK)GetEnum(fieldOffset, typeof(TK));
         }
         public Object GetValue(int fieldOffset, Type type)
         {
-            if (type == typeof(Guid))
+            var nullableType = Nullable.GetUnderlyingType(type);
+            if (type == typeof(Guid) || nullableType == typeof(Guid))
                 return GetGuid(fieldOffset);
-            else if (type.IsEnum)
+            else if (type.IsEnum || (nullableType != null && nullableType.IsEnum))
                 return GetEnum(fieldOffset, type);
+            else if (type.IsSubclassOf(typeof(StoreEnum)))
+            {
+                var enumType = (Type)(type.GetField("type", BindingFlags.Public | BindingFlags.Static).GetValue(null));
+                Object val;
+                GetEnum(fieldOffset, enumType, out val);
+                return Activator.CreateInstance(type, val);
+            }
+            else if (type.IsSubclassOf(typeof(Bytes)))
+            {
+                var val = GetUInt(fieldOffset);
+                if (val == null)
+                    return null;
+                return Activator.CreateInstance(type, (uint)val);
+            }
             switch (Type.GetTypeCode(type))
             {
                 case TypeCode.Byte:
@@ -153,7 +180,7 @@ namespace PacketParser.Misc
                     return GetUInt64(fieldOffset);
                 default:
                     {
-                        switch (Type.GetTypeCode(Nullable.GetUnderlyingType(type)))
+                        switch (Type.GetTypeCode(nullableType))
                         {
                             case TypeCode.UInt32:
                                 return GetUInt(fieldOffset);
