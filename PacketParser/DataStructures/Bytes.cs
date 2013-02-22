@@ -84,8 +84,6 @@ namespace PacketParser.DataStructures
             StringBuilder b = new StringBuilder(40);
             if (t1.IsEnum)
             {
-                b.Append(t1.Name);
-                b.Append(":");
                 b.Append(Enum<T1>.ToString(b1));
                 b.Append("(");
                 b.Append(b1);
@@ -96,8 +94,6 @@ namespace PacketParser.DataStructures
             b.Append(" ");
             if (t2.IsEnum)
             {
-                b.Append(t2.Name);
-                b.Append(":");
                 b.Append(Enum<T2>.ToString(b2));
                 b.Append("(");
                 b.Append(b2);
@@ -108,8 +104,6 @@ namespace PacketParser.DataStructures
             b.Append(" ");
             if (t3.IsEnum)
             {
-                b.Append(t3.Name);
-                b.Append(":");
                 b.Append(Enum<T3>.ToString(b3));
                 b.Append("(");
                 b.Append(b3);
@@ -120,8 +114,6 @@ namespace PacketParser.DataStructures
             b.Append(" ");
             if (t4.IsEnum)
             {
-                b.Append(t4.Name);
-                b.Append(":");
                 b.Append(Enum<T4>.ToString(b4));
                 b.Append("(");
                 b.Append(b4);

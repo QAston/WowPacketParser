@@ -155,7 +155,7 @@ namespace PacketParser.Misc
                 GetEnum(fieldOffset, enumType, out val);
                 return Activator.CreateInstance(type, val);
             }
-            else if (type.IsSubclassOf(typeof(Bytes)))
+            else if (type.IsSubclassOf(typeof(Bytes)) || type.IsSubclassOf(typeof(Shorts)))
             {
                 var val = GetUInt(fieldOffset);
                 if (val == null)

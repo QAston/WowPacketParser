@@ -3,7 +3,7 @@ using System;
 namespace PacketParser.Enums
 {
     [Flags]
-    public enum GameObjectDynamicFlag // 4.x
+    public enum GameObjectDynamicFlag : ushort
     {
         ConditionalUseOk = 0x01,
         LoAnimate = 0x02,

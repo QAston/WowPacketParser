@@ -6,8 +6,8 @@ namespace PacketParser.Enums
     [Flags]
     public enum UnitBytes2Flags2 : byte
     {
-        UNIT_BYTE2_FLAG1_CAN_BE_RENAMED = 0x01,
-        UNIT_BYTE2_CAN_BE_ABANDONED = 0x02,
+        UNIT_BYTE2_FLAG2_CAN_BE_RENAMED = 0x01,
+        UNIT_BYTE2_FLAG2_CAN_BE_ABANDONED = 0x02,
         UNIT_BYTE2_FLAG2_UNK2 = 0x04,
         UNIT_BYTE2_FLAG2_UNK3 = 0x08,
         UNIT_BYTE2_FLAG2_UNK4 = 0x10,

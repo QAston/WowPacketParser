@@ -480,9 +480,6 @@
     <Compile Include="..\wowpacketparser\enums\PetTameFailureReason.cs">
       <Link>Enums\PetTameFailureReason.cs</Link>
     </Compile>
-    <Compile Include="..\wowpacketparser\enums\PlayerFieldBytesMiscFlags.cs">
-      <Link>Enums\PlayerFieldBytesMiscFlags.cs</Link>
-    </Compile>
     <Compile Include="..\wowpacketparser\enums\PlayerFlags.cs">
       <Link>Enums\PlayerFlags.cs</Link>
     </Compile>
@@ -1052,12 +1049,21 @@
     </Compile>
     <Compile Include="AssemblyGitBuild.cs" />
     <Compile Include="DataStructures\Bit.cs" />
+    <Compile Include="DataStructures\Shorts.cs" />
     <Compile Include="DataStructures\IndexedTreeNode.cs" />
     <Compile Include="DataStructures\ITreeNode.cs" />
     <Compile Include="DataStructures\NamedTreeNode.cs" />
     <Compile Include="DataStructures\StoreEntry.cs" />
     <Compile Include="DataStructures\StoreEnum.cs" />
     <Compile Include="DataStructures\TreeNodeEnumerator.cs" />
+    <Compile Include="Enums\CorpseDynamicFlags.cs" />
+    <Compile Include="Enums\CorpseFlags.cs" />
+    <Compile Include="Enums\GameObjectState.cs" />
+    <Compile Include="Enums\ObjectTypeFlags1.cs" />
+    <Compile Include="Enums\PlayerBytes2Flags3.cs" />
+    <Compile Include="Enums\PlayerBytesFlags0.cs" />
+    <Compile Include="Enums\PlayerBytesFlags1.cs" />
+    <Compile Include="Enums\RestState.cs" />
     <Compile Include="Enums\ShapeshiftForm.cs" />
     <Compile Include="Enums\UnitBytes2Flags1.cs" />
     <Compile Include="Enums\UnitBytes2Flags2.cs" />
@@ -1070,6 +1076,7 @@
     <Compile Include="Misc\CacheFileManager.cs" />
     <Compile Include="Misc\Enum.cs" />
     <Compile Include="Misc\UpdateFieldDictionary.cs" />
+    <Compile Include="Enums\ObjectTypeFlags2.cs" />
     <Compile Include="Processing\ITextOutputDisabled.cs" />
     <Compile Include="Misc\TimeSpanContainers.cs" />
     <Compile Include="Processing\IPacketProcessor.cs" />

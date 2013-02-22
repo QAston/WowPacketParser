@@ -1,6 +1,6 @@
 namespace PacketParser.Enums
 {
-    public enum GameObjectType
+    public enum GameObjectType : byte
     {
         Door = 0,
         Button = 1,

@@ -185,6 +185,7 @@ namespace PacketParser.Enums.Version
                 case "UNIT_FIELD_MINOFFHANDDAMAGE":
                 case "UNIT_FIELD_MAXOFFHANDDAMAGE":
                 case "UNIT_MOD_CAST_SPEED":
+                case "UNIT_MOD_CAST_HASTE":
                 case "UNIT_FIELD_ATTACK_POWER_MULTIPLIER":
                 case "UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER":
                 case "UNIT_FIELD_MINRANGEDDAMAGE":
@@ -219,7 +220,13 @@ namespace PacketParser.Enums.Version
                 case "GAMEOBJECT_FLAGS":
                     return typeof(StoreEnum<GameObjectFlag>);
                 case "CORPSE_FIELD_FLAGS":
-                    return typeof(StoreEnum<UnknownFlags>);
+                    return typeof(StoreEnum<CorpseFlags>);
+                case "CORPSE_FIELD_DYNAMIC_FLAGS":
+                    return typeof(StoreEnum<CorpseDynamicFlags>);
+                case "OBJECT_FIELD_TYPE":
+                    return typeof(Shorts<ObjectTypeFlags1, ObjectTypeFlags2>);
+                case "GAMEOBJECT_DYNAMIC":
+                    return typeof(Shorts<UInt16, GameObjectDynamicFlag>);
                 case "UNIT_FIELD_BYTES":
                     if (name.EndsWith("1"))
                         // byte 1: free talent points
@@ -230,12 +237,29 @@ namespace PacketParser.Enums.Version
                     return typeof(Bytes<Race, Class, Gender, PowerType>);
                 case "PLAYER_FIELD_BYTES":
                     if (name.EndsWith("2"))
-                        // byte 1: free talent points
-                        return typeof(Bytes<UnitStandStateType, byte, UnitStandFlags, UnitBytes1Flags>);
+                        //                  spelloverrideId(lo,hi), unk
+                        return typeof(Bytes<byte, byte, byte, PlayerBytes2Flags3>);
+                    // bytes 0               , actionbars, unk
+                    return typeof(Bytes<PlayerBytesFlags0, PlayerBytesFlags1, byte, byte>);
+                case "PLAYER_BYTES":
+                    if (name.EndsWith("2"))
+                        //                 facial hair, unk ,bank bag slot count
+                        return typeof(Bytes<byte, byte, byte, RestState>);
                     if (name.EndsWith("3"))
-                        return typeof(Bytes<SheathState, UnitBytes2Flags1, UnitBytes2Flags2, ShapeshiftForm>);
+                        //                  gender, drunk, unk, arenaFaction
+                        return typeof(Bytes<Gender, byte, byte, byte>);
                     // bytes 0
-                    return typeof(Bytes<Race, Class, Gender, PowerType>);
+                    //                  skin   face  hair    haircolor
+                    return typeof(Bytes<byte, byte, byte, byte>);
+                case "GAMEOBJECT_BYTES":
+                    //                                                     artKit, animProgress
+                    return typeof(Bytes<GameObjectState, GameObjectType, uint, uint>);
+                case "CORPSE_FIELD_BYTES":
+                    if (name.EndsWith("2"))
+                        //                 face, hairstyle ,haircolor, facialhair
+                        return typeof(Bytes<byte, byte, byte, byte>);
+                    // bytes1:          unk,                 skin
+                    return typeof(Bytes<byte, Race, Gender, byte>);
                 default:
                     return typeof(int);
             }
