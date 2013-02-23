@@ -1,8 +1,7 @@
 namespace PacketParser.Enums
 {
-    public enum PowerType
+    public enum PowerType : byte
     {
-        Health = -2,
         Mana = 0,
         Rage = 1,
         Focus = 2,

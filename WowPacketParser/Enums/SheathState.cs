@@ -1,6 +1,6 @@
 namespace PacketParser.Enums
 {
-    public enum SheathState
+    public enum SheathState : byte
     {
         Unarmed = 0,
         Melee   = 1,

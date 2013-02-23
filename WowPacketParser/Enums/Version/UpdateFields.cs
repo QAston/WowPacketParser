@@ -5,6 +5,7 @@ using PacketParser.Misc;
 using System.Collections.Specialized;
 using Guid = PacketParser.DataStructures.Guid;
 using PacketParser.DataStructures;
+using System.Text;
 
 namespace PacketParser.Enums.Version
 {
@@ -168,6 +169,7 @@ namespace PacketParser.Enums.Version
                 case "DYNAMICOBJECT_CASTER":
                 case "CORPSE_FIELD_OWNER":
                 case "CORPSE_FIELD_PARTY":
+                case "OBJECT_FIELD_CREATED_BY":
                     return typeof(Guid);
                 case "PLAYER__FIELD_KNOWN_TITLES":
                 case "PLAYER_FIELD_KNOWN_CURRENCIES":
@@ -253,7 +255,7 @@ namespace PacketParser.Enums.Version
                     return typeof(Bytes<byte, byte, byte, byte>);
                 case "GAMEOBJECT_BYTES":
                     //                                                     artKit, animProgress
-                    return typeof(Bytes<GameObjectState, GameObjectType, uint, uint>);
+                    return typeof(Bytes<GameObjectState, GameObjectType, byte, byte>);
                 case "CORPSE_FIELD_BYTES":
                     if (name.EndsWith("2"))
                         //                 face, hairstyle ,haircolor, facialhair
@@ -264,6 +266,52 @@ namespace PacketParser.Enums.Version
                     return typeof(int);
             }
         }
+
+        public static string GetUpdateFieldBytesInfo(string name)
+        {
+            StringBuilder keyBuilder = new StringBuilder();
+            switch (name)
+            {
+                case "UNIT_FIELD_BYTES_0":
+                    keyBuilder.Append("<Race, Class, Gender, PowerType>");
+                    break;
+                case "UNIT_FIELD_BYTES_1":
+                    keyBuilder.Append("<StandStateType, FreeTalentPoints, StandFlags, Bytes1Flags>");
+                    break;
+                case "UNIT_FIELD_BYTES_2":
+                    keyBuilder.Append("<SheathState, Bytes2Flags1, Bytes2Flags2, ShapeshiftForm>");
+                    break;
+                case "PLAYER_FIELD_BYTES":
+                    keyBuilder.Append("<PlayerBytesFlags0, PlayerBytesFlags1, Actionbars, Unk>");
+                    break;
+                case "PLAYER_FIELD_BYTES2":
+                    keyBuilder.Append("<SpellOverrideId(lo,hi), Unk, PlayerBytes2Flags3>");
+                    break;
+                case "PLAYER_BYTES":
+                    keyBuilder.Append("<Skin, Face, Hair, Haircolor>");
+                    break;
+                case "PLAYER_BYTES_2":
+                    keyBuilder.Append("<FacialHair, Unk, BankBagSlotCount, RestState>");
+                    break;
+                case "PLAYER_BYTES_3":
+                    keyBuilder.Append("<Gender, Drunk, Unk, ArenaFaction>");
+                    break;
+                case "GAMEOBJECT_BYTES_1":
+                    keyBuilder.Append("<GameObjectState, GameObjectType, ArtKit, AnimProgress>");
+                    break;
+                case "CORPSE_FIELD_BYTES_1":
+                    keyBuilder.Append("<Face, Hairstyle, Haircolor, Facialhair>");
+                    break;
+                case "CORPSE_FIELD_BYTES_2":
+                    keyBuilder.Append("<Unk, Race, Gender, Skin>");
+                    break;
+                case "DYNAMICOBJECT_BYTES":
+                    keyBuilder.Append("<[0..27]SpellVisual, DynObjType>");
+                    break;
+            }
+            return keyBuilder.ToString();
+        }
+
 
         public static Type GetUpdateFieldEnumByOffset(Int32 offset, ObjectType type)
         {

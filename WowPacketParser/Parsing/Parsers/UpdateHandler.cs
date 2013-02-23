@@ -108,7 +108,7 @@ namespace PacketParser.Parsing.Parsers
             packet.StoreBeginList("Objects", index);
             for (var j = 0; j < objCount; j++)
             {
-                var guid = packet.ReadPackedGuid("Object GUID", index, j);
+                var guid = packet.ReadPackedGuid("GUID", index, j);
                 var obj = ObjectStore.GetObjectOrCreate(guid); // must be found - was read
                 obj.State = state;
             }
@@ -186,46 +186,8 @@ namespace PacketParser.Parsing.Parsers
                     keyBuilder.Append(i);
                     keyBuilder.Append(")");
                 }
-                switch (name)
-                {
-                    case "UNIT_FIELD_BYTES_0":
-                        keyBuilder.Append("<Race, Class, Gender, PowerType>");
-                        break;
-                    case "UNIT_FIELD_BYTES_1":
-                        keyBuilder.Append("<StandStateType, FreeTalentPoints, StandFlags, Bytes1Flags>");
-                        break;
-                    case "UNIT_FIELD_BYTES_2":
-                        keyBuilder.Append("<SheathState, Bytes2Flags1, Bytes2Flags2, ShapeshiftForm>");
-                        break;
-                    case "PLAYER_FIELD_BYTES":
-                        keyBuilder.Append("<PlayerBytesFlags0, PlayerBytesFlags1, Actionbars, Unk>");
-                        break;
-                    case "PLAYER_FIELD_BYTES2":
-                        keyBuilder.Append("<SpellOverrideId(lo,hi), Unk, PlayerBytes2Flags3>");
-                        break;
-                    case "PLAYER_BYTES":
-                        keyBuilder.Append("<Skin, Face, Hair, Haircolor>");
-                        break;
-                    case "PLAYER_BYTES_2":
-                        keyBuilder.Append("<FacialHair, Unk, BankBagSlotCount, RestState>");
-                        break;
-                    case "PLAYER_BYTES_3":
-                        keyBuilder.Append("<Gender, Drunk, Unk, ArenaFaction>");
-                        break;
-                    case "GAMEOBJECT_BYTES_1":
-                        keyBuilder.Append("<GameObjectState, GameObjectType, ArtKit, AnimProgress>");
-                        break;
-                    case "CORPSE_FIELD_BYTES_1":
-                        keyBuilder.Append("<Face, Hairstyle, Haircolor, Facialhair>");
-                        break;
-                    case "CORPSE_FIELD_BYTES_2":
-                        keyBuilder.Append("<Unk, Race, Gender, Skin>");
-                        break;
-                    case "DYNAMICOBJECT_BYTES":
-                        keyBuilder.Append("<[0..27]SpellVisual, DynObjType>");
-                        break;
 
-                }
+                keyBuilder.Append(UpdateFields.GetUpdateFieldBytesInfo(name));
                 Object val = obj.UpdateFields.GetValue(i, fieldType);
                 packet.Store(keyBuilder.ToString(), val, index, i);
                 i = i + fieldSize;

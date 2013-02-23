@@ -1,6 +1,6 @@
 namespace PacketParser.Enums
 {
-    public enum Race
+    public enum Race : byte
     {
         None = 0,
         Human = 1,

@@ -85,7 +85,7 @@ namespace PacketDumper.Processing.SQLData
 
                             startAction.Actions.Add(action);
                         }
-                        StartActions.Add(new Tuple<Race, Class>(character.Race, character.Class), startAction, packet.TimeSpan);
+                        StartActions.Add(new Tuple<Race, Class>((Race)character.Race, (Class)character.Class), startAction, packet.TimeSpan);
                         break;
                     }
                 case Opcode.SMSG_INITIAL_SPELLS:
@@ -102,7 +102,7 @@ namespace PacketDumper.Processing.SQLData
 
                         Player character = PacketFileProcessor.Current.GetProcessor<SessionStore>().LoggedInCharacter;
                         if (character != null && character.FirstLogin)
-                            StartSpells.Add(new Tuple<Race, Class>(character.Race, character.Class), startSpell, packet.TimeSpan);
+                            StartSpells.Add(new Tuple<Race, Class>((Race)character.Race, (Class)character.Class), startSpell, packet.TimeSpan);
                         break;
                     }
 

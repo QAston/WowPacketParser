@@ -1,8 +1,9 @@
 using PacketParser.Enums;
+using PacketParser.DataStructures;
 
 namespace PacketParser.DataStructures
 {
-    public sealed class Player : WoWObject
+    public sealed class Player : Unit
     {
         public Player()
         {
@@ -11,15 +12,10 @@ namespace PacketParser.DataStructures
             : base(rhs)
         {
         }
-        public Race Race;
-
-        public Class Class;
 
         public string Name;
 
         public bool FirstLogin;
-
-        public int Level;
 
         // Used when inserting data from SMSG_CHAR_ENUM into the Objects container
         public void UpdatePlayerInfo(Player newInfo)

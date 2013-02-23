@@ -1,6 +1,6 @@
 namespace PacketParser.Enums
 {
-    public enum Class
+    public enum Class : byte
     {
         None = 0,
         Warrior = 1,

@@ -260,11 +260,11 @@ namespace PacketParser.Parsing.Parsers
                 // This aura is scalable with level/talents
                 // Here we show each effect value after scaling
                 if (aura.AuraFlags.HasAnyFlag(AuraFlag.EffectIndex0))
-                    packet.ReadInt32("Effect 0 Value");
+                    aura.Effects[0] = packet.ReadInt32("Effect 0 Value");
                 if (aura.AuraFlags.HasAnyFlag(AuraFlag.EffectIndex1))
-                    packet.ReadInt32("Effect 1 Value");
+                    aura.Effects[1] = packet.ReadInt32("Effect 1 Value");
                 if (aura.AuraFlags.HasAnyFlag(AuraFlag.EffectIndex2))
-                    packet.ReadInt32("Effect 2 Value");
+                    aura.Effects[2] = packet.ReadInt32("Effect 2 Value");
             }
 
             packet.StoreEndObj();
@@ -317,7 +317,7 @@ namespace PacketParser.Parsing.Parsers
                 for (var j = 0; j < b1; ++j)
                     if (((1 << j) & mask) != 0)
                     {
-                        packet.ReadSingle("Effect Value", j);
+                        aura.Effects[j] = packet.ReadSingle("Effect Value", j);
                     }
                 packet.StoreEndList();
             }

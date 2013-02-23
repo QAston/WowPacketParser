@@ -1,5 +1,6 @@
 ﻿using PacketParser.Enums;
 using PacketParser.Misc;
+using System.Collections.Generic;
 
 namespace PacketParser.DataStructures
 {
@@ -20,5 +21,7 @@ namespace PacketParser.DataStructures
         public int MaxDuration;
 
         public int Duration;
+
+        public Dictionary<int, float> Effects = new Dictionary<int, float>();
     }
 }

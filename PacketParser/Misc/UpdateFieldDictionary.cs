@@ -153,6 +153,8 @@ namespace PacketParser.Misc
                 var enumType = (Type)(type.GetField("type", BindingFlags.Public | BindingFlags.Static).GetValue(null));
                 Object val;
                 GetEnum(fieldOffset, enumType, out val);
+                if (val == null)
+                    return null;
                 return Activator.CreateInstance(type, val);
             }
             else if (type.IsSubclassOf(typeof(Bytes)) || type.IsSubclassOf(typeof(Shorts)))

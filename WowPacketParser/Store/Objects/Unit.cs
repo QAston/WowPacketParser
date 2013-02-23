@@ -6,14 +6,17 @@ using PacketParser.Misc;
 
 namespace PacketParser.DataStructures
 {
-    public sealed class Unit : WoWObject
+    public class Unit : WoWObject
     {
+        public Unit()
+        {
+        }
         public Unit(WoWObject rhs) : base(rhs)
         {
         }
         public List<Aura> SpawnAuras;
 
-        public Dictionary<uint, Aura> Auras;
+        public Dictionary<uint, Aura> Auras = new  Dictionary<uint, Aura>();
 
         public override bool IsTemporarySpawn()
         {
