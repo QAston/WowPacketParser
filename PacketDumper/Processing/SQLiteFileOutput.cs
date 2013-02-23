@@ -94,7 +94,7 @@ namespace PacketDumper.Processing
                     { 
                         { "@packetId", packet.Number }, 
                         { "@packetSubId", packet.SubPacketNumber },
-                        { "@objectGuid", guid },
+                        { "@objectGuid", guid.Full },
                         { "@auras", null }, 
                         { "@movement", null },
                         { "@fields", null }
@@ -112,7 +112,7 @@ namespace PacketDumper.Processing
                                                              VALUES(@id, @subId, @from, @length, @date, @opcodeId, @status, @data)";
 
         public static string insertPacketObject = @"INSERT INTO [packetObject] ([packetId], [packetSubId], [objectGuid], [auras], [movement], [fields]) 
-                                                             VALUES(@packetId, @packetSubId, @objectGuid, @auras, @movement, @fields)";
+                                                                          VALUES(@packetId, @packetSubId, @objectGuid, @auras, @movement, @fields)";
         public void ProcessedPacket(Packet packet)
         {
             var objects = PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects;
@@ -121,14 +121,18 @@ namespace PacketDumper.Processing
             {
                 case Opcode.SMSG_UPDATE_OBJECT:
                     {
+
                         var updates = packet.GetData().GetNode<IndexedTreeNode>("Updates");
                         foreach (var update in updates)
                         {
                             string typeObj = update.Value.GetNode<string>("UpdateType");
                             if (typeObj.Contains("Create") || typeObj.Contains("Values"))
                             {
-                                var guid = update.Value.GetNode<Guid>("GUID");
-                                set[guid]["@fields"] = PrintUpdateFields(objects[guid]);
+                                if (Settings.SQLiteDumpCurrentFields)
+                                {
+                                    var guid = update.Value.GetNode<Guid>("GUID");
+                                    set[guid]["@fields"] = PrintUpdateFields(objects[guid]);
+                                }
                             }
                         }
                     }
@@ -136,8 +140,11 @@ namespace PacketDumper.Processing
                 case Opcode.SMSG_AURA_UPDATE_ALL:
                 case Opcode.SMSG_AURA_UPDATE:
                     {
-                        var guid = packet.GetData().GetNode<Guid>("GUID");
-                        set[guid]["@auras"] = PrintAuras((Unit)objects[guid]);
+                        if (Settings.SQLiteDumpCurrentAuras)
+                        {
+                            var guid = packet.GetData().GetNode<Guid>("GUID");
+                            set[guid]["@auras"] = PrintAuras((Unit)objects[guid]);
+                        }
                     }
                     break;
             }
@@ -287,7 +294,7 @@ namespace PacketDumper.Processing
                     if (obj.Type == ObjectType.Player)
                         cmd.Parameters.Add(new SQLiteParameter("@name", names.GetPlayerName(guid)));
                     else
-                        cmd.Parameters.Add(new SQLiteParameter("@name", names.GetName(Utilities.ObjectTypeToStore(obj.Type), (int)guid.GetEntry())));
+                        cmd.Parameters.Add(new SQLiteParameter("@name", names.GetName(Utilities.ObjectTypeToStore(obj.Type), (int)guid.GetEntry(), false)));
                     cmd.ExecuteNonQuery();
                 }
             }
