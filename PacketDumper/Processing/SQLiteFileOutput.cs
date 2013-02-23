@@ -97,7 +97,9 @@ namespace PacketDumper.Processing
                         { "@objectGuid", guid.Full },
                         { "@auras", null }, 
                         { "@movement", null },
-                        { "@fields", null }
+                        { "@fields", null },
+                        { "@unitFieldFlags", null },
+                        { "@unitFieldFlags2", null }
                     });
             }
         }
@@ -111,8 +113,8 @@ namespace PacketDumper.Processing
         public static string insertPacket = @"INSERT INTO [packet] ([id], [subId], [from], [length], [date], [opcodeId], [status], [data]) 
                                                              VALUES(@id, @subId, @from, @length, @date, @opcodeId, @status, @data)";
 
-        public static string insertPacketObject = @"INSERT INTO [packetObject] ([packetId], [packetSubId], [objectGuid], [auras], [movement], [fields]) 
-                                                                          VALUES(@packetId, @packetSubId, @objectGuid, @auras, @movement, @fields)";
+        public static string insertPacketObject = @"INSERT INTO [packetObject] ([packetId], [packetSubId], [objectGuid], [auras], [movement], [fields], [unitFieldFlags], [unitFieldFlags2]) 
+                                                                          VALUES(@packetId, @packetSubId, @objectGuid, @auras, @movement, @fields, @unitFieldFlags, @unitFieldFlags2)";
         public void ProcessedPacket(Packet packet)
         {
             var objects = PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects;
@@ -128,11 +130,19 @@ namespace PacketDumper.Processing
                             string typeObj = update.Value.GetNode<string>("UpdateType");
                             if (typeObj.Contains("Create") || typeObj.Contains("Values"))
                             {
+                                var guid = update.Value.GetNode<Guid>("GUID");
+                                var obj = objects[guid];
+
                                 if (Settings.SQLiteDumpCurrentFields)
+                                    set[guid]["@fields"] = PrintUpdateFields(obj);
+                                switch (obj.Type)
                                 {
-                                    var guid = update.Value.GetNode<Guid>("GUID");
-                                    set[guid]["@fields"] = PrintUpdateFields(objects[guid]);
-                                }
+                                    case ObjectType.Player:
+                                    case ObjectType.Unit:
+                                        set[guid]["@unitFieldFlags"] = obj.GetValue<UnitField, uint?>(UnitField.UNIT_FIELD_FLAGS);
+                                        set[guid]["@unitFieldFlags2"] = obj.GetValue<UnitField, uint?>(UnitField.UNIT_FIELD_FLAGS_2);
+                                        break;
+                                } 
                             }
                         }
                     }
@@ -143,7 +153,15 @@ namespace PacketDumper.Processing
                         if (Settings.SQLiteDumpCurrentAuras)
                         {
                             var guid = packet.GetData().GetNode<Guid>("GUID");
-                            set[guid]["@auras"] = PrintAuras((Unit)objects[guid]);
+                            var obj = objects[guid];
+                            switch (obj.Type)
+                            {
+                                case ObjectType.Player:
+                                case ObjectType.Unit:
+                                    set[guid]["@auras"] = PrintAuras((Unit)obj);
+                                    break;
+                            }
+                            
                         }
                     }
                     break;

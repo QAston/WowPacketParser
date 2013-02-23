@@ -46,7 +46,7 @@ namespace PacketParser.Processing
                 if (w.Type != type)
                 {
                     if (!w.Created)
-                        Trace.WriteLine(String.Format("Object store: different requested object type ({0}) than current type of object created from GUID ({1}), probably wrong HighGuid type define", type, w.Type));
+                        Trace.WriteLine(String.Format("Object store: different requested object type ({0}) than current type ({1}) of object created from GUID ({2}), probably wrong HighGuid type define", type, w.Type, guid.Full.ToString("X16")));
                     CreateObjectWithType(guid, type, w);
                     return Objects[guid];
                 }
