@@ -81,7 +81,12 @@ namespace PacketDumper.Processing
             return true;
         }
 
+        public static string insertPacketSpell = @"INSERT INTO [packetSpell] ([packetId], [packetSubId], [spellId]) 
+                                                                          VALUES(@packetId, @packetSubId, @spellId)";
+
         public Dictionary<Packet, Dictionary<Guid, Dictionary<string, Object>>> packetObjects = new Dictionary<Packet, Dictionary<Guid, Dictionary<string, Object>>>();
+
+        public Dictionary<Packet, HashSet<UInt32>> packetSpells = new Dictionary<Packet,HashSet<uint>>();
 
         public void ProcessData(string name, int? index, Object obj, Type t, Packet packet)
         {
@@ -102,11 +107,33 @@ namespace PacketDumper.Processing
                         { "@unitFieldFlags2", null }
                     });
             }
+            else if (obj.GetType() == typeof(StoreEntry))
+            {
+                var entry = (StoreEntry)obj;
+                
+                if (entry._type == StoreNameType.Spell)
+                {
+                    var set = packetSpells[packet];
+                    if (!set.Contains((UInt32)entry._data))
+                    {
+                        set.Add((UInt32)entry._data);
+                        using (SQLiteCommand cmd = new SQLiteCommand(insertPacketSpell, _connection))
+                        {
+                            cmd.Transaction = tr;
+                            cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
+                            cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
+                            cmd.Parameters.Add(new SQLiteParameter("@spellId", entry._data));
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+            }
         }
         
 
         public void ProcessPacket(Packet packet)
         {
+            packetSpells.Add(packet, new HashSet<UInt32>());
             packetObjects.Add(packet, new Dictionary<Guid, Dictionary<string, Object>>());
         }
 
@@ -115,12 +142,23 @@ namespace PacketDumper.Processing
 
         public static string insertPacketObject = @"INSERT INTO [packetObject] ([packetId], [packetSubId], [objectGuid], [auras], [movement], [fields], [unitFieldFlags], [unitFieldFlags2]) 
                                                                           VALUES(@packetId, @packetSubId, @objectGuid, @auras, @movement, @fields, @unitFieldFlags, @unitFieldFlags2)";
+
+        public static string insertPacketAura = @"INSERT INTO [packetAura] ([packetId], [packetSubId], [slot], [spellId], [target], [caster], [auraFlags]) 
+                                                                          VALUES(@packetId, @packetSubId, @slot, @spellId, @target, @caster, @auraFlags)";
+
+        public static string insertPacketSpellStart = @"INSERT INTO [packetSpellStart] ([packetId], [packetSubId], [spellId], [caster], [casterUnit], [castFlags], [targetFlags], [target], [itemTarget]) 
+                                                                          VALUES(@packetId, @packetSubId, @spellId, @caster, @casterUnit, @castFlags, @targetFlags, @target, @itemTarget)";
+
+        public static string insertPacketSpellGo = @"INSERT INTO [packetSpellGo] ([packetId], [packetSubId], [spellId], [caster], [casterUnit], [castFlags], [targetFlags], [target], [itemTarget], [hitCount], [missCount], [missMask], [extraTargetsCount]) 
+                                                                          VALUES(@packetId, @packetSubId, @spellId, @caster, @casterUnit, @castFlags, @targetFlags, @target, @itemTarget, @hitCount, @missCount, @missMask, @extraTargetsCount)";
+
         public void ProcessedPacket(Packet packet)
         {
             var objects = PacketFileProcessor.Current.GetProcessor<ObjectStore>().Objects;
             var set = packetObjects[packet];
             switch(Opcodes.GetOpcode(packet.Opcode))
             {
+                case Opcode.SMSG_COMPRESSED_UPDATE_OBJECT:
                 case Opcode.SMSG_UPDATE_OBJECT:
                     {
 
@@ -150,9 +188,9 @@ namespace PacketDumper.Processing
                 case Opcode.SMSG_AURA_UPDATE_ALL:
                 case Opcode.SMSG_AURA_UPDATE:
                     {
+                        var guid = packet.GetData().GetNode<Guid>("GUID");
                         if (Settings.SQLiteDumpCurrentAuras)
                         {
-                            var guid = packet.GetData().GetNode<Guid>("GUID");
                             var obj = objects[guid];
                             switch (obj.Type)
                             {
@@ -161,12 +199,97 @@ namespace PacketDumper.Processing
                                     set[guid]["@auras"] = PrintAuras((Unit)obj);
                                     break;
                             }
-                            
+                        }
+                        var auras = packet.GetData().GetNode<IndexedTreeNode>("Auras");
+                        foreach (var aura in auras)
+                        {
+                            var a = aura.Value.GetNode<NamedTreeNode>("Aura");
+                            var spellId = a.GetNode<UInt32>("Spell ID");
+                            if (spellId > 0)
+                            {
+                                using (SQLiteCommand cmd = new SQLiteCommand(insertPacketAura, _connection))
+                                {
+                                    cmd.Transaction = tr;
+                                    cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
+                                    cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
+                                    cmd.Parameters.Add(new SQLiteParameter("@slot", a.GetNode<byte>("Slot")));
+                                    cmd.Parameters.Add(new SQLiteParameter("@spellId", spellId));
+                                    cmd.Parameters.Add(new SQLiteParameter("@target", guid.Full));
+                                    Guid casterGuid;
+                                    if (!a.TryGetNode<Guid>(out casterGuid, "Caster GUID"))
+                                        casterGuid = new Guid(0);
+                                    cmd.Parameters.Add(new SQLiteParameter("@caster", casterGuid.Full));
+                                    cmd.Parameters.Add(new SQLiteParameter("@auraFlags", (UInt32)a.GetNode<StoreEnum>("Flags").rawVal));
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+                        break;
+                    }
+                case Opcode.SMSG_SPELL_START:
+                    {
+                        var d = packet.GetData();
+                        using (SQLiteCommand cmd = new SQLiteCommand(insertPacketSpellStart, _connection))
+                        {
+                            cmd.Transaction = tr;
+                            cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
+                            cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
+                            cmd.Parameters.Add(new SQLiteParameter("@spellId", d.GetNode<Int32>("Spell ID")));
+                            cmd.Parameters.Add(new SQLiteParameter("@caster", d.GetNode<Guid>("Caster GUID").Full));
+                            cmd.Parameters.Add(new SQLiteParameter("@casterUnit", d.GetNode<Guid>("Caster Unit GUID").Full));
+                            Guid targetGuid;
+                            if (!d.TryGetNode<Guid>(out targetGuid, "Target GUID"))
+                                targetGuid = new Guid(0);
+                            cmd.Parameters.Add(new SQLiteParameter("@target", targetGuid.Full));
+                            Guid itemTargetGuid;
+                            if (!d.TryGetNode<Guid>(out itemTargetGuid, "Item Target GUID"))
+                                itemTargetGuid = new Guid(0);
+                            cmd.Parameters.Add(new SQLiteParameter("@itemTarget", itemTargetGuid.Full));
+                            cmd.Parameters.Add(new SQLiteParameter("@castFlags", (UInt32)d.GetNode<StoreEnum>("Cast Flags").rawVal));
+                            cmd.Parameters.Add(new SQLiteParameter("@targetFlags", (UInt32)d.GetNode<StoreEnum>("Target Flags").rawVal));
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    break;
+                case Opcode.SMSG_SPELL_GO:
+                    {
+                        var d = packet.GetData();
+                        using (SQLiteCommand cmd = new SQLiteCommand(insertPacketSpellGo, _connection))
+                        {
+                            cmd.Transaction = tr;
+                            cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
+                            cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
+                            cmd.Parameters.Add(new SQLiteParameter("@spellId", d.GetNode<Int32>("Spell ID")));
+                            cmd.Parameters.Add(new SQLiteParameter("@caster", d.GetNode<Guid>("Caster GUID").Full));
+                            cmd.Parameters.Add(new SQLiteParameter("@casterUnit", d.GetNode<Guid>("Caster Unit GUID").Full));
+                            Guid targetGuid;
+                            if (!d.TryGetNode<Guid>(out targetGuid, "Target GUID"))
+                                targetGuid = new Guid(0);
+                            cmd.Parameters.Add(new SQLiteParameter("@target", targetGuid.Full));
+                            Guid itemTargetGuid;
+                            if (!d.TryGetNode<Guid>(out itemTargetGuid, "Item Target GUID"))
+                                itemTargetGuid = new Guid(0);
+                            cmd.Parameters.Add(new SQLiteParameter("@itemTarget", itemTargetGuid.Full));
+                            cmd.Parameters.Add(new SQLiteParameter("@castFlags", (UInt32)d.GetNode<StoreEnum>("Cast Flags").rawVal));
+                            cmd.Parameters.Add(new SQLiteParameter("@targetFlags", (UInt32)d.GetNode<StoreEnum>("Target Flags").rawVal));
+                            cmd.Parameters.Add(new SQLiteParameter("@hitCount", d.GetNode<byte>("Hit Count")));
+                            cmd.Parameters.Add(new SQLiteParameter("@missCount", d.GetNode<byte>("Miss Count")));
+                            byte extraTargetsCount;
+                            if (!d.TryGetNode<byte>(out extraTargetsCount, "Extra Targets Count"))
+                                extraTargetsCount = 0;
+                            cmd.Parameters.Add(new SQLiteParameter("@extraTargetsCount", extraTargetsCount));
+                            var misses = d.GetNode<IndexedTreeNode>("Miss Targets");
+                            uint missMask = 0;
+                            foreach (var miss in misses)
+                            {
+                                missMask |= (uint)(1 << ((byte)miss.Value.GetNode<StoreEnum>("Miss Type").rawVal));
+                            }
+                            cmd.Parameters.Add(new SQLiteParameter("@missMask", missMask));
+                            cmd.ExecuteNonQuery();
                         }
                     }
                     break;
             }
-
 
             foreach (var objectData in set)
             {
@@ -183,6 +306,7 @@ namespace PacketDumper.Processing
                 }
             }
             packetObjects.Remove(packet);
+            packetSpells.Remove(packet);
 
             using (SQLiteCommand cmd = new SQLiteCommand(insertPacket, _connection))
             {

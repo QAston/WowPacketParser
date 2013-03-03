@@ -38,7 +38,7 @@ namespace PacketParser.DataStructures
             switch (GetHighType())
             {
                 case HighGuidType.Player:
-                case HighGuidType.DynObject:
+                case HighGuidType.Corpse:
                 case HighGuidType.Group:
                 case HighGuidType.Item:
                     return Full & 0x000FFFFFFFFFFFFF;
@@ -77,9 +77,13 @@ namespace PacketParser.DataStructures
             if (Full == 0)
                 return HighGuidType.None;
 
-            var highGUID = (HighGuidType)((Full & 0xF0F0000000000000) >> 52);
+            var highGUID = ((Full & 0xF0F0000000000000) >> 52);
+            if ((highGUID & 0xF00) == 0)
+                return HighGuidType.Player;
+            if (((highGUID & 0xF00) == 0x400))
+                return HighGuidType.Item;
 
-            return highGUID == 0 ? HighGuidType.Player : highGUID;
+            return  (HighGuidType)highGUID;
         }
 
         public string GetHighTypeString()
@@ -89,8 +93,8 @@ namespace PacketParser.DataStructures
             {
                 case HighGuidType.Player:
                     return "Player";
-                case HighGuidType.DynObject:
-                    return "DynObject";
+                case HighGuidType.Corpse:
+                    return "Corpse";
                 case HighGuidType.Item:
                     return "Item";
                 case HighGuidType.GameObject:
@@ -126,8 +130,8 @@ namespace PacketParser.DataStructures
             {
                 case HighGuidType.Player:
                     return ObjectType.Player;
-                case HighGuidType.DynObject:
-                    return ObjectType.DynamicObject;
+                case HighGuidType.Corpse:
+                    return ObjectType.Corpse;
                 case HighGuidType.Item:
                     return ObjectType.Item;
                 case HighGuidType.GameObject:

@@ -39,6 +39,19 @@ namespace PacketParser.Enums
         Sheath = 0x40000000,
         Unk31 = 0x80000000,
 
+        // NoThreatFeedback
+        // NoNpcDamageBelow 85%
+        // NoMelee
+        // RAID_LOCK_ON_DEATH
+        // Sessile(siedzący)
+        // IgnoreCombat
+        // PVP
+        // NoXP
+        // NoLoot
+        // Floating
+        // Unkillable
+        // Uninteractible
+
         IsInCombat = PetIsAttackingTarget | AffectingCombat
     }
 }

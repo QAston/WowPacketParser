@@ -351,6 +351,8 @@ namespace PacketParser.Parsing.Parsers
 
                 if (unit != null)
                 {
+                    if (unit.Auras[slot] != null)
+                        packet.Store("PreviousAuraInSlot", unit.Auras[slot].SpellId, i);
                     if (aura != null)
                     {
                         unit.Auras[slot] = aura;
