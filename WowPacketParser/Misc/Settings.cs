@@ -62,6 +62,10 @@ namespace PacketDumper.Misc
         public static readonly string SQLiteFileName = GetString("SQLiteFileName", string.Empty);
         public static readonly bool SQLiteDumpCurrentAuras = GetBoolean("SQLiteDumpCurrentAuras", false);
         public static readonly bool SQLiteDumpCurrentFields = GetBoolean("SQLiteDumpCurrentFields", false);
+        public static readonly bool SQLiteDumpSpellStart = GetBoolean("SQLiteDumpSpellStart", false);
+        public static readonly bool SQLiteDumpSpellGo = GetBoolean("SQLiteDumpSpellGo", false);
+        public static readonly bool SQLiteDumpSpellAura = GetBoolean("SQLiteDumpSpellAura", false);
+        public static readonly bool SQLiteDumpSpellOpcode = GetBoolean("SQLiteDumpSpellOpcode", false);
         
         public static readonly bool ShowEndPrompt = GetBoolean("ShowEndPrompt", false);
         public static readonly bool LogEnumErrors = GetBoolean("LogEnumErrors", false);

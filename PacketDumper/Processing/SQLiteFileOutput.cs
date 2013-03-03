@@ -109,21 +109,24 @@ namespace PacketDumper.Processing
             }
             else if (obj.GetType() == typeof(StoreEntry))
             {
-                var entry = (StoreEntry)obj;
-                
-                if (entry._type == StoreNameType.Spell)
+                if (Settings.SQLiteDumpSpellOpcode)
                 {
-                    var set = packetSpells[packet];
-                    if (!set.Contains((UInt32)entry._data))
+                    var entry = (StoreEntry)obj;
+
+                    if (entry._type == StoreNameType.Spell)
                     {
-                        set.Add((UInt32)entry._data);
-                        using (SQLiteCommand cmd = new SQLiteCommand(insertPacketSpell, _connection))
+                        var set = packetSpells[packet];
+                        if (!set.Contains((UInt32)entry._data))
                         {
-                            cmd.Transaction = tr;
-                            cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
-                            cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
-                            cmd.Parameters.Add(new SQLiteParameter("@spellId", entry._data));
-                            cmd.ExecuteNonQuery();
+                            set.Add((UInt32)entry._data);
+                            using (SQLiteCommand cmd = new SQLiteCommand(insertPacketSpell, _connection))
+                            {
+                                cmd.Transaction = tr;
+                                cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
+                                cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
+                                cmd.Parameters.Add(new SQLiteParameter("@spellId", entry._data));
+                                cmd.ExecuteNonQuery();
+                            }
                         }
                     }
                 }
@@ -200,27 +203,30 @@ namespace PacketDumper.Processing
                                     break;
                             }
                         }
-                        var auras = packet.GetData().GetNode<IndexedTreeNode>("Auras");
-                        foreach (var aura in auras)
+                        if (Settings.SQLiteDumpSpellAura)
                         {
-                            var a = aura.Value.GetNode<NamedTreeNode>("Aura");
-                            var spellId = a.GetNode<UInt32>("Spell ID");
-                            if (spellId > 0)
+                            var auras = packet.GetData().GetNode<IndexedTreeNode>("Auras");
+                            foreach (var aura in auras)
                             {
-                                using (SQLiteCommand cmd = new SQLiteCommand(insertPacketAura, _connection))
+                                var a = aura.Value.GetNode<NamedTreeNode>("Aura");
+                                var spellId = a.GetNode<UInt32>("Spell ID");
+                                if (spellId > 0)
                                 {
-                                    cmd.Transaction = tr;
-                                    cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
-                                    cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
-                                    cmd.Parameters.Add(new SQLiteParameter("@slot", a.GetNode<byte>("Slot")));
-                                    cmd.Parameters.Add(new SQLiteParameter("@spellId", spellId));
-                                    cmd.Parameters.Add(new SQLiteParameter("@target", guid.Full));
-                                    Guid casterGuid;
-                                    if (!a.TryGetNode<Guid>(out casterGuid, "Caster GUID"))
-                                        casterGuid = new Guid(0);
-                                    cmd.Parameters.Add(new SQLiteParameter("@caster", casterGuid.Full));
-                                    cmd.Parameters.Add(new SQLiteParameter("@auraFlags", (UInt32)a.GetNode<StoreEnum>("Flags").rawVal));
-                                    cmd.ExecuteNonQuery();
+                                    using (SQLiteCommand cmd = new SQLiteCommand(insertPacketAura, _connection))
+                                    {
+                                        cmd.Transaction = tr;
+                                        cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
+                                        cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
+                                        cmd.Parameters.Add(new SQLiteParameter("@slot", a.GetNode<byte>("Slot")));
+                                        cmd.Parameters.Add(new SQLiteParameter("@spellId", spellId));
+                                        cmd.Parameters.Add(new SQLiteParameter("@target", guid.Full));
+                                        Guid casterGuid;
+                                        if (!a.TryGetNode<Guid>(out casterGuid, "Caster GUID"))
+                                            casterGuid = new Guid(0);
+                                        cmd.Parameters.Add(new SQLiteParameter("@caster", casterGuid.Full));
+                                        cmd.Parameters.Add(new SQLiteParameter("@auraFlags", (UInt32)a.GetNode<StoreEnum>("Flags").rawVal));
+                                        cmd.ExecuteNonQuery();
+                                    }
                                 }
                             }
                         }
@@ -228,64 +234,70 @@ namespace PacketDumper.Processing
                     }
                 case Opcode.SMSG_SPELL_START:
                     {
-                        var d = packet.GetData();
-                        using (SQLiteCommand cmd = new SQLiteCommand(insertPacketSpellStart, _connection))
+                        if (Settings.SQLiteDumpSpellStart)
                         {
-                            cmd.Transaction = tr;
-                            cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
-                            cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
-                            cmd.Parameters.Add(new SQLiteParameter("@spellId", d.GetNode<Int32>("Spell ID")));
-                            cmd.Parameters.Add(new SQLiteParameter("@caster", d.GetNode<Guid>("Caster GUID").Full));
-                            cmd.Parameters.Add(new SQLiteParameter("@casterUnit", d.GetNode<Guid>("Caster Unit GUID").Full));
-                            Guid targetGuid;
-                            if (!d.TryGetNode<Guid>(out targetGuid, "Target GUID"))
-                                targetGuid = new Guid(0);
-                            cmd.Parameters.Add(new SQLiteParameter("@target", targetGuid.Full));
-                            Guid itemTargetGuid;
-                            if (!d.TryGetNode<Guid>(out itemTargetGuid, "Item Target GUID"))
-                                itemTargetGuid = new Guid(0);
-                            cmd.Parameters.Add(new SQLiteParameter("@itemTarget", itemTargetGuid.Full));
-                            cmd.Parameters.Add(new SQLiteParameter("@castFlags", (UInt32)d.GetNode<StoreEnum>("Cast Flags").rawVal));
-                            cmd.Parameters.Add(new SQLiteParameter("@targetFlags", (UInt32)d.GetNode<StoreEnum>("Target Flags").rawVal));
-                            cmd.ExecuteNonQuery();
+                            var d = packet.GetData();
+                            using (SQLiteCommand cmd = new SQLiteCommand(insertPacketSpellStart, _connection))
+                            {
+                                cmd.Transaction = tr;
+                                cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
+                                cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
+                                cmd.Parameters.Add(new SQLiteParameter("@spellId", d.GetNode<Int32>("Spell ID")));
+                                cmd.Parameters.Add(new SQLiteParameter("@caster", d.GetNode<Guid>("Caster GUID").Full));
+                                cmd.Parameters.Add(new SQLiteParameter("@casterUnit", d.GetNode<Guid>("Caster Unit GUID").Full));
+                                Guid targetGuid;
+                                if (!d.TryGetNode<Guid>(out targetGuid, "Target GUID"))
+                                    targetGuid = new Guid(0);
+                                cmd.Parameters.Add(new SQLiteParameter("@target", targetGuid.Full));
+                                Guid itemTargetGuid;
+                                if (!d.TryGetNode<Guid>(out itemTargetGuid, "Item Target GUID"))
+                                    itemTargetGuid = new Guid(0);
+                                cmd.Parameters.Add(new SQLiteParameter("@itemTarget", itemTargetGuid.Full));
+                                cmd.Parameters.Add(new SQLiteParameter("@castFlags", (UInt32)d.GetNode<StoreEnum>("Cast Flags").rawVal));
+                                cmd.Parameters.Add(new SQLiteParameter("@targetFlags", (UInt32)d.GetNode<StoreEnum>("Target Flags").rawVal));
+                                cmd.ExecuteNonQuery();
+                            }
                         }
                     }
                     break;
                 case Opcode.SMSG_SPELL_GO:
                     {
-                        var d = packet.GetData();
-                        using (SQLiteCommand cmd = new SQLiteCommand(insertPacketSpellGo, _connection))
+                        if (Settings.SQLiteDumpSpellGo)
                         {
-                            cmd.Transaction = tr;
-                            cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
-                            cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
-                            cmd.Parameters.Add(new SQLiteParameter("@spellId", d.GetNode<Int32>("Spell ID")));
-                            cmd.Parameters.Add(new SQLiteParameter("@caster", d.GetNode<Guid>("Caster GUID").Full));
-                            cmd.Parameters.Add(new SQLiteParameter("@casterUnit", d.GetNode<Guid>("Caster Unit GUID").Full));
-                            Guid targetGuid;
-                            if (!d.TryGetNode<Guid>(out targetGuid, "Target GUID"))
-                                targetGuid = new Guid(0);
-                            cmd.Parameters.Add(new SQLiteParameter("@target", targetGuid.Full));
-                            Guid itemTargetGuid;
-                            if (!d.TryGetNode<Guid>(out itemTargetGuid, "Item Target GUID"))
-                                itemTargetGuid = new Guid(0);
-                            cmd.Parameters.Add(new SQLiteParameter("@itemTarget", itemTargetGuid.Full));
-                            cmd.Parameters.Add(new SQLiteParameter("@castFlags", (UInt32)d.GetNode<StoreEnum>("Cast Flags").rawVal));
-                            cmd.Parameters.Add(new SQLiteParameter("@targetFlags", (UInt32)d.GetNode<StoreEnum>("Target Flags").rawVal));
-                            cmd.Parameters.Add(new SQLiteParameter("@hitCount", d.GetNode<byte>("Hit Count")));
-                            cmd.Parameters.Add(new SQLiteParameter("@missCount", d.GetNode<byte>("Miss Count")));
-                            byte extraTargetsCount;
-                            if (!d.TryGetNode<byte>(out extraTargetsCount, "Extra Targets Count"))
-                                extraTargetsCount = 0;
-                            cmd.Parameters.Add(new SQLiteParameter("@extraTargetsCount", extraTargetsCount));
-                            var misses = d.GetNode<IndexedTreeNode>("Miss Targets");
-                            uint missMask = 0;
-                            foreach (var miss in misses)
+                            var d = packet.GetData();
+                            using (SQLiteCommand cmd = new SQLiteCommand(insertPacketSpellGo, _connection))
                             {
-                                missMask |= (uint)(1 << ((byte)miss.Value.GetNode<StoreEnum>("Miss Type").rawVal));
+                                cmd.Transaction = tr;
+                                cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
+                                cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
+                                cmd.Parameters.Add(new SQLiteParameter("@spellId", d.GetNode<Int32>("Spell ID")));
+                                cmd.Parameters.Add(new SQLiteParameter("@caster", d.GetNode<Guid>("Caster GUID").Full));
+                                cmd.Parameters.Add(new SQLiteParameter("@casterUnit", d.GetNode<Guid>("Caster Unit GUID").Full));
+                                Guid targetGuid;
+                                if (!d.TryGetNode<Guid>(out targetGuid, "Target GUID"))
+                                    targetGuid = new Guid(0);
+                                cmd.Parameters.Add(new SQLiteParameter("@target", targetGuid.Full));
+                                Guid itemTargetGuid;
+                                if (!d.TryGetNode<Guid>(out itemTargetGuid, "Item Target GUID"))
+                                    itemTargetGuid = new Guid(0);
+                                cmd.Parameters.Add(new SQLiteParameter("@itemTarget", itemTargetGuid.Full));
+                                cmd.Parameters.Add(new SQLiteParameter("@castFlags", (UInt32)d.GetNode<StoreEnum>("Cast Flags").rawVal));
+                                cmd.Parameters.Add(new SQLiteParameter("@targetFlags", (UInt32)d.GetNode<StoreEnum>("Target Flags").rawVal));
+                                cmd.Parameters.Add(new SQLiteParameter("@hitCount", d.GetNode<byte>("Hit Count")));
+                                cmd.Parameters.Add(new SQLiteParameter("@missCount", d.GetNode<byte>("Miss Count")));
+                                byte extraTargetsCount;
+                                if (!d.TryGetNode<byte>(out extraTargetsCount, "Extra Targets Count"))
+                                    extraTargetsCount = 0;
+                                cmd.Parameters.Add(new SQLiteParameter("@extraTargetsCount", extraTargetsCount));
+                                var misses = d.GetNode<IndexedTreeNode>("Miss Targets");
+                                uint missMask = 0;
+                                foreach (var miss in misses)
+                                {
+                                    missMask |= (uint)(1 << ((byte)miss.Value.GetNode<StoreEnum>("Miss Type").rawVal));
+                                }
+                                cmd.Parameters.Add(new SQLiteParameter("@missMask", missMask));
+                                cmd.ExecuteNonQuery();
                             }
-                            cmd.Parameters.Add(new SQLiteParameter("@missMask", missMask));
-                            cmd.ExecuteNonQuery();
                         }
                     }
                     break;
