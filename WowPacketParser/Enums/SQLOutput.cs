@@ -30,6 +30,10 @@
         quest_template,
         SniffData,
         SniffDataOpcodes,
+        SpellStart,
+        SpellGo,
+        SpellAura,
+        SpellOpcode,
 // ReSharper restore InconsistentNaming
     }
 }

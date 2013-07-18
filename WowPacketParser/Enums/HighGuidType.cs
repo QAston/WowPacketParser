@@ -11,6 +11,7 @@ namespace PacketParser.Enums
         MOTransport     = 0x10C,
         Guild           = 0x10F,
         Item            = 0x400,   // in fact any with 4xx is an item
+        Container       = 0x408,
         Corpse          = 0xF00,
         GameObject      = 0xF01,
         Transport       = 0xF02,

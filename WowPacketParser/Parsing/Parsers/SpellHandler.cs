@@ -345,23 +345,24 @@ namespace PacketParser.Parsing.Parsers
                 uint slot;
                 Aura aura = null;
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_0_5_16048))
-                    aura = ReadAuraUpdateBlock505(ref packet, out slot, i++);
+                    aura = ReadAuraUpdateBlock505(ref packet, out slot, i);
                 else
-                    aura = ReadAuraUpdateBlock(ref packet, out slot, i++);
+                    aura = ReadAuraUpdateBlock(ref packet, out slot, i);
 
                 if (unit != null)
                 {
-                    if (unit.Auras[slot] != null)
+                    if (unit.Auras.ContainsKey(slot))
                         packet.Store("PreviousAuraInSlot", unit.Auras[slot].SpellId, i);
                     if (aura != null)
                     {
                         unit.Auras[slot] = aura;
                     }
-                    else
+                    else if (unit.Auras.ContainsKey(slot))
                     {
                         unit.Auras.Remove(slot);
                     }
                 }
+                i++;
             }
             packet.StoreEndList();
 

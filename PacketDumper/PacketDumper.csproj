@@ -121,6 +121,7 @@
     <Compile Include="..\WowPacketParser\Store\Objects\UnitTemplateNonWDB.cs">
       <Link>DataStructures\UnitTemplateNonWDB.cs</Link>
     </Compile>
+    <Compile Include="Processing\SQLData\SpellStore.cs" />
     <Compile Include="Processing\SQLiteFileOutput.cs" />
     <Compile Include="Processing\HexFileOutput.cs" />
     <Compile Include="Processing\ParseErrorFileOutput.cs" />

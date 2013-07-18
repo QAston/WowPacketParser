@@ -41,6 +41,7 @@ namespace PacketParser.DataStructures
                 case HighGuidType.Corpse:
                 case HighGuidType.Group:
                 case HighGuidType.Item:
+                case HighGuidType.Container:
                     return Full & 0x000FFFFFFFFFFFFF;
                 case HighGuidType.GameObject:
                 case HighGuidType.Transport:
@@ -80,6 +81,8 @@ namespace PacketParser.DataStructures
             var highGUID = ((Full & 0xF0F0000000000000) >> 52);
             if ((highGUID & 0xF00) == 0)
                 return HighGuidType.Player;
+            if ((HighGuidType)highGUID == HighGuidType.Container)
+                return HighGuidType.Container;
             if (((highGUID & 0xF00) == 0x400))
                 return HighGuidType.Item;
 
@@ -119,6 +122,8 @@ namespace PacketParser.DataStructures
                     return "Group";
                 case HighGuidType.Guild:
                     return "Guild";
+                case HighGuidType.Container:
+                    return "Container";
                 default:
                     return "Unknown (" + ((uint)GetHighType()).ToString();
             }
@@ -134,6 +139,8 @@ namespace PacketParser.DataStructures
                     return ObjectType.Corpse;
                 case HighGuidType.Item:
                     return ObjectType.Item;
+                case HighGuidType.Container:
+                    return ObjectType.Container;
                 case HighGuidType.GameObject:
                 case HighGuidType.Transport:
                 case HighGuidType.MOTransport:

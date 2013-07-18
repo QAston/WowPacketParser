@@ -52,7 +52,7 @@ namespace PacketDumper.Processing
                 return false;
             }
             File.Delete(_outFileName);
-            File.Copy("template.db", _outFileName);
+            File.Copy(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar + "template.db", _outFileName);
             _connection = new SQLiteConnection("Data Source=" + _outFileName);
             _connection.Open();
 
@@ -208,24 +208,27 @@ namespace PacketDumper.Processing
                             var auras = packet.GetData().GetNode<IndexedTreeNode>("Auras");
                             foreach (var aura in auras)
                             {
-                                var a = aura.Value.GetNode<NamedTreeNode>("Aura");
-                                var spellId = a.GetNode<UInt32>("Spell ID");
-                                if (spellId > 0)
+                                NamedTreeNode a;
+                                if (aura.Value.TryGetNode<NamedTreeNode>(out a, "Aura"))
                                 {
-                                    using (SQLiteCommand cmd = new SQLiteCommand(insertPacketAura, _connection))
+                                    var spellId = a.GetNode<UInt32>("Spell ID");
+                                    if (spellId > 0)
                                     {
-                                        cmd.Transaction = tr;
-                                        cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
-                                        cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
-                                        cmd.Parameters.Add(new SQLiteParameter("@slot", a.GetNode<byte>("Slot")));
-                                        cmd.Parameters.Add(new SQLiteParameter("@spellId", spellId));
-                                        cmd.Parameters.Add(new SQLiteParameter("@target", guid.Full));
-                                        Guid casterGuid;
-                                        if (!a.TryGetNode<Guid>(out casterGuid, "Caster GUID"))
-                                            casterGuid = new Guid(0);
-                                        cmd.Parameters.Add(new SQLiteParameter("@caster", casterGuid.Full));
-                                        cmd.Parameters.Add(new SQLiteParameter("@auraFlags", (UInt32)a.GetNode<StoreEnum>("Flags").rawVal));
-                                        cmd.ExecuteNonQuery();
+                                        using (SQLiteCommand cmd = new SQLiteCommand(insertPacketAura, _connection))
+                                        {
+                                            cmd.Transaction = tr;
+                                            cmd.Parameters.Add(new SQLiteParameter("@packetId", packet.Number));
+                                            cmd.Parameters.Add(new SQLiteParameter("@packetSubId", packet.SubPacketNumber));
+                                            cmd.Parameters.Add(new SQLiteParameter("@slot", a.GetNode<byte>("Slot")));
+                                            cmd.Parameters.Add(new SQLiteParameter("@spellId", spellId));
+                                            cmd.Parameters.Add(new SQLiteParameter("@target", guid.Full));
+                                            Guid casterGuid;
+                                            if (!a.TryGetNode<Guid>(out casterGuid, "Caster GUID"))
+                                                casterGuid = new Guid(0);
+                                            cmd.Parameters.Add(new SQLiteParameter("@caster", casterGuid.Full));
+                                            cmd.Parameters.Add(new SQLiteParameter("@auraFlags", (UInt32)a.GetNode<StoreEnum>("Flags").rawVal));
+                                            cmd.ExecuteNonQuery();
+                                        }
                                     }
                                 }
                             }

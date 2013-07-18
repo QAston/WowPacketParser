@@ -40,7 +40,7 @@ namespace PacketDumper.Processing.SQLData
                 var guid = packet.GetData().GetNode<Guid>("GUID");
                 var loot = packet.GetNode<Loot>("LootObject");
                 // Items do not have item id in its guid, we need to query the wowobject store go
-                if (guid.GetObjectType() == ObjectType.Item)
+                if (guid.GetObjectType() == ObjectType.Item || guid.GetObjectType() == ObjectType.Container)
                 {
                     WoWObject item = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound(guid);
                     UpdateField itemEntry;

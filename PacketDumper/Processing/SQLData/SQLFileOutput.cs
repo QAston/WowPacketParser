@@ -191,6 +191,12 @@ namespace PacketDumper.Processing.SQLData
             }
 
             {
+                var spellStore = PacketFileProcessor.Current.GetProcessor<SpellStore>();
+                if (spellStore != null)
+                    writes.Add(new Tuple<string, Builder>("SpellStore", () => { return spellStore.Build(); }));
+            }
+
+            {
                 var SniffDatas = PacketFileProcessor.Current.GetProcessor<SniffDataStore>();
                 if (SniffDatas != null)
                     writes.Add(new Tuple<string, Builder>("SniffData", () => { return SniffDatas.Build(); }));

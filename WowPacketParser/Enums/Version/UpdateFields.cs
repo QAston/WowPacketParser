@@ -324,6 +324,8 @@ namespace PacketParser.Enums.Version
                         int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
+                        if (offset >= Enums.Version.UpdateFields.GetUpdateFieldOffset<ItemField>(ItemField.ITEM_END))
+                            throw new Exception("Incorrect object type" + type + " for given offset "+ offset);
                         return typeof(ItemField);
                     }
                 case ObjectType.Container:
@@ -331,6 +333,8 @@ namespace PacketParser.Enums.Version
                         int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ItemField>(ItemField.ITEM_END);
                         if (offset < max)
                             goto case ObjectType.Item;
+                        if (offset >= Enums.Version.UpdateFields.GetUpdateFieldOffset<ContainerField>(ContainerField.CONTAINER_END))
+                            throw new Exception("Incorrect object type" + type + " for given offset " + offset);
                         return typeof(ContainerField);
                     }
                 case ObjectType.Unit:
@@ -338,6 +342,8 @@ namespace PacketParser.Enums.Version
                         int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
+                        if (offset >= Enums.Version.UpdateFields.GetUpdateFieldOffset<UnitField>(UnitField.UNIT_END))
+                            throw new Exception("Incorrect object type" + type + " for given offset " + offset);
                         return typeof(UnitField);
                     }
                 case ObjectType.Player:
@@ -345,6 +351,8 @@ namespace PacketParser.Enums.Version
                         int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<UnitField>(UnitField.UNIT_END);
                         if (offset < max)
                             goto case ObjectType.Unit;
+                        if (offset >= Enums.Version.UpdateFields.GetUpdateFieldOffset<PlayerField>(PlayerField.PLAYER_END))
+                            throw new Exception("Incorrect object type" + type + " for given offset " + offset);
                         return typeof(PlayerField);
                     }
                 case ObjectType.GameObject:
@@ -352,6 +360,8 @@ namespace PacketParser.Enums.Version
                         int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
+                        if (offset >= Enums.Version.UpdateFields.GetUpdateFieldOffset<GameObjectField>(GameObjectField.GAMEOBJECT_END))
+                            throw new Exception("Incorrect object type" + type + " for given offset " + offset);
                         return typeof(GameObjectField);
                     }
                 case ObjectType.DynamicObject:
@@ -359,6 +369,8 @@ namespace PacketParser.Enums.Version
                         int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
+                        if (offset >= Enums.Version.UpdateFields.GetUpdateFieldOffset<DynamicObjectField>(DynamicObjectField.DYNAMICOBJECT_END))
+                            throw new Exception("Incorrect object type" + type + " for given offset " + offset);
                         return typeof(DynamicObjectField);
                     }
                 case ObjectType.Corpse:
@@ -366,6 +378,8 @@ namespace PacketParser.Enums.Version
                         int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
+                        if (offset >= Enums.Version.UpdateFields.GetUpdateFieldOffset<CorpseField>(CorpseField.CORPSE_END))
+                            throw new Exception("Incorrect object type" + type + " for given offset " + offset);
                         return typeof(CorpseField);
                     }
                 case ObjectType.AreaTrigger:
@@ -373,6 +387,8 @@ namespace PacketParser.Enums.Version
                         int max = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset<ObjectField>(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
+                        if (offset >= Enums.Version.UpdateFields.GetUpdateFieldOffset<AreaTriggerField>(AreaTriggerField.AREATRIGGER_END))
+                            throw new Exception("Incorrect object type" + type + " for given offset " + offset);
                         return typeof(AreaTriggerField);
                     }
                 default:
