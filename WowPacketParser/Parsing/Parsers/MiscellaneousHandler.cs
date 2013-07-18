@@ -545,7 +545,7 @@ namespace PacketParser.Parsing.Parsers
             var zones = packet.ReadUInt32("Zones count");
             packet.StoreBeginList("Zones");
             for (var i = 0; i < zones; ++i)
-                packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id");
+                packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id", i);
             packet.StoreEndList();
 
             var patterns = packet.ReadUInt32("Pattern count");
