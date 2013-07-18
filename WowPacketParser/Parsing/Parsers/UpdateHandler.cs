@@ -140,7 +140,7 @@ namespace PacketParser.Parsing.Parsers
 
             int size = 0;
 
-            for (var i = 0; i < m.Length-1; i++)
+            for (var i = 0; i < m.Length; i++)
             {
                 if (!m[i])
                     continue;

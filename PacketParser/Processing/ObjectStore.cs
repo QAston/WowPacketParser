@@ -34,7 +34,11 @@ namespace PacketParser.Processing
         {
             if (Objects.ContainsKey(guid))
                 return Objects[guid];
-            CreateObjectWithType(guid, guid.GetObjectType());
+            ObjectType type = guid.GetObjectType();
+            // containers and items are indistinguishable by guid, create container just in case
+            if (type == ObjectType.Item)
+                type = ObjectType.Container;
+            CreateObjectWithType(guid, type);
             return Objects[guid];
         }
 
@@ -73,6 +77,9 @@ namespace PacketParser.Processing
                 case ObjectType.Player:
                     wobj = new Player(obj);
                     break;
+                case ObjectType.Container:
+                    wobj = new Item(obj);
+                    break;
                 default:
                     wobj = new WoWObject(obj);
                     break;
@@ -90,9 +97,9 @@ namespace PacketParser.Processing
                 {
                     ObjectType type = guid.GetObjectType();
                     // containers and items are indistinguishable by guid, create container just in case
-                    if (guid.GetObjectType() == ObjectType.Item)
+                    if (type == ObjectType.Item)
                         type = ObjectType.Container;
-                    CreateObjectWithType(guid, guid.GetObjectType());
+                    CreateObjectWithType(guid, type);
                 }
             }
         }
