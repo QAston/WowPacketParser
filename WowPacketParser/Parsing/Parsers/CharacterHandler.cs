@@ -749,7 +749,7 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_CHAR_ENUM, ClientVersionBuild.V5_0_5_16048, ClientVersionBuild.V5_1_0_16309)]
         public static void HandleCharEnum505(Packet packet)
         {
-            var unkCounter = packet.ReadBits("Unk Counter", 23);
+            packet.ReadBits("Unk Counter", 23);
             packet.ReadBit("Unk bit");
             var count = packet.ReadBits("Char count", 17);
 
@@ -825,13 +825,13 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(guildGuids[c], 0);
 
                 packet.ReadEnum<CharacterFlag>("Character Flags", TypeCode.Int32, c);
-                packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id", c);
+                var zone = packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id", c);
 
                 packet.ReadXORByte(charGuids[c], 5);
                 packet.ReadXORByte(charGuids[c], 6);
 
                 packet.ReadEnum<CustomizationFlag>("Customization Flags", TypeCode.Int32, c);
-                packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map Id", c);
+                var mapId = packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map Id", c);
 
                 packet.ReadXORByte(charGuids[c], 1);
 
@@ -851,10 +851,10 @@ namespace PacketParser.Parsing.Parsers
 
                 packet.ReadInt32("Pet Level", c);
                 packet.ReadByte("Gender", c);
-                packet.ReadSingle("Position X", c);
+                var x = packet.ReadSingle("Position X", c);
                 var clss = packet.ReadEnum<Class>("Class", TypeCode.Byte, c);
                 packet.ReadByte("Unk 8", c);
-                packet.ReadSingle("Position Y", c);
+                var y = packet.ReadSingle("Position Y", c);
 
                 packet.ReadXORByte(guildGuids[c], 3);
                 packet.ReadXORByte(guildGuids[c], 7);
@@ -1309,6 +1309,9 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Value", i);
             }
             packet.StoreEndList();
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
+                packet.ReadInt32("Talent Level"); // 0 - No Talent gain / 1 - Talent Point gain
+
         }
 
         [Parser(Opcode.SMSG_HEALTH_UPDATE)]

@@ -429,7 +429,7 @@ namespace PacketParser.Parsing.Parsers
                 Level = packet.ReadInt32("Level")
             };
 
-            packet.ReadInt32("Unk Int32 1");
+            packet.ReadInt32("Package Id");
             quest.MinLevel = packet.ReadInt32("Min Level");
             quest.ZoneOrSort = packet.ReadEnum<QuestSort>("Sort", TypeCode.Int32);
             quest.Type = packet.ReadEnum<QuestType>("Type", TypeCode.Int32);
@@ -444,10 +444,10 @@ namespace PacketParser.Parsing.Parsers
             quest.RewardHonorMultiplier = packet.ReadSingle("Reward Honor Multiplier");
             quest.SourceItemId = (uint)packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Source Item ID");
             quest.Flags = packet.ReadEnum<QuestFlags>("Flags", TypeCode.UInt32);
+            packet.ReadEnum<QuestFlags2>("Flags 2", TypeCode.UInt32);
             quest.MinimapTargetMark = packet.ReadUInt32("Minimap Target Mark"); // missing enum. 1- Skull, 16 - Unknown, but exists
             quest.RewardTitleId = packet.ReadUInt32("Reward Title ID");
             quest.RequiredPlayerKills = packet.ReadUInt32("Required Player Kills");
-            quest.RewardTalents = packet.ReadUInt32("Bonus Talents");
             quest.RewardSkillId = packet.ReadUInt32("RewSkillId");
             quest.RewardSkillPoints = packet.ReadUInt32("RewSkillPoints");
             quest.RewardReputationMask = packet.ReadUInt32("RewRepMask");
@@ -583,6 +583,7 @@ namespace PacketParser.Parsing.Parsers
             quest.RequiredFactionId = new uint[2];
             quest.RequiredFactionValue = new int[2];
             quest.ObjectiveText = new string[4];
+            quest.RewardTalents = 0;
 
             packet.Store("QuestTemplateObject", quest);
         }
@@ -682,7 +683,7 @@ namespace PacketParser.Parsing.Parsers
                     var idx = packet.ReadInt32("POI Index", i, j);
                     questPoi.ObjectiveIndex = packet.ReadInt32("Objective Index", i, j);
 
-                    if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
+                    if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_0_5_16048))
                         packet.ReadUInt32("Unk Int32 4", i, j);
 
                     questPoi.Map = (uint) packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map Id", i, j);
@@ -691,7 +692,7 @@ namespace PacketParser.Parsing.Parsers
                     questPoi.UnkInt1 = packet.ReadUInt32("Unk Int32 2", i, j);
                     questPoi.UnkInt2 = packet.ReadUInt32("Unk Int32 3", i, j);
 
-                    if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
+                    if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_0_5_16048))
                     {
                         packet.ReadUInt32("Unk Int32 5", i, j);
                         packet.ReadUInt32("Unk Int32 6", i, j);
@@ -774,7 +775,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadInt32("QuestTurn Portrait");
             packet.ReadByte("Unk Byte");
             packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32);
-            packet.ReadInt32("Unk Int32 2");
+            packet.ReadEnum<QuestFlags2>("Quest Flags 2", TypeCode.UInt32);
             packet.ReadInt32("Unk Int32 3");
 
             var emoteCount = packet.ReadUInt32("Quest Emote Count");
@@ -828,7 +829,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadInt32("Quest Level", i);
                 packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32, i);
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
-                    packet.ReadUInt32("Unk UInt32", i); // if this flag is 0x100, quest icon is LegendaryQuestIcon
+                    packet.ReadEnum<QuestFlags2>("Quest Flags 2", TypeCode.UInt32, i);
 
                 packet.ReadBoolean("Change icon", i);
                 packet.ReadCString("Title", i);
@@ -943,8 +944,8 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadUInt32("QuestGiver Portrait");
             packet.ReadUInt32("QuestTurn Portrait");
             packet.ReadBoolean("Auto Accept");
-            var flags = packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32);
-            packet.ReadUInt32("Unk UInt32");
+            packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32);
+            packet.ReadEnum<QuestFlags2>("Quest Flags 2", TypeCode.UInt32);
             packet.ReadUInt32("Suggested Players");
             packet.ReadByte("Unknown byte");
             packet.ReadBoolean("Starts at AreaTrigger");
@@ -1080,7 +1081,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadUInt32("Close Window on Cancel");
 
             packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32);
-            packet.ReadUInt32("Unk UInt32");
+            packet.ReadEnum<QuestFlags2>("Quest Flags 2", TypeCode.UInt32);
             packet.ReadUInt32("Suggested Players");
             packet.ReadUInt32("Money");
 
@@ -1223,7 +1224,7 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_QUESTGIVER_QUEST_COMPLETE, ClientVersionBuild.V5_1_0_16309)]
         public static void HandleQuestCompleted510(Packet packet)
         {
-            packet.ReadInt32("Unk Int32 1"); // Talent Points?
+            packet.ReadInt32("Unk Int32 1");
             packet.ReadInt32("Money");
             packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Quest ID");
             packet.ReadInt32("XP");

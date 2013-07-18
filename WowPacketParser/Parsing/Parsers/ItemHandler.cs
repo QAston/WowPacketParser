@@ -111,10 +111,49 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadSubPacket(opcode, "MovePacket");
         }
 
-        [Parser(Opcode.CMSG_AUTOSTORE_LOOT_ITEM)]
+        [Parser(Opcode.CMSG_AUTOSTORE_LOOT_ITEM, ClientVersionBuild.Zero, ClientVersionBuild.V5_1_0_16309)]
         public static void HandleAutoStoreLootItem(Packet packet)
         {
             packet.ReadByte("Slot");
+        }
+
+        [Parser(Opcode.CMSG_AUTOSTORE_LOOT_ITEM, ClientVersionBuild.V5_1_0_16309)]
+        public static void HandleAutoStoreLootItem510(Packet packet)
+        {
+            var counter = packet.ReadBits("Count", 25);
+
+            var guid = new byte[counter][];
+
+            for (var i = 0; i < counter; ++i)
+            {
+                guid[i] = new byte[8];
+
+                guid[i][5] = packet.ReadBit();
+                guid[i][6] = packet.ReadBit();
+                guid[i][7] = packet.ReadBit();
+                guid[i][4] = packet.ReadBit();
+                guid[i][3] = packet.ReadBit();
+                guid[i][0] = packet.ReadBit();
+                guid[i][2] = packet.ReadBit();
+                guid[i][1] = packet.ReadBit();
+            }
+
+            packet.ResetBitReader();
+
+            for (var i = 0; i < counter; ++i)
+            {
+                packet.ReadXORByte(guid[i], 4);
+                packet.ReadXORByte(guid[i], 1);
+                packet.ReadXORByte(guid[i], 5);
+                packet.ReadXORByte(guid[i], 3);
+                packet.ReadXORByte(guid[i], 6);
+                packet.ReadXORByte(guid[i], 7);
+                packet.ReadByte("Slot", i);
+                packet.ReadXORByte(guid[i], 0);
+                packet.ReadXORByte(guid[i], 2);
+
+                packet.WriteGuid("Lootee GUID", guid[i], i);
+            }
         }
 
         [Parser(Opcode.CMSG_SWAP_INV_ITEM)]
@@ -983,7 +1022,7 @@ namespace PacketParser.Parsing.Parsers
                 PacketFileProcessor.Current.GetProcessor<NameStore>().AddName(StoreNameType.Item, itemId2, item.Name, packet.TimeSpan);
             }
 
-            var type = packet.ReadUInt32("Type");
+            packet.ReadUInt32("Type");
             packet.ReadTime("Hotfix date");
             var itemId = (uint)packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
         }
@@ -991,13 +1030,18 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_DB_REPLY, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleDBReply434(Packet packet)
         {
-            var itemId = (uint)packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
+            var id = packet.ReadInt32("Entry");
             var type = packet.ReadUInt32("Type");
             var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
             packet.ReadTime("Hotfix date");
             var size = packet.ReadUInt32("Size");
             if (size == 0)
                 return;
+
+            if (id < 0)
+                return;
+
+            var itemId = (uint)id;
 
             switch (type)
             {
@@ -1154,7 +1198,7 @@ namespace PacketParser.Parsing.Parsers
                 case 0x6D8A2694: // KeyChain
                 {
                     packet.ReadUInt32("Key Chain Id");
-                    packet.ReadCString("Unk String"); //not sure what this is
+                    packet.WriteLine("Key: {0}", Utilities.ByteArrayToHexString(packet.ReadBytes(32)));
                     break;
                 }
             }
@@ -1163,8 +1207,7 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_UPDATE_ITEM_ENCHANTMENTS)]
         public static void HandleUpdateItemEnchantments(Packet packet)
         {
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
-                packet.ReadGuid("Item Guid");
+            packet.ReadGuid("Item Guid");
 
             packet.StoreBeginList("Auras");
             for (var i = 0; i < 4; i++)

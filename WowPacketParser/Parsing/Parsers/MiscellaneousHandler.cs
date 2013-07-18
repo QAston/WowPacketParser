@@ -144,7 +144,7 @@ namespace PacketParser.Parsing.Parsers
 
         [Parser(Opcode.SMSG_STOP_DANCE)]
         [Parser(Opcode.SMSG_INVALIDATE_PLAYER)]
-        [Parser(Opcode.CMSG_SET_SELECTION)]
+        [Parser(Opcode.CMSG_SET_SELECTION, ClientVersionBuild.Zero, ClientVersionBuild.V5_1_0_16309)]
         [Parser(Opcode.CMSG_INSPECT)]
         [Parser(Opcode.CMSG_BUY_BANK_SLOT)]
         [Parser(Opcode.CMSG_DEL_FRIEND)]
@@ -157,6 +157,14 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleReadGuid(Packet packet)
         {
             packet.ReadGuid("GUID");
+        }
+
+        [Parser(Opcode.CMSG_SET_SELECTION, ClientVersionBuild.V5_1_0_16309)]
+        public static void HandleSetSelection510(Packet packet)
+        {
+            var guid = packet.StartBitStream(0, 1, 2, 4, 7, 3, 6, 5);
+            packet.ParseBitStream(guid, 4, 1, 5, 2, 6, 7, 0, 3);
+            packet.WriteGuid("Guid", guid);
         }
 
         [Parser(Opcode.CMSG_GRANT_LEVEL)]
@@ -230,7 +238,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadCString("Text");
         }
 
-        [Parser(Opcode.CMSG_SET_ACTION_BUTTON)]
+        [Parser(Opcode.CMSG_SET_ACTION_BUTTON, ClientVersionBuild.Zero, ClientVersionBuild.V5_1_0_16309)]
         public static void HandleActionButton(Packet packet)
         {
             packet.ReadByte("Button");
@@ -239,6 +247,15 @@ namespace PacketParser.Parsing.Parsers
             var action = (data & 0x00FFFFFF);
             packet.Store("Type", type);
             packet.Store("actionID", action);
+        }
+
+        [Parser(Opcode.CMSG_SET_ACTION_BUTTON, ClientVersionBuild.V5_1_0_16309)]
+        public static void HandleSetActionButton(Packet packet)
+        {
+            packet.ReadByte("Slot Id");
+            var actionId = packet.StartBitStream(0, 7, 6, 1, 3, 5, 2, 4);
+            packet.ParseBitStream(actionId, 3, 0, 1, 4, 7, 2, 6, 5);
+            packet.WriteLine("Action Id: {0}", BitConverter.ToUInt32(actionId, 0));
         }
 
         [Parser(Opcode.SMSG_RESURRECT_REQUEST)]
@@ -269,7 +286,7 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_FEATURE_SYSTEM_STATUS, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_0_15005)]
         public static void HandleFeatureSystemStatus(Packet packet)
         {
-            packet.ReadByte("Unk byte");
+            packet.ReadBoolean("Enable Complaint Chat");
             packet.ReadBoolean("Enable Voice Chat");
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
@@ -296,29 +313,30 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleFeatureSystemStatus434(Packet packet)
         {
             packet.ReadByte("Complain System Status");
-            packet.ReadInt32("NumSoRRemaining");
-            packet.ReadInt32("Unk Int32 (SoR)");
-            packet.ReadInt32("Unk Int32 2"); // unused
-            packet.ReadInt32("Unk Int32 3"); // unused
-            packet.ReadBit("HasTravelPass"); // order of these 3 bits can be wrong
+            packet.ReadInt32("Scroll of Resurrections Remaining");
+            packet.ReadInt32("Scroll of Resurrections Per Day");
+            packet.ReadInt32("Unused Int32");
+            packet.ReadInt32("Unused Int32");
+            packet.ReadBit("HasTravelPass");
             packet.ReadBit("GMItemRestorationButtonEnabled");
-            packet.ReadBit("CanSendSoRByText");
+            packet.ReadBit("Scroll of Resurrection Enabled");
+            var quickTicket = packet.ReadBit("EuropaTicketSystemEnabled");
             var sessionTimeAlert = packet.ReadBit("Session Time Alert");
-            var quickTicket = packet.ReadBit("GMQuickTicketSystemEnabled");
             packet.ReadBit("IsVoiceChatAllowedByServer");
-            if (sessionTimeAlert)
+
+            if (quickTicket)
             {
                 packet.ReadInt32("Unk5");
-                packet.ReadInt32("Play Time"); // unconfirmed
+                packet.ReadInt32("Unk6");
                 packet.ReadInt32("Unk7");
                 packet.ReadInt32("Unk8");
             }
 
-            if (quickTicket)
+            if (sessionTimeAlert)
             {
-                packet.ReadInt32("Unk9");
-                packet.ReadInt32("Unk10");
-                packet.ReadInt32("Unk11");
+                packet.ReadInt32("Session Alert Delay");
+                packet.ReadInt32("Session Alert Period");
+                packet.ReadInt32("Session Alert DisplayTime");
             }
         }
 
@@ -416,6 +434,8 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleClientAreaTrigger(Packet packet)
         {
             packet.ReadInt32("Area Trigger Id");
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
+                packet.ReadByte("Unk Byte");
         }
 
         [Parser(Opcode.SMSG_PRE_RESURRECT)]
@@ -644,23 +664,24 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_WORLD_SERVER_INFO, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleWorldServerInfo434(Packet packet)
         {
-            var b0 = packet.ReadBit("Unk Bit 1");
-            var b1 = packet.ReadBit("Unk Bit 2");
-            var b2 = packet.ReadBit("Unk Bit 3");
+            var hasRestrictedMoney = packet.ReadBit();
+            var hasRestrictedLevel = packet.ReadBit();
+            var isNotEligibleForLoot = packet.ReadBit();
 
-            if (b2)
-                packet.ReadInt32("Unk Int32 (EVENT_INELIGIBLE_FOR_LOOT)");
+            // Sends: "You are not eligible for these items because you recently defeated this encounter."
+            if (isNotEligibleForLoot)
+                packet.ReadUInt32("Unk UInt32");
 
-            packet.ReadByte("Unk Byte 4");
+            packet.ReadBoolean("Is On Tournament Realm");
 
-            if (b1)
-                packet.ReadInt32("Unk Int32 5");
+            if (hasRestrictedLevel)
+                packet.ReadInt32("Restricted Account Max Level");
 
-            if (b0)
-                packet.ReadInt32("Unk Int32 6");
+            if (hasRestrictedMoney)
+                packet.ReadInt32("Restricted Account Max Money");
 
-            packet.ReadTime("Unk Time 7");
-            packet.ReadInt32("Unk Int32 8");
+            packet.ReadTime("Last Weekly Reset");
+            packet.ReadInt32("Instance Difficulty ID");
         }
 
         [Parser(Opcode.MSG_INSPECT_HONOR_STATS)]
@@ -682,9 +703,10 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(4, 3, 6, 2, 5, 0, 7, 1);
 
-            packet.ReadByte("Max Rank");
-            packet.ReadInt16("Yesterday"); // Today?
-            packet.ReadInt16("Today"); // Yesterday?
+            packet.ReadByte("Lifetime Max Rank");
+            // Might be swapped, unsure
+            packet.ReadInt16("Yesterday Honorable Kills");
+            packet.ReadInt16("Today Honorable Kills");
 
             packet.ParseBitStream(guid, 2, 0, 6, 3, 4, 1, 5);
 
@@ -799,10 +821,9 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_START_TIMER)]
         public static void HandleStartTimer(Packet packet)
         {
-            // Unk use, related to EVENT_START_TIMER
-            packet.ReadInt32("Unk Int32 1");
-            packet.ReadInt32("Current time (secs)");
-            packet.ReadInt32("Max time (secs)");
+            packet.ReadEnum<TimerType>("Timer type", TypeCode.UInt32);
+            packet.ReadInt32("Time left (secs)");
+            packet.ReadInt32("Total time (secs)");
         }
 
         [Parser(Opcode.CMSG_SET_PREFERED_CEMETERY)] // 4.3.4
@@ -814,11 +835,11 @@ namespace PacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_REQUEST_CEMETERY_LIST_RESPONSE)] // 4.3.4
         public static void HandleRequestCemeteryListResponse(Packet packet)
         {
-            packet.ReadBit("Unk Bit");
+            packet.ReadBit("Is MicroDungeon"); // Named in WorldMapFrame.lua
             var count = packet.ReadBits("Count", 24);
             packet.StoreBeginList("CemeteryList");
             for (int i = 0; i < count; ++i)
-                packet.ReadInt32("Cemetery Id", i); // not confirmed
+                packet.ReadInt32("Cemetery Id", i);
             packet.StoreEndList();
         }
 

@@ -29,9 +29,9 @@ namespace PacketParser.Parsing.Parsers
                 for (var i = 0; i < count; i++)
                 {
                     packet.ReadCString("Name", i);
-                    packet.ReadBoolean("Enabled", i);
-                    packet.ReadInt32("CRC", i);
-                    packet.ReadInt32("Unk Int32", i);
+                    packet.ReadBoolean("Uses public key", i);
+                    packet.ReadInt32("Public key CRC", i);
+                    packet.ReadInt32("URL file CRC", i);
                 }
                 packet.StoreEndList();
 
@@ -81,7 +81,7 @@ namespace PacketParser.Parsing.Parsers
 
                     if (usePublicKey)
                     {
-                        packet.ReadChars("Public Key", 256, i);
+                        packet.ReadChars("Name Md5", 256, i);
                     }
 
                     packet.ReadInt32("Unk Int32", i);
@@ -102,15 +102,15 @@ namespace PacketParser.Parsing.Parsers
                     packet.ReadInt32("ID", i);
 
                     var unkStr2 = packet.ReadBytes(16);
-                    packet.Store("Unk Hash 1", Utilities.ByteArrayToHexString(unkStr2), i);
+                    packet.Store("Name md5", Utilities.ByteArrayToHexString(unkStr2), i);
 
                     var unkStr3 = packet.ReadBytes(16);
-                    packet.Store("Unk Hash 2", Utilities.ByteArrayToHexString(unkStr3), i);
+                    packet.Store("Version md5", Utilities.ByteArrayToHexString(unkStr3), i);
 
-                    packet.ReadInt32("Unk Int32 3", i);
+                    packet.ReadTime("Time", i);
 
                     if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_3a_11723))
-                        packet.ReadInt32("Unk Int32 4", i);
+                        packet.ReadInt32("Is banned", i);
                 }
                 packet.StoreEndList();
             }

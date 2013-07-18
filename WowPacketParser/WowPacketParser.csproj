@@ -10,7 +10,6 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>WowPacketParser</RootNamespace>
     <AssemblyName>WowPacketParser</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <StartupObject>WowPacketParser.Program</StartupObject>
     <FileUpgradeFlags>
@@ -33,7 +32,6 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -73,6 +71,7 @@
     <CodeAnalysisRuleSet>BasicCorrectnessRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <Prefer32Bit>false</Prefer32Bit>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -122,10 +121,6 @@
     <CodeAnalysisIgnoreBuiltInRules>true</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Ionic.Zlib, Version=1.9.1.8, Culture=neutral, PublicKeyToken=edbe51ad942a3f5c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>Dependencies\Ionic.Zlib.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -138,8 +133,10 @@
     <Reference Include="SharpSSH, Version=2.0.0.25137, Culture=neutral, PublicKeyToken=null">
       <HintPath>Dependencies\SharpSSH.dll</HintPath>
     </Reference>
-    <Reference Include="PowerCollections, Version=1.0.2141.24679, Culture=neutral, PublicKeyToken=null">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Ionic.Zlib">
+      <HintPath>Dependencies\Ionic.Zlib.dll</HintPath>
+    </Reference>
+    <Reference Include="PowerCollections">
       <HintPath>Dependencies\PowerCollections.dll</HintPath>
     </Reference>
     <Reference Include="System.Data.SQLite, Version=1.0.81.0, Culture=neutral, PublicKeyToken=db937bc2d44ff139, processorArchitecture=x86">
@@ -194,6 +191,7 @@
     <Compile Include="Enums\ContactResult.cs" />
     <Compile Include="Enums\ContactStatus.cs" />
     <Compile Include="Enums\BuyResult.cs" />
+    <Compile Include="Enums\QuestFlags2.cs" />
     <Compile Include="Enums\QuestRequirementType.cs" />
     <Compile Include="Enums\CreatureFamily.cs" />
     <Compile Include="Enums\CreatureRank.cs" />
@@ -325,6 +323,7 @@
     <Compile Include="Enums\TargetFlag.cs" />
     <Compile Include="Enums\TaxiError.cs" />
     <Compile Include="Enums\TeamType.cs" />
+    <Compile Include="Enums\TimerType.cs" />
     <Compile Include="Enums\TotemCategory.cs" />
     <Compile Include="Enums\TradeStatus.cs" />
     <Compile Include="Enums\TrainerSpellState.cs" />
@@ -369,6 +368,10 @@
     <Compile Include="Enums\Version\V5_0_4_16016\UpdateFields.cs" />
     <Compile Include="Enums\Version\V5_1_0_16309\Opcodes.cs" />
     <Compile Include="Enums\Version\V5_1_0_16309\UpdateFields.cs" />
+    <Compile Include="Enums\Version\V5_2_0_16650\Opcodes.cs" />
+    <Compile Include="Enums\Version\V5_2_0_16650\UpdateFields.cs" />
+    <Compile Include="Enums\Version\V5_3_0_16981\Opcodes.cs" />
+    <Compile Include="Enums\Version\V5_3_0_16981\UpdateFields.cs" />
     <Compile Include="Enums\VictimStates.cs" />
     <Compile Include="Enums\VoidTransferError.cs" />
     <Compile Include="Enums\WardenCheckType.cs" />
@@ -566,7 +569,7 @@
     <MonoDevelop>
       <Properties>
         <Policies>
-          <TextStylePolicy FileWidth="120" NoTabsAfterNonTabs="True" RemoveTrailingWhitespace="True" inheritsSet="VisualStudio" inheritsScope="text/plain" scope="text/plain" />
+          <TextStylePolicy FileWidth="120" NoTabsAfterNonTabs="True" inheritsSet="VisualStudio" inheritsScope="text/plain" scope="text/plain" />
         </Policies>
       </Properties>
     </MonoDevelop>

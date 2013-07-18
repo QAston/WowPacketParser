@@ -478,6 +478,28 @@ namespace PacketParser.Enums.Version
                 {
                     return "V5_1_0_16309";
                 }
+                case ClientVersionBuild.V5_2_0_16650:
+                case ClientVersionBuild.V5_2_0_16669:
+                case ClientVersionBuild.V5_2_0_16683:
+                case ClientVersionBuild.V5_2_0_16685:
+                case ClientVersionBuild.V5_2_0_16701:
+                case ClientVersionBuild.V5_2_0_16709:
+                case ClientVersionBuild.V5_2_0_16716:
+                case ClientVersionBuild.V5_2_0_16733:
+                case ClientVersionBuild.V5_2_0_16769:
+                case ClientVersionBuild.V5_2_0_16826:
+                {
+                    return "V5_2_0_16650";
+                }
+                case ClientVersionBuild.V5_3_0_16981:
+                case ClientVersionBuild.V5_3_0_16983:
+                case ClientVersionBuild.V5_3_0_16992:
+                case ClientVersionBuild.V5_3_0_17055:
+                case ClientVersionBuild.V5_3_0_17116:
+                case ClientVersionBuild.V5_3_0_17128:
+                {
+                    return "V5_3_0_16981";
+                }
                 default:
                 {
                     return "V3_3_5a_12340";

@@ -513,12 +513,22 @@ namespace PacketParser.Parsing.Parsers
             PacketFileProcessor.Current.GetProcessor<SessionStore>().LoginGuid = packet.StoreBitstreamGuid("GUID", guid);
         }
 
-        [Parser(Opcode.CMSG_PLAYER_LOGIN, ClientVersionBuild.V4_3_4_15595)]
+        [Parser(Opcode.CMSG_PLAYER_LOGIN, ClientVersionBuild.V4_3_4_15595, ClientVersionBuild.V5_1_0_16309)]
         public static void HandlePlayerLogin434(Packet packet)
         {
             var guid = packet.StartBitStream(2, 3, 0, 6, 4, 5, 1, 7);
             packet.ParseBitStream(guid, 2, 7, 0, 3, 5, 6, 1, 4);
             PacketFileProcessor.Current.GetProcessor<SessionStore>().LoginGuid = packet.StoreBitstreamGuid("GUID", guid);
+        }
+
+        [Parser(Opcode.CMSG_PLAYER_LOGIN, ClientVersionBuild.V5_1_0_16309)]
+        public static void HandlePlayerLogin510(Packet packet)
+        {
+            var guid = packet.StartBitStream(1, 5, 0, 2, 7, 6, 3, 4);
+            packet.ParseBitStream(guid, 6, 4, 3, 5, 0, 2, 7, 1);
+            packet.WriteGuid("Guid", guid);
+            packet.ReadSingle("Unk Float");
+            LoginGuid = new Guid(BitConverter.ToUInt64(guid, 0));
         }
 
         [Parser(Opcode.SMSG_CHARACTER_LOGIN_FAILED)]
@@ -593,7 +603,6 @@ namespace PacketParser.Parsing.Parsers
         public static void HandleRedirectionAuthProof(Packet packet)
         {
             packet.ReadCString("Account");
-
             packet.ReadInt64("Unk Int64");
 
             var hash = packet.ReadBytes(20);

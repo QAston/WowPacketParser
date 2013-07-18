@@ -101,7 +101,7 @@ namespace PacketParser.Parsing.Parsers
 
             creature.SubName = packet.ReadCString("Sub Name");
 
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_1_0_16309))
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V5_0_5_16048))
                 packet.ReadCString("Unk String");
 
             creature.IconName = packet.ReadCString("Icon Name");

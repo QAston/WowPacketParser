@@ -12,6 +12,8 @@ using PacketParser.Enums.Version.V4_3_4_15595;
 using PacketParser.Enums.Version.V5_0_4_16016;
 using PacketParser.Enums.Version.V5_0_5_16048;
 using PacketParser.Enums.Version.V5_1_0_16309;
+using WowPacketParser.Enums.Version.V5_2_0_16650;
+using WowPacketParser.Enums.Version.V5_3_0_16981;
 using PacketParser.Misc;
 using System;
 
@@ -103,6 +105,28 @@ switch (build)
                 case ClientVersionBuild.V5_1_0a_16357:
                 {
                     return Opcodes_5_1_0.Opcodes();
+                }
+                case ClientVersionBuild.V5_2_0_16650:
+                case ClientVersionBuild.V5_2_0_16669:
+                case ClientVersionBuild.V5_2_0_16683:
+                case ClientVersionBuild.V5_2_0_16685:
+                case ClientVersionBuild.V5_2_0_16701:
+                case ClientVersionBuild.V5_2_0_16709:
+                case ClientVersionBuild.V5_2_0_16716:
+                case ClientVersionBuild.V5_2_0_16733:
+                case ClientVersionBuild.V5_2_0_16769:
+                case ClientVersionBuild.V5_2_0_16826:
+                {
+                    return Opcodes_5_2_0.Opcodes();
+                }
+                case ClientVersionBuild.V5_3_0_16981:
+                case ClientVersionBuild.V5_3_0_16983:
+                case ClientVersionBuild.V5_3_0_16992:
+                case ClientVersionBuild.V5_3_0_17055:
+                case ClientVersionBuild.V5_3_0_17116:
+                case ClientVersionBuild.V5_3_0_17128:
+                {
+                    return Opcodes_5_3_0.Opcodes();
                 }
                 default:
                 {
