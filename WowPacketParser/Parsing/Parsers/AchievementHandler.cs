@@ -395,6 +395,7 @@ namespace PacketParser.Parsing.Parsers
             var guid = new byte[criterias][];
             var flags = new byte[criterias];
 
+            var criteriasList = packet.StoreBeginList("Criterias");
             for (var i = 0; i < criterias; ++i)
             {
                 counter[i] = new byte[8];
@@ -418,9 +419,11 @@ namespace PacketParser.Parsing.Parsers
                 guid[i][0] = packet.ReadBit();
                 counter[i][0] = packet.ReadBit();
             }
+            packet.StoreEndList();
 
             var achievements = packet.ReadBits("Achievement count", 22);
             var achievementGuid = new byte[achievements][];
+            var achievementsList = packet.StoreBeginList("Achievements");
             for (var i = 0; i < achievements; ++i)
             {
                 achievementGuid[i] = new byte[8];
@@ -450,7 +453,9 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(achievementGuid[i], 5);
                 packet.StoreBitstreamGuid("Achievement Completer GUID", achievementGuid[i], i);
             }
+            packet.StoreEndList();
 
+            packet.StoreContinueList(criteriasList);
             for (var i = 0; i < criterias; ++i)
             {
                 packet.ReadXORByte(guid[i], 6);
@@ -478,6 +483,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.Store("Criteria counter", BitConverter.ToUInt64(counter[i], 0), i);
                 packet.StoreBitstreamGuid("Criteria GUID", guid[i], i);
             }
+            packet.StoreEndList();
         }
     }
 }

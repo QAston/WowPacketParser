@@ -154,18 +154,24 @@ namespace PacketParser.Parsing.Parsers
             var specCount = packet.ReadByte("Spec Group count");
             packet.ReadByte("Active Spec Group");
 
+            packet.StoreBeginList("Specs");
             for (var i = 0; i < specCount; ++i)
             {
                 packet.ReadUInt32("Spec Id", i);
 
+                packet.StoreBeginList("Talets", i);
                 var spentTalents = packet.ReadByte("Spec Talent Count", i);
                 for (var j = 0; j < spentTalents; ++j)
                     packet.ReadUInt16("Talent Id", i, j);
+                packet.StoreEndList();
 
+                packet.StoreBeginList("Glyphs", i);
                 var glyphCount = packet.ReadByte("Glyph count", i);
                 for (var j = 0; j < glyphCount; ++j)
                     packet.ReadUInt16("Glyph", i, j);
+                packet.StoreEndList();
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_LEARN_PREVIEW_TALENTS, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
@@ -195,7 +201,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadUInt32("Tab Page");
 
             var count = packet.ReadUInt32("Talent Count");
-            packet.StoreBeginList("talents");
+            packet.StoreBeginList("Talents");
             for (var i = 0; i < count; ++i)
             {
                 packet.ReadUInt32("Talent ID", i);
@@ -216,8 +222,10 @@ namespace PacketParser.Parsing.Parsers
         {
             var talentCount = packet.ReadBits("Learned Talent Count", 25);
 
+            packet.StoreBeginList("Talents");
             for (int i = 0; i < talentCount; i++)
                 packet.ReadUInt16("Talent Id", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_TALENTS_ERROR)]

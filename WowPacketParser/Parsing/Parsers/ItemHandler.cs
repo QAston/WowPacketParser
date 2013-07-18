@@ -140,6 +140,7 @@ namespace PacketParser.Parsing.Parsers
 
             packet.ResetBitReader();
 
+            packet.StoreBeginList("Lotees");
             for (var i = 0; i < counter; ++i)
             {
                 packet.ReadXORByte(guid[i], 4);
@@ -154,6 +155,7 @@ namespace PacketParser.Parsing.Parsers
 
                 packet.StoreBitstreamGuid("Lootee GUID", guid[i], i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_SWAP_INV_ITEM)]
