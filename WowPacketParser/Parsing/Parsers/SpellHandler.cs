@@ -226,22 +226,14 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadBit("Unk Bit");
             packet.ResetBitReader();
 
-            var spells = new List<uint>((int)count);
+            packet.StoreBeginList("InitialSpells");
             for (var i = 0; i < count; i++)
             {
-                var spellId = packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Spell ID", i);
-                spells.Add((uint)spellId);
+                packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Spell ID", i);
             }
 
-            var startSpell = new StartSpell { Spells = spells };
+            packet.StoreEndList();
 
-            WoWObject character;
-            if (Storage.Objects.TryGetValue(SessionHandler.LoginGuid, out character))
-            {
-                var player = character as Player;
-                if (player != null && player.FirstLogin)
-                    Storage.StartSpells.Add(new Tuple<Race, Class>(player.Race, player.Class), startSpell, packet.TimeSpan);
-            }
         }
 
 

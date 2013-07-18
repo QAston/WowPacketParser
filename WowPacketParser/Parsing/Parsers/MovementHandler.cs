@@ -1414,7 +1414,7 @@ namespace PacketParser.Parsing.Parsers
             pos.Y = packet.ReadSingle();
             pos.Z = packet.ReadSingle();
             pos.O = packet.ReadSingle();
-            packet.WriteLine("Destination: {0}", pos);
+            packet.Store("Destination", pos);
 
             guid[3] = packet.ReadBit();
             guid[1] = packet.ReadBit();
@@ -1443,7 +1443,7 @@ namespace PacketParser.Parsing.Parsers
             if (onTransport)
             {
                 packet.ParseBitStream(transGuid, 1, 5, 7, 0, 3, 4, 6, 2);
-                packet.WriteGuid("Transport Guid", transGuid);
+                packet.StoreBitstreamGuid("Transport Guid", transGuid);
             }
 
             packet.ReadXORByte(guid, 3);
@@ -1459,7 +1459,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 4);
             packet.ReadXORByte(guid, 0);
 
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.MSG_MOVE_STOP, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
@@ -6366,7 +6366,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadXORByte(guid, 7);
             packet.ReadInt32("Unk Int32");
             packet.ParseBitStream(guid, 3, 6, 0, 4, 1, 5, 2);
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.SMSG_MOVE_ROOT, ClientVersionBuild.V4_3_4_15595)]

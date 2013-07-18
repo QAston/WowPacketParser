@@ -125,7 +125,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadByte("Spec Group");
             var guid = packet.StartBitStream(5, 3, 2, 7, 0, 6, 1, 4);
             packet.ParseBitStream(guid, 0, 1, 2, 3, 5, 6, 7, 4);
-            packet.WriteGuid("GUID", guid);
+            packet.StoreBitstreamGuid("GUID", guid);
         }
 
         [Parser(Opcode.SMSG_TALENTS_INFO, ClientVersionBuild.Zero, ClientVersionBuild.V5_1_0_16309)]

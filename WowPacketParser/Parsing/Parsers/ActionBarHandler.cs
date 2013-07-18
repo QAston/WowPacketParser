@@ -1,6 +1,7 @@
 using PacketParser.Enums;
 using PacketParser.Misc;
 using PacketParser.DataStructures;
+using System;
 
 namespace PacketParser.Parsing.Parsers
 {
@@ -44,8 +45,6 @@ namespace PacketParser.Parsing.Parsers
         {
             const int buttonCount = 132;
 
-            var startAction = new StartAction { Actions = new List<Store.Objects.Action>(buttonCount) };
-
             var buttons = new byte[buttonCount][];
 
             for (var i = 0; i < buttonCount; i++)
@@ -88,6 +87,7 @@ namespace PacketParser.Parsing.Parsers
 
             packet.ReadByte("Packet Type");
 
+            packet.StoreBeginList("Buttons");
             for (int i = 0; i < buttonCount; i++)
             {
                 var actionId = BitConverter.ToInt32(buttons[i], 0);
@@ -95,24 +95,12 @@ namespace PacketParser.Parsing.Parsers
                 if (actionId == 0)
                     continue;
 
-                var action = new Store.Objects.Action
-                {
-                    Button = (uint)i,
-                    Id = (uint)actionId,
-                    Type = 0 // removed in MoP
-                };
+                packet.Store("Action", actionId, i);
+                // removed in MoP
+                packet.Store("Type", 0, i);
 
-                packet.WriteLine("Action " + i + ": " + action.Id);
-                startAction.Actions.Add(action);
             }
-
-            WoWObject character;
-            if (Storage.Objects.TryGetValue(SessionHandler.LoginGuid, out character))
-            {
-                var player = character as Player;
-                if (player != null && player.FirstLogin)
-                    Storage.StartActions.Add(new Tuple<Race, Class>(player.Race, player.Class), startAction, packet.TimeSpan);
-            }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_SET_ACTIONBAR_TOGGLES)]

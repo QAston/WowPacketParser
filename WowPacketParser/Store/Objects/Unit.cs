@@ -37,7 +37,8 @@ namespace PacketParser.DataStructures
                 if (UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_FIELD_SUMMONEDBY), out uf) ||
                     UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_CREATED_BY_SPELL), out uf) ||
                     UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_FIELD_CREATEDBY), out uf))
-                return uf.UInt32Value != 0;
+                    return uf.UInt32Value != 0;
+            }
 
             return false;
         }

@@ -489,6 +489,9 @@
     <Compile Include="..\wowpacketparser\enums\QuestFlags.cs">
       <Link>Enums\QuestFlags.cs</Link>
     </Compile>
+    <Compile Include="..\WowPacketParser\Enums\QuestFlags2.cs">
+      <Link>Enums\QuestFlags2.cs</Link>
+    </Compile>
     <Compile Include="..\wowpacketparser\enums\QuestGiverStatus.cs">
       <Link>Enums\QuestGiverStatus.cs</Link>
     </Compile>
@@ -596,6 +599,9 @@
     </Compile>
     <Compile Include="..\wowpacketparser\enums\TeamType.cs">
       <Link>Enums\TeamType.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Enums\TimerType.cs">
+      <Link>Enums\TimerType.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\TotemCategory.cs">
       <Link>Enums\TotemCategory.cs</Link>
@@ -722,6 +728,18 @@
     </Compile>
     <Compile Include="..\wowpacketparser\enums\version\v4_3_4_15595\UpdateFields.cs">
       <Link>Enums\Version\V4_3_4_15595\UpdateFields.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Enums\Version\V5_2_0_16650\Opcodes.cs">
+      <Link>Enums\Version\V5_2_0_16650\Opcodes.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Enums\Version\V5_2_0_16650\UpdateFields.cs">
+      <Link>Enums\Version\V5_2_0_16650\UpdateFields.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Enums\Version\V5_3_0_16981\Opcodes.cs">
+      <Link>Enums\Version\V5_3_0_16981\Opcodes.cs</Link>
+    </Compile>
+    <Compile Include="..\WowPacketParser\Enums\Version\V5_3_0_16981\UpdateFields.cs">
+      <Link>Enums\Version\V5_3_0_16981\UpdateFields.cs</Link>
     </Compile>
     <Compile Include="..\wowpacketparser\enums\VictimStates.cs">
       <Link>Enums\VictimStates.cs</Link>

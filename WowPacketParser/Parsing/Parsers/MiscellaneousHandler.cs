@@ -164,7 +164,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(0, 1, 2, 4, 7, 3, 6, 5);
             packet.ParseBitStream(guid, 4, 1, 5, 2, 6, 7, 0, 3);
-            packet.WriteGuid("Guid", guid);
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.CMSG_GRANT_LEVEL)]
@@ -255,7 +255,7 @@ namespace PacketParser.Parsing.Parsers
             packet.ReadByte("Slot Id");
             var actionId = packet.StartBitStream(0, 7, 6, 1, 3, 5, 2, 4);
             packet.ParseBitStream(actionId, 3, 0, 1, 4, 7, 2, 6, 5);
-            packet.WriteLine("Action Id: {0}", BitConverter.ToUInt32(actionId, 0));
+            packet.Store("Action Id", BitConverter.ToUInt32(actionId, 0));
         }
 
         [Parser(Opcode.SMSG_RESURRECT_REQUEST)]

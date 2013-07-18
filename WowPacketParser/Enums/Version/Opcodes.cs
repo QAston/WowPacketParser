@@ -12,8 +12,8 @@ using PacketParser.Enums.Version.V4_3_4_15595;
 using PacketParser.Enums.Version.V5_0_4_16016;
 using PacketParser.Enums.Version.V5_0_5_16048;
 using PacketParser.Enums.Version.V5_1_0_16309;
-using WowPacketParser.Enums.Version.V5_2_0_16650;
-using WowPacketParser.Enums.Version.V5_3_0_16981;
+using PacketParser.Enums.Version.V5_2_0_16650;
+using PacketParser.Enums.Version.V5_3_0_16981;
 using PacketParser.Misc;
 using System;
 

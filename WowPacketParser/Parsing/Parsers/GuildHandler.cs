@@ -1390,7 +1390,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(5, 3, 6, 4, 7, 2, 1, 0);
             packet.ParseBitStream(guid, 4, 7, 5, 6, 0, 1, 2, 3);
-            packet.WriteGuid("GUID", guid);
+            packet.StoreBitstreamGuid("GUID", guid);
         }
 
         [Parser(Opcode.CMSG_QUERY_GUILD_XP, ClientVersionBuild.V4_3_4_15595)]
@@ -2158,7 +2158,7 @@ namespace PacketParser.Parsing.Parsers
         {
             var guid = packet.StartBitStream(1, 4, 3, 5, 0, 6, 2, 7);
             packet.ParseBitStream(guid, 5, 3, 1, 4, 0, 7, 6, 2);
-            packet.WriteGuid("Guild Guid", guid);
+            packet.StoreBitstreamGuid("Guild Guid", guid);
         }
 
         [Parser(Opcode.SMSG_GUILD_RECIPES)] // 4.3.4

@@ -152,7 +152,7 @@ namespace PacketParser.Parsing.Parsers
                 packet.ReadXORByte(guid[i], 0);
                 packet.ReadXORByte(guid[i], 2);
 
-                packet.WriteGuid("Lootee GUID", guid[i], i);
+                packet.StoreBitstreamGuid("Lootee GUID", guid[i], i);
             }
         }
 
@@ -1198,7 +1198,7 @@ namespace PacketParser.Parsing.Parsers
                 case 0x6D8A2694: // KeyChain
                 {
                     packet.ReadUInt32("Key Chain Id");
-                    packet.WriteLine("Key: {0}", Utilities.ByteArrayToHexString(packet.ReadBytes(32)));
+                    packet.Store("Key", Utilities.ByteArrayToHexString(packet.ReadBytes(32)));
                     break;
                 }
             }
