@@ -45,7 +45,7 @@ namespace PacketParser.Processing
             {
                 if (w.Type != type)
                 {
-                    if (!w.Created)
+                    if (!w.Created && !(w.Type == ObjectType.Container && type == ObjectType.Item))
                         Trace.WriteLine(String.Format("Object store: different requested object type ({0}) than current type ({1}) of object created from GUID ({2}), probably wrong HighGuid type define", type, w.Type, guid.Full.ToString("X16")));
                     CreateObjectWithType(guid, type, w);
                     return Objects[guid];
@@ -87,7 +87,13 @@ namespace PacketParser.Processing
             {
                 var guid = (Guid)obj;
                 if (guid.Full != 0 && !Objects.ContainsKey(guid))
+                {
+                    ObjectType type = guid.GetObjectType();
+                    // containers and items are indistinguishable by guid, create container just in case
+                    if (guid.GetObjectType() == ObjectType.Item)
+                        type = ObjectType.Container;
                     CreateObjectWithType(guid, guid.GetObjectType());
+                }
             }
         }
     }
